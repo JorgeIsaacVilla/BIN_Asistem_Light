@@ -1,0 +1,146 @@
+[
+    {
+        "id": 1,
+        "nombre": "arreglar mesa de trabajo",
+        "hora": "05:40",
+        "veces": 1,
+        "intervalo_valor": 24,
+        "intervalo_unidad": "horas",
+        "dias": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+        ],
+        "duracion": "00:00:41",
+        "estado": "ERROR",
+        "transcurrido": "00:00:20",
+        "progreso": 0,
+        "elapsed_seconds": 20,
+        "runtime_base_seconds": 0,
+        "runtime_started_at": null,
+        "current_run_key": "manual-20260902-002818",
+        "last_run_key": null,
+        "queued_at": null,
+        "completed_at": null,
+        "ultima_ejecucion": null,
+        "acciones": [
+            {
+                "id": 1,
+                "tipo": "comando_teclado",
+                "origen": "grabacion_global",
+                "descripcion": "Comando · Atajo automático · Ctrl + Shift + 1 · Ctrl + Shift + 1",
+                "contexto_objetivo": null,
+                "contexto_despues": {
+                    "hwnd": 985340,
+                    "pid": 16540,
+                    "proceso": "Code.exe",
+                    "ejecutable": "C:\\Users\\jvill\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe",
+                    "titulo": "main.py - BIN_IA_asistem-main - Visual Studio Code",
+                    "clase": "Chrome_WidgetWin_1"
+                },
+                "capturado_en": "2026-09-02T00:27:08.966085",
+                "comando_id": "auto_atajo_ctrl_shift_1",
+                "nombre_comando": "Atajo automático · Ctrl + Shift + 1",
+                "parametros": [
+                    {
+                        "tecla": "Ctrl",
+                        "repeticiones": 1
+                    },
+                    {
+                        "tecla": "Shift",
+                        "repeticiones": 1
+                    },
+                    {
+                        "tecla": "1",
+                        "repeticiones": 1
+                    }
+                ],
+                "espera_antes_ms": 0,
+                "espera_despues_ms": 0,
+                "duracion_ms": 159,
+                "ids_origen": [
+                    1
+                ]
+            }
+        ],
+        "acciones_semanticas": [
+            {
+                "id": 1,
+                "tipo": "comando_teclado",
+                "descripcion": "Comando · Atajo automático · Ctrl + Shift + 1 · Ctrl + Shift + 1",
+                "acciones_origen": [
+                    1
+                ],
+                "confianza": "baja",
+                "datos": {
+                    "origen": "grabacion_global",
+                    "capturado_en": "2026-09-02T00:27:08.966085",
+                    "comando_id": "auto_atajo_ctrl_shift_1",
+                    "nombre_comando": "Atajo automático · Ctrl + Shift + 1",
+                    "parametros": [
+                        {
+                            "tecla": "Ctrl",
+                            "repeticiones": 1
+                        },
+                        {
+                            "tecla": "Shift",
+                            "repeticiones": 1
+                        },
+                        {
+                            "tecla": "1",
+                            "repeticiones": 1
+                        }
+                    ],
+                    "espera_antes_ms": 0,
+                    "espera_despues_ms": 0,
+                    "duracion_ms": 159,
+                    "ids_origen": [
+                        1
+                    ]
+                },
+                "contexto_objetivo": null,
+                "contexto_despues": {
+                    "hwnd": 985340,
+                    "pid": 16540,
+                    "proceso": "Code.exe",
+                    "ejecutable": "C:\\Users\\jvill\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe",
+                    "titulo": "main.py - BIN_IA_asistem-main - Visual Studio Code",
+                    "clase": "Chrome_WidgetWin_1"
+                }
+            }
+        ],
+        "accion_actual_indice": null,
+        "repeticion_actual": 1,
+        "repeticiones_totales": 1,
+        "ejecucion_real_indice": 0,
+        "ejecucion_real_repeticion": 1,
+        "ejecuciones_reales_completadas": 0,
+        "delay_ejecucion_restante_ms": 0,
+        "ejecucion_real_fase": "inactiva",
+        "elapsed_repeticion_real_ms": 19771,
+        "duracion_origen": "grabacion",
+        "detalle_estado": "ERROR DE EJECUCIÓN\n\nTarea: arreglar mesa de trabajo\nRepetición: 1/1\nAcción: 1/1\nAcción esperada: Comando · Atajo automático · Ctrl + Shift + 1 · Ctrl + Shift + 1\nEstado: TIMEOUT\nEsperó: 20.2 s\nContexto esperado: Code.exe\nContexto actual: explorer.exe\nÚltima decisión: WAIT\nMotivo: El contexto posterior todavía no coincide con el esperado.",
+        "supervisor_espera_acumulada_ms": 19646,
+        "supervisor_intentos": 38,
+        "supervisor_ultima_decision": "WAIT",
+        "supervisor_ultimo_motivo": "El contexto posterior todavía no coincide con el esperado.",
+        "ultimo_checkpoint": {
+            "decision": "WAIT",
+            "motivo": "El contexto posterior todavía no coincide con el esperado.",
+            "timestamp": "2026-09-02T00:28:39.273588",
+            "accion_indice": 0,
+            "repeticion": 1,
+            "contexto_actual": {
+                "pid": 19064,
+                "proceso": "explorer.exe",
+                "titulo": "Descargas - Explorador de archivos",
+                "clase": "CabinetWClass",
+                "hwnd": 1183566
+            }
+        }
+    }
+]

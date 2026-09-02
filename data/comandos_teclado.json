@@ -1,0 +1,331 @@
+[
+    {
+        "id": "win_r",
+        "nombre": "Abrir Ejecutar",
+        "parametros": [
+            {
+                "tecla": "Win",
+                "repeticiones": 1
+            },
+            {
+                "tecla": "R",
+                "repeticiones": 1
+            }
+        ],
+        "personalizado": false
+    },
+    {
+        "id": "ctrl_c",
+        "nombre": "Copiar",
+        "parametros": [
+            {
+                "tecla": "Ctrl",
+                "repeticiones": 1
+            },
+            {
+                "tecla": "C",
+                "repeticiones": 1
+            }
+        ],
+        "personalizado": false
+    },
+    {
+        "id": "ctrl_x",
+        "nombre": "Cortar",
+        "parametros": [
+            {
+                "tecla": "Ctrl",
+                "repeticiones": 1
+            },
+            {
+                "tecla": "X",
+                "repeticiones": 1
+            }
+        ],
+        "personalizado": false
+    },
+    {
+        "id": "ctrl_v",
+        "nombre": "Pegar",
+        "parametros": [
+            {
+                "tecla": "Ctrl",
+                "repeticiones": 1
+            },
+            {
+                "tecla": "V",
+                "repeticiones": 1
+            }
+        ],
+        "personalizado": false
+    },
+    {
+        "id": "ctrl_g",
+        "nombre": "Ctrl + G",
+        "parametros": [
+            {
+                "tecla": "Ctrl",
+                "repeticiones": 1
+            },
+            {
+                "tecla": "G",
+                "repeticiones": 1
+            }
+        ],
+        "personalizado": false
+    },
+    {
+        "id": "ctrl_y",
+        "nombre": "Rehacer",
+        "parametros": [
+            {
+                "tecla": "Ctrl",
+                "repeticiones": 1
+            },
+            {
+                "tecla": "Y",
+                "repeticiones": 1
+            }
+        ],
+        "personalizado": false
+    },
+    {
+        "id": "ctrl_z",
+        "nombre": "Deshacer",
+        "parametros": [
+            {
+                "tecla": "Ctrl",
+                "repeticiones": 1
+            },
+            {
+                "tecla": "Z",
+                "repeticiones": 1
+            }
+        ],
+        "personalizado": false
+    },
+    {
+        "id": "ctrl_a",
+        "nombre": "Seleccionar todo",
+        "parametros": [
+            {
+                "tecla": "Ctrl",
+                "repeticiones": 1
+            },
+            {
+                "tecla": "A",
+                "repeticiones": 1
+            }
+        ],
+        "personalizado": false
+    },
+    {
+        "id": "ctrl_s",
+        "nombre": "Guardar",
+        "parametros": [
+            {
+                "tecla": "Ctrl",
+                "repeticiones": 1
+            },
+            {
+                "tecla": "S",
+                "repeticiones": 1
+            }
+        ],
+        "personalizado": false
+    },
+    {
+        "id": "ctrl_f",
+        "nombre": "Buscar",
+        "parametros": [
+            {
+                "tecla": "Ctrl",
+                "repeticiones": 1
+            },
+            {
+                "tecla": "F",
+                "repeticiones": 1
+            }
+        ],
+        "personalizado": false
+    },
+    {
+        "id": "ctrl_l",
+        "nombre": "Barra de dirección",
+        "parametros": [
+            {
+                "tecla": "Ctrl",
+                "repeticiones": 1
+            },
+            {
+                "tecla": "L",
+                "repeticiones": 1
+            }
+        ],
+        "personalizado": false
+    },
+    {
+        "id": "ctrl_p",
+        "nombre": "Imprimir",
+        "parametros": [
+            {
+                "tecla": "Ctrl",
+                "repeticiones": 1
+            },
+            {
+                "tecla": "P",
+                "repeticiones": 1
+            }
+        ],
+        "personalizado": false
+    },
+    {
+        "id": "ctrl_shift_z",
+        "nombre": "Rehacer alternativo",
+        "parametros": [
+            {
+                "tecla": "Ctrl",
+                "repeticiones": 1
+            },
+            {
+                "tecla": "Shift",
+                "repeticiones": 1
+            },
+            {
+                "tecla": "Z",
+                "repeticiones": 1
+            }
+        ],
+        "personalizado": false
+    },
+    {
+        "id": "alt_tab",
+        "nombre": "Cambiar aplicación",
+        "parametros": [
+            {
+                "tecla": "Alt",
+                "repeticiones": 1
+            },
+            {
+                "tecla": "Tab",
+                "repeticiones": 1
+            }
+        ],
+        "personalizado": false
+    },
+    {
+        "id": "alt_f4",
+        "nombre": "Cerrar ventana",
+        "parametros": [
+            {
+                "tecla": "Alt",
+                "repeticiones": 1
+            },
+            {
+                "tecla": "F4",
+                "repeticiones": 1
+            }
+        ],
+        "personalizado": false
+    },
+    {
+        "id": "tab",
+        "nombre": "Tab",
+        "parametros": [
+            {
+                "tecla": "Tab",
+                "repeticiones": 1
+            }
+        ],
+        "personalizado": false
+    },
+    {
+        "id": "tab_3",
+        "nombre": "Tab x3",
+        "parametros": [
+            {
+                "tecla": "Tab",
+                "repeticiones": 3
+            }
+        ],
+        "personalizado": false
+    },
+    {
+        "id": "shift_tab",
+        "nombre": "Retroceder Tab",
+        "parametros": [
+            {
+                "tecla": "Shift",
+                "repeticiones": 1
+            },
+            {
+                "tecla": "Tab",
+                "repeticiones": 1
+            }
+        ],
+        "personalizado": false
+    },
+    {
+        "id": "enter",
+        "nombre": "Enter",
+        "parametros": [
+            {
+                "tecla": "Enter",
+                "repeticiones": 1
+            }
+        ],
+        "personalizado": false
+    },
+    {
+        "id": "escape",
+        "nombre": "Escape",
+        "parametros": [
+            {
+                "tecla": "Esc",
+                "repeticiones": 1
+            }
+        ],
+        "personalizado": false
+    },
+    {
+        "id": "custom-20260901202245231925",
+        "nombre": "Prueba",
+        "parametros": [
+            {
+                "tecla": "Tab",
+                "repeticiones": 3
+            }
+        ],
+        "personalizado": true
+    },
+    {
+        "id": "custom-20260901230823268376",
+        "nombre": "Organizar mesa de trabajo Alfora.art generador masibo",
+        "parametros": [
+            {
+                "tecla": "Ctrl",
+                "repeticiones": 1
+            },
+            {
+                "tecla": "Shift",
+                "repeticiones": 1
+            },
+            {
+                "tecla": "1",
+                "repeticiones": 1
+            }
+        ],
+        "personalizado": true
+    },
+    {
+        "id": "custom-20260902000111105431",
+        "nombre": "llamar menú desplegable de windows",
+        "parametros": [
+            {
+                "tecla": "Win",
+                "repeticiones": 1
+            }
+        ],
+        "personalizado": true
+    }
+]

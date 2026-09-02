@@ -1,0 +1,3 @@
+"main v1.8.py"
+
+Es un sistema automatizado completo. pero sin IA. ejecuta y replica tareas en una y multiples pantallas. en esta versión solo falta el sistema de implementación de tareas retrasadas.
