@@ -1,313 +1,347 @@
-============================================
-NOTAS DE INSTALACIÓN Y ENTORNO VIRTUAL — BIN
-============================================
+BIN IA ASISTEM — LIGHT
+V1.6.13
 
-Cuando se instale por primera vez el proyecto desde el repositorio, se debe clonar el proyecto y crear un entorno virtual nuevo para esa computadora.
+============================================================
+BIN IA ASISTEM — LIGHT v1.6.13
+============================================================
 
-COMANDOS DE PRIMERA INSTALACIÓN:
-============================================
+BIN Light es una versión ligera de BIN orientada a la
+automatización de tareas repetitivas en Windows.
 
-git clone <URL_DEL_REPOSITORIO>
-cd BIN_IA_asistem
+Esta versión NO utiliza IA local.
 
-python -m venv .venv
-source .venv/Scripts/activate
+En su lugar, trabaja mediante un sistema avanzado de análisis
+automático, supervisión de contexto, decisiones condicionales,
+correcciones y ejecución física de acciones.
 
-python -m pip install -r requirements.txt
+BIN observa el entorno de trabajo, registra las acciones
+demostradas por el usuario y utiliza la información disponible
+de ventanas, aplicaciones, navegadores y recursos para intentar
+reproducir la tarea de la forma más estable posible.
 
-python main.py
+La prioridad de BIN Light es:
 
-============================================
-EXPLICACIÓN DEL PROCESO
-============================================
-
-1. CLONAR EL PROYECTO
-============================================
-
-Primero se descarga el proyecto desde GitHub: git clone <URL_DEL_REPOSITORIO>
-
-Luego se entra en la carpeta del proyecto: cd BIN_IA_asistem
-
-
-2. CREAR EL ENTORNO VIRTUAL
-============================================
-
-Se crea el entorno virtual con: python -m venv .venv
-
-Esto crea una carpeta llamada: .venv
-
-La carpeta .venv contiene el entorno de Python exclusivo para BIN y las librerías instaladas para este proyecto.
-Cada computadora debe crear su propio .venv.
-No se debe copiar el .venv desde otra computadora y tampoco se debe subir a GitHub.
+- Bajo consumo de recursos.
+- Automatización mecánica de tareas.
+- Ejecución de secuencias largas.
+- Supervisión del estado de las ventanas.
+- Corrección automática cuando el entorno cambia.
+- Funcionamiento en equipos modestos.
+- Capacidad para permanecer activo durante períodos prolongados.
 
 
-3. ACTIVAR EL ENTORNO VIRTUAL
-============================================
+============================================================
+REQUISITOS
+============================================================
 
-En Git Bash: source .venv/Scripts/activate
+Sistema recomendado:
 
-Cuando esté activo debe aparecer algo parecido a:
-
-(.venv)
-
-al principio de la terminal.
-Eso significa que Python y pip están trabajando dentro del entorno virtual de BIN.
+Windows 10 / Windows 11
+Python 3
 
 
-Si se usa PowerShell: .\.venv\Scripts\Activate.ps1
-
-
-Si se usa CMD: .venv\Scripts\activate.bat
-
-
-4. INSTALAR TODO LO QUE NECESITA BIN
-============================================
-
-Luego se instala todo lo que necesita BIN usando: python -m pip install -r requirements.txt
-
-El archivo requirements.txt contiene la lista de librerías necesarias para ejecutar el proyecto.
-
-Por ejemplo:
+Dependencias externas:
 
 PySide6
 psutil
 mss
 pynput
-black
 
-Esto evita tener que instalar cada dependencia manualmente en una computadora nueva.
 
+Instalación:
 
-5. EJECUTAR BIN
-============================================
+python -m pip install PySide6 psutil mss pynput
 
-Una vez instaladas todas las dependencias: python main.py
 
-============================================
-USO NORMAL DESPUÉS DE LA PRIMERA INSTALACIÓN
-=============================================
+Para comprobar las dependencias:
 
-Cuando el proyecto ya fue instalado en una computadora, NO se vuelve a crear el .venv.
+python -c "import PySide6, psutil, mss, pynput; print('BIN Light: dependencias OK')"
 
-No volver a ejecutar:
 
-python -m venv .venv
+Para comprobar el archivo principal:
 
-Solo hay que entrar en el proyecto, activar el entorno y ejecutar BIN:
-
-cd BIN_IA_asistem
-
-source .venv/Scripts/activate
-
-python main.py
-
-
-CUANDO SE HACE GIT PULL
-=======================
-
-Cuando se actualice el proyecto desde GitHub: git pull
-
-Después conviene volver a ejecutar: python -m pip install -r requirements.txt
-
-Esto permite instalar automáticamente cualquier dependencia nueva que se haya agregado al proyecto.
-
-Flujo recomendado:
-
-git pull
-
-source .venv/Scripts/activate
-
-python -m pip install -r requirements.txt
-
-python main.py
-
-
-CUANDO SE AGREGA UNA NUEVA LIBRERÍA
-===================================
-
-Si BIN empieza a utilizar una librería nueva, primero se instala normalmente.
-
-Ejemplo:
-
-python -m pip install playwright
-
-Después se debe actualizar requirements.txt:
-
-python -m pip freeze > requirements.txt
-
-Luego se suben los cambios a Git:
-
-git add requirements.txt
-
-git commit -m "Actualizar dependencias"
-
-git push
-
-De esta forma, cuando otra computadora haga git pull, podrá instalar la nueva dependencia con:
-
-python -m pip install -r requirements.txt
-
-
-GITIGNORE
-=========
-
-Debemos asegurarnos de que la carpeta .venv esté incluida en el archivo:
-
-.gitignore
-
-La regla principal es:
-
-.venv/
-
-Esto evita que Git intente subir todo el entorno virtual al repositorio.
-
-
-.gitignore recomendado para BIN:
-
-.venv/
-venv/
-env/
-
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-
-.vscode/
-
-.DS_Store
-Thumbs.db
-
-*.tmp
-*.log
-
-build/
-dist/
-*.egg-info/
-
-.env
-.env.*
-
-
-POR QUÉ .venv NO DEBE SUBIRSE A GIT
-===================================
-
-La carpeta .venv contiene librerías instaladas específicamente para una computadora y puede contener rutas internas propias de esa máquina.
-
-Por eso:
-
-.venv NO se comparte.
-
-requirements.txt SÍ se comparte.
-
-Cada computadora reconstruye su propio entorno usando:
-
-python -m venv .venv
-
-y:
-
-python -m pip install -r requirements.txt
-
-
-COMPROBAR QUE .venv ESTÁ SIENDO IGNORADO
-========================================
-
-Se puede comprobar con:
-
-git status
-
-La carpeta .venv no debería aparecer como archivo pendiente.
-
-
-También se puede comprobar directamente con:
-
-git check-ignore -v .venv/
-
-
-SI .venv YA FUE SUBIDO A GIT
-=============================
-
-Agregar .venv/ al .gitignore no basta si Git ya estaba siguiendo esa carpeta.
-
-En ese caso hay que ejecutar:
-
-git rm -r --cached .venv
-
-Esto deja de rastrear la carpeta en Git, pero NO elimina el .venv de la computadora.
-
-Después:
-
-git add .gitignore
-
-git commit -m "Ignorar entorno virtual"
-
-git push
-
-
-RESUMEN RÁPIDO
-==============
-
-PRIMERA INSTALACIÓN:
-
-git clone <URL_DEL_REPOSITORIO>
-cd BIN_IA_asistem
-python -m venv .venv
-source .venv/Scripts/activate
-python -m pip install -r requirements.txt
-python main.py
-
-
-USO NORMAL:
-
-cd BIN_IA_asistem
-source .venv/Scripts/activate
-python main.py
-
-
-DESPUÉS DE GIT PULL:
-
-git pull
-source .venv/Scripts/activate
-python -m pip install -r requirements.txt
-python main.py
-
-
-SI SE AGREGA UNA LIBRERÍA NUEVA:
-
-python -m pip install NOMBRE_LIBRERIA
-python -m pip freeze > requirements.txt
-git add requirements.txt
-git commit -m "Actualizar dependencias"
-git push
-
-
-REGLA FUNDAMENTAL DE .gitignore:
-
-.venv/
-
-El entorno virtual nunca debe viajar dentro del repositorio.
-
-=============================
-Para inicializar el proyecto despues de dejar todo instalado
-=============================
-source .venv/Scripts/activate ---> Para activarlo
-python main.py ---> para comenzar el trabajo
-
-=============================
-Para hacer comprobaciones durante la codificación
-=============================
-python -m black main.py
 python -m py_compile main.py
+
+
+Para ejecutar BIN:
+
 python main.py
 
-Así:
 
-black ordena/formatea el código.
-py_compile comprueba que no haya errores de sintaxis.
-python main.py inicia BIN.
+============================================================
+IMPORTANTE — ESTA VERSIÓN NO UTILIZA IA LOCAL
+============================================================
 
-=============================
-IA contratada
-=============================
-La IA se llama ollama y se activa en CMD con=> ollama run qwen3-vl:4b --->Eliminar
-ollama run qwen3-vl:4b-instruct ----> elegida
+BIN Light v1.6.13 no incorpora un modelo de inteligencia
+artificial local.
+
+Las decisiones durante una automatización son realizadas por
+el propio motor de BIN utilizando:
+
+- Contexto de las acciones.
+- Estado de las ventanas.
+- Procesos activos.
+- Posición y dimensiones de ventanas.
+- Rutas de archivos y carpetas.
+- URL del navegador.
+- Perfil del navegador.
+- Cuenta asociada cuando puede ser identificada.
+- Historial de la demostración.
+- Reglas y parámetros condicionales.
+- Verificaciones antes y después de las acciones.
+- Sistemas de corrección y recuperación.
+
+El objetivo es que BIN pueda adaptarse a pequeñas diferencias
+entre la demostración original y el entorno encontrado durante
+la ejecución.
+
+
+============================================================
+CHAT DE BIN
+============================================================
+
+BIN incluye un chat operativo integrado.
+
+En esta versión el chat funciona principalmente como registro
+y asistente local del sistema.
+
+Permite mostrar información sobre:
+
+- Acciones observadas.
+- Contextos detectados.
+- Correcciones realizadas.
+- Esperas.
+- Verificaciones.
+- Errores.
+- Estado de una ejecución.
+
+BIN también puede interactuar con Google Chrome durante las
+automatizaciones.
+
+Cuando existe conexión a Internet, las tareas demostradas
+pueden utilizar páginas y servicios web normalmente.
+
+
+============================================================
+AUTOMATIZACIÓN DE VENTANAS
+============================================================
+
+BIN Light supervisa continuamente las ventanas disponibles
+en Windows.
+
+Durante una tarea puede utilizar información como:
+
+- Aplicación o proceso.
+- Título de la ventana.
+- Clase de ventana.
+- Posición.
+- Tamaño.
+- Estado de la ventana.
+- Recurso abierto.
+- Ruta.
+- URL.
+- Perfil del navegador.
+- Cuenta asociada.
+
+Cuando BIN encuentra una ventana que corresponde al contexto
+esperado, puede intentar corregir automáticamente su posición,
+tamaño, URL u otros estados compatibles antes de continuar con
+la siguiente acción.
+
+Esto ayuda a conservar las condiciones necesarias para que
+clics, scrolls, escritura y comandos físicos ocurran en el
+lugar esperado.
+
+
+============================================================
+NAVEGADORES
+============================================================
+
+BIN puede trabajar con navegadores compatibles durante una
+automatización.
+
+Para obtener mejores resultados se recomienda utilizar una
+configuración sencilla y consistente.
+
+Especialmente en Google Chrome:
+
+Utiliza, siempre que sea posible, una sola cuenta de Google
+por cada perfil del navegador utilizado en una tarea.
+
+BIN puede identificar información del perfil y, cuando es
+observable, la cuenta asociada.
+
+Las contraseñas, autenticación multifactor, passkeys,
+confirmaciones desde teléfonos u otros mecanismos de seguridad
+deben ser realizados manualmente por el usuario.
+
+
+============================================================
+RECOMENDACIONES DE USO
+============================================================
+
+1. REDUCE LA CANTIDAD DE PASOS
+
+Utiliza la menor cantidad de acciones posible.
+
+Una tarea corta y directa normalmente será más resistente que
+una tarea llena de movimientos innecesarios.
+
+
+2. UTILIZA PASOS CLAROS Y PAUSADOS
+
+Evita realizar demasiadas acciones seguidas durante la
+demostración.
+
+BIN necesita tiempo para observar los cambios producidos en
+Windows.
+
+
+3. UTILIZA ESPERAS RAZONABLES
+
+Para aplicaciones o páginas que necesitan tiempo de carga,
+puede ser conveniente esperar aproximadamente entre 5 y
+12 segundos antes de continuar.
+
+Esto también permite que BIN tenga tiempo para detectar y
+corregir cambios inesperados.
+
+
+4. MANTÉN EL MISMO SOFTWARE
+
+Si enseñas una rutina utilizando una versión determinada de
+un programa, intenta conservar esa misma versión.
+
+Una actualización importante del software puede modificar:
+
+- Ventanas.
+- Botones.
+- Menús.
+- Coordenadas.
+- Distribución visual.
+- Comportamiento.
+
+Si el programa cambia demasiado, lo recomendable es volver a
+demostrar la tarea.
+
+
+5. EN RUTAS WEB, UTILIZA LA URL DIRECTAMENTE
+
+Cuando sea posible, navega directamente hacia la URL necesaria.
+
+Esto suele ser más estable que depender de varios clics para
+llegar a una página.
+
+
+6. MANTÉN UNA MESA DE TRABAJO CONSISTENTE
+
+Para tareas repetitivas es recomendable mantener un orden
+similar en el escritorio y en las aplicaciones utilizadas.
+
+BIN puede corregir determinados estados, pero una estructura
+predecible siempre mejora la estabilidad.
+
+
+7. CIERRA VENTANAS INNECESARIAS
+
+Antes de iniciar una automatización importante, intenta cerrar
+programas, ventanas o pestañas que no sean necesarias.
+
+Esto reduce posibles ambigüedades.
+
+
+8. RECOMENDACIÓN IMPORTANTE PARA VENTANAS
+
+Antes y después de mover o cambiar el tamaño de una ventana
+durante una demostración, haz clic en su barra de título.
+
+Esto ayuda a BIN a observar correctamente la ventana activa y
+actualizar información como:
+
+- Posición.
+- Tamaño.
+- Aplicación.
+- Contexto.
+- URL, cuando corresponde.
+
+
+9. EVITA PASOS INNECESARIOS
+
+Si una operación puede realizarse con una acción directa,
+prefiere esa opción.
+
+Menos pasos significan menos puntos posibles de fallo.
+
+
+============================================================
+CONSIDERACIONES PARA AUTOMATIZACIONES WEB
+============================================================
+
+Las páginas web son entornos dinámicos.
+
+Una misma página puede cambiar debido a:
+
+- Tiempo de carga.
+- Redirecciones.
+- Sesiones.
+- Cookies.
+- Publicidad.
+- Actualizaciones del sitio.
+- Estado de la cuenta.
+- Conexión a Internet.
+
+Por esta razón, las automatizaciones web pueden necesitar más
+tiempo de espera y supervisión que una aplicación local.
+
+
+============================================================
+FILOSOFÍA DE BIN LIGHT
+============================================================
+
+Durante la demostración, BIN intenta capturar todo.
+
+Durante la ejecución, BIN analiza el entorno e intenta mantener
+las condiciones necesarias para continuar la tarea.
+
+Cuando puede corregir un estado de forma segura, intenta
+corregirlo.
+
+Cuando una acción física sigue siendo necesaria, conserva y
+ejecuta la acción física.
+
+El objetivo no es sustituir todas las acciones del usuario,
+sino reproducir de forma confiable las tareas que el usuario
+le ha enseñado.
+
+
+============================================================
+VERSIÓN
+============================================================
+
+BIN IA Asistem — Light
+
+Versión estable:
+
+v1.6.13
+
+
+Esta versión ha sido probada realizando una secuencia completa
+de automatización con supervisión y corrección de ventanas y
+contextos web.
+
+
+============================================================
+ESTADO DEL PROYECTO
+============================================================
+
+BIN Light continúa en desarrollo.
+
+Las nuevas funciones deben incorporarse conservando como
+prioridades:
+
+- Estabilidad.
+- Bajo consumo.
+- Ejecución prolongada.
+- Compatibilidad con Windows.
+- Recuperación ante cambios del entorno.
+- Automatizaciones comprensibles y reproducibles.

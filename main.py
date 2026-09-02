@@ -1,6 +1,8 @@
 #v1.6.13
 import sys
 import json
+import os
+import re
 import psutil
 import ctypes
 import time
@@ -27,6 +29,7 @@ except ImportError:
 
 from pathlib import Path
 from datetime import datetime, timedelta
+from urllib.parse import urlsplit, unquote
 
 from PySide6.QtCore import Qt, QTimer, Signal, QTime, QThread
 from PySide6.QtGui import QImage, QPixmap, QIcon
@@ -4081,6 +4084,13 @@ class BIN(QMainWindow):
         self.ultimo_chat_sistema = ""
 
         # ====================================================
+        # REGISTRO OPERATIVO VISIBLE DE BIN
+        # ====================================================
+
+        self.historial_chat_bin = []
+        self.max_historial_chat_bin = 500
+
+        # ====================================================
         # CAPTURA DEL ESCRITORIO
         # ====================================================
 
@@ -6038,12 +6048,129 @@ class BIN(QMainWindow):
 
         self.pausar_ejecucion(tarea)
 
-    def actualizar_chat_bin(self, mensaje):
-        self.ultimo_chat_sistema = mensaje
+    def _bajar_scroll_chat(
+        self,
+    ):
+        if not hasattr(
+            self,
+            "scroll_chat",
+        ):
+            return
 
-        if hasattr(self, "mensaje_chat"):
-            self.mensaje_chat.setText(f"BIN: {mensaje}")
+        barra = (
+            self.scroll_chat
+            .verticalScrollBar()
+        )
 
+        if barra is not None:
+            barra.setValue(
+                barra.maximum()
+            )
+
+    def registrar_evento_bin(
+        self,
+        categoria,
+        mensaje,
+        detalle=None,
+    ):
+        """
+        Registro operativo visible de BIN.
+
+        Muestra hechos observados, decisiones deterministas,
+        acciones enviadas, verificaciones y errores.
+
+        No expone razonamiento interno oculto de modelos;
+        registra únicamente el estado operativo real del sistema.
+        """
+
+        categoria = str(
+            categoria
+            or "INFO"
+        ).strip().upper()
+
+        mensaje = str(
+            mensaje
+            or ""
+        ).strip()
+
+        detalle = str(
+            detalle
+            or ""
+        ).strip()
+
+        hora = datetime.now().strftime(
+            "%H:%M:%S"
+        )
+
+        bloque = (
+            f"[{hora}] {categoria}\n"
+            f"{mensaje}"
+        )
+
+        if detalle:
+            bloque += (
+                "\n"
+                + detalle
+            )
+
+        self.ultimo_chat_sistema = (
+            mensaje
+        )
+
+        if not hasattr(
+            self,
+            "historial_chat_bin",
+        ):
+            self.historial_chat_bin = []
+
+        self.historial_chat_bin.append(
+            bloque
+        )
+
+        limite = max(
+            50,
+            int(
+                getattr(
+                    self,
+                    "max_historial_chat_bin",
+                    500,
+                )
+                or 500
+            ),
+        )
+
+        if len(
+            self.historial_chat_bin
+        ) > limite:
+            self.historial_chat_bin = (
+                self.historial_chat_bin[
+                    -limite:
+                ]
+            )
+
+        if hasattr(
+            self,
+            "mensaje_chat",
+        ):
+            self.mensaje_chat.setText(
+                "\n\n".join(
+                    self.historial_chat_bin
+                )
+            )
+
+            QTimer.singleShot(
+                0,
+                self._bajar_scroll_chat,
+            )
+
+    def actualizar_chat_bin(
+        self,
+        mensaje,
+    ):
+        self.registrar_evento_bin(
+            "INFO",
+            mensaje,
+        )
     def procesar_chat(self):
         if not hasattr(self, "entrada_chat"):
             return
@@ -8533,6 +8660,4710 @@ class BIN(QMainWindow):
                 except Exception:
                     pass
 
+
+    # ========================================================
+    # BLOQUE 2 — ESTADO OPERATIVO / ACCIONES CORRECTIVAS
+    # ========================================================
+
+    def _cache_operativo_bin(self, nombre):
+        atributo = "_cache_operativo_" + str(nombre)
+        cache = getattr(self, atributo, None)
+        if not isinstance(cache, dict):
+            cache = {}
+            setattr(self, atributo, cache)
+        return cache
+
+    def _cache_operativo_obtener(self, nombre, clave, ttl=0.8):
+        cache = self._cache_operativo_bin(nombre)
+        registro = cache.get(clave)
+        if not registro:
+            return None
+
+        try:
+            momento = float(registro.get("momento", 0.0) or 0.0)
+        except Exception:
+            momento = 0.0
+
+        if time.monotonic() - momento > max(0.05, float(ttl)):
+            cache.pop(clave, None)
+            return None
+
+        return registro.get("valor")
+
+    def _cache_operativo_guardar(self, nombre, clave, valor):
+        cache = self._cache_operativo_bin(nombre)
+        cache[clave] = {
+            "momento": time.monotonic(),
+            "valor": valor,
+        }
+
+        if len(cache) > 100:
+            ordenadas = sorted(
+                cache.items(),
+                key=lambda item: float(item[1].get("momento", 0.0) or 0.0),
+            )
+            for clave_vieja, _ in ordenadas[:-60]:
+                cache.pop(clave_vieja, None)
+
+    def obtener_geometria_ventana(self, hwnd):
+        if sys.platform != "win32" or not hwnd:
+            return None
+
+        try:
+            user32 = ctypes.windll.user32
+            rect = wintypes.RECT()
+
+            if not user32.GetWindowRect(int(hwnd), ctypes.byref(rect)):
+                return None
+
+            return {
+                "x": int(rect.left),
+                "y": int(rect.top),
+                "ancho": max(0, int(rect.right - rect.left)),
+                "alto": max(0, int(rect.bottom - rect.top)),
+                "maximizada": bool(user32.IsZoomed(int(hwnd))),
+                "minimizada": bool(user32.IsIconic(int(hwnd))),
+            }
+        except Exception:
+            return None
+
+    def _powershell_bin(self, script, timeout=2.5):
+        if sys.platform != "win32":
+            return None
+
+        try:
+            resultado = subprocess.run(
+                [
+                    "powershell.exe",
+                    "-NoLogo",
+                    "-NoProfile",
+                    "-NonInteractive",
+                    "-ExecutionPolicy",
+                    "Bypass",
+                    "-Command",
+                    script,
+                ],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=max(0.5, float(timeout)),
+                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+            )
+            if resultado.returncode != 0:
+                return None
+
+            salida = str(resultado.stdout or "").strip()
+            return salida or None
+        except Exception:
+            return None
+
+    def convertir_file_url_a_ruta(self, valor):
+        texto = str(valor or "").strip()
+        if not texto or not texto.lower().startswith("file:"):
+            return texto
+
+        try:
+            partes = urlsplit(texto)
+            ruta = unquote(partes.path or "")
+
+            if partes.netloc:
+                return "\\\\" + partes.netloc + ruta.replace("/", "\\")
+
+            ruta = ruta.replace("/", "\\")
+            if len(ruta) >= 3 and ruta[0] == "\\" and ruta[2] == ":":
+                ruta = ruta[1:]
+            return ruta
+        except Exception:
+            return texto
+
+    def obtener_ruta_explorer_hwnd(self, hwnd, titulo=""):
+        if sys.platform != "win32" or not hwnd:
+            return ""
+
+        clave = (int(hwnd), str(titulo or ""))
+        cache = self._cache_operativo_obtener("explorer", clave, ttl=0.65)
+        if cache is not None:
+            return str(cache or "")
+
+        script = (
+            "$ErrorActionPreference='SilentlyContinue';"
+            f"$hwnd={int(hwnd)};"
+            "$shell=New-Object -ComObject Shell.Application;"
+            "$w=$shell.Windows()|Where-Object {[int64]$_.HWND -eq [int64]$hwnd}"
+            "|Select-Object -First 1;"
+            "if($w){[pscustomobject]@{LocationURL=[string]$w.LocationURL;"
+            "LocationName=[string]$w.LocationName}|ConvertTo-Json -Compress}"
+        )
+
+        salida = self._powershell_bin(script, timeout=2.0)
+        ruta = ""
+
+        if salida:
+            try:
+                datos = json.loads(salida)
+                location_url = str(datos.get("LocationURL", "") or "").strip()
+                if location_url.lower().startswith("file:"):
+                    ruta = self.convertir_file_url_a_ruta(location_url)
+            except Exception:
+                pass
+
+        self._cache_operativo_guardar("explorer", clave, ruta)
+        return ruta
+
+    def es_navegador_proceso(self, proceso):
+        return str(proceso or "").strip().lower() in {
+            "chrome.exe",
+            "msedge.exe",
+            "firefox.exe",
+            "brave.exe",
+            "opera.exe",
+        }
+
+    def parece_localizador_web(self, texto):
+        valor = str(texto or "").strip()
+        if not valor:
+            return False
+
+        if valor.lower().startswith(
+            ("http://", "https://", "chrome://", "edge://", "about:", "file://")
+        ):
+            return True
+
+        return self.parece_url_o_dominio(valor)
+
+    def normalizar_url_bin(self, url):
+        texto = str(url or "").strip()
+        if not texto:
+            return ""
+
+        if self.parece_url_o_dominio(texto) and "://" not in texto:
+            texto = "https://" + texto
+
+        try:
+            partes = urlsplit(texto)
+            if not partes.scheme:
+                return texto.rstrip("/").lower()
+
+            esquema = partes.scheme.lower()
+            host = (partes.netloc or "").lower()
+            ruta = "" if partes.path == "/" else (partes.path or "")
+            consulta = "?" + partes.query if partes.query else ""
+            fragmento = "#" + partes.fragment if partes.fragment else ""
+
+            if host:
+                return (
+                    f"{esquema}://{host}{ruta}{consulta}{fragmento}"
+                ).rstrip("/")
+        except Exception:
+            pass
+
+        return texto.rstrip("/")
+
+    def observar_navegador_uia(self, hwnd, titulo=""):
+        """
+        Lee URL y cuenta visibles mediante Windows UI Automation.
+        Usa componentes incluidos en Windows; no requiere paquetes extra.
+        """
+        if sys.platform != "win32" or not hwnd:
+            return {"url": "", "cuenta": "", "uia": False}
+
+        clave = (int(hwnd), str(titulo or ""))
+        cache = self._cache_operativo_obtener("browser_uia", clave, ttl=0.75)
+        if isinstance(cache, dict):
+            return dict(cache)
+
+        script = (
+            "$ErrorActionPreference='SilentlyContinue';"
+            "Add-Type -AssemblyName UIAutomationClient;"
+            f"$root=[System.Windows.Automation.AutomationElement]::FromHandle([IntPtr]{int(hwnd)});"
+            "if($null -eq $root){exit};"
+            "$r=[ordered]@{edits=@();cuentas=@()};"
+            "$ce=New-Object System.Windows.Automation.PropertyCondition("
+            "[System.Windows.Automation.AutomationElement]::ControlTypeProperty,"
+            "[System.Windows.Automation.ControlType]::Edit);"
+            "$es=$root.FindAll([System.Windows.Automation.TreeScope]::Descendants,$ce);"
+            "foreach($e in $es){$v='';try{$p=$e.GetCurrentPattern("
+            "[System.Windows.Automation.ValuePattern]::Pattern);$v=[string]$p.Current.Value}catch{};"
+            "if($v){$r.edits += [pscustomobject]@{name=[string]$e.Current.Name;"
+            "id=[string]$e.Current.AutomationId;value=$v}}};"
+            "$cb=New-Object System.Windows.Automation.PropertyCondition("
+            "[System.Windows.Automation.AutomationElement]::ControlTypeProperty,"
+            "[System.Windows.Automation.ControlType]::Button);"
+            "$bs=$root.FindAll([System.Windows.Automation.TreeScope]::Descendants,$cb);"
+            "foreach($b in $bs){$n=[string]$b.Current.Name;"
+            "if($n -and ($n -match '@' -or $n -match "
+            "'(?i)Google Account|Cuenta de Google|Microsoft account|Cuenta de Microsoft|Profile|Perfil'))"
+            "{$r.cuentas += $n}};"
+            "$r|ConvertTo-Json -Compress -Depth 5"
+        )
+
+        salida = self._powershell_bin(script, timeout=3.0)
+        respuesta = {"url": "", "cuenta": "", "uia": False}
+
+        if salida:
+            try:
+                datos = json.loads(salida)
+                edits = datos.get("edits", [])
+                if isinstance(edits, dict):
+                    edits = [edits]
+
+                candidatos_url = []
+
+                for item in edits or []:
+                    valor = str(item.get("value", "") or "").strip()
+                    if not self.parece_localizador_web(valor):
+                        continue
+
+                    nombre = str(item.get("name", "") or "").lower()
+                    automation_id = str(item.get("id", "") or "").lower()
+                    firma = nombre + " " + automation_id
+
+                    indicadores = (
+                        "address",
+                        "direcci",
+                        "omnibox",
+                        "location",
+                        "url",
+                        "search bar",
+                        "barra de búsqueda",
+                    )
+
+                    puntuacion = (
+                        100
+                        if any(indicador in firma for indicador in indicadores)
+                        else 10
+                    )
+
+                    candidatos_url.append(
+                        (puntuacion, self.normalizar_url_bin(valor))
+                    )
+
+                if candidatos_url:
+                    candidatos_url.sort(
+                        key=lambda item: item[0],
+                        reverse=True,
+                    )
+                    respuesta["url"] = candidatos_url[0][1]
+
+                cuentas = datos.get("cuentas", [])
+                if isinstance(cuentas, str):
+                    cuentas = [cuentas]
+
+                for nombre in cuentas or []:
+                    texto = str(nombre or "").strip()
+                    if not texto:
+                        continue
+
+                    coincidencia = re.search(
+                        r"[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}",
+                        texto,
+                    )
+                    respuesta["cuenta"] = (
+                        coincidencia.group(0)
+                        if coincidencia
+                        else respuesta["cuenta"] or texto
+                    )
+                    if coincidencia:
+                        break
+
+                respuesta["uia"] = True
+            except Exception:
+                pass
+
+        self._cache_operativo_guardar("browser_uia", clave, respuesta)
+        return dict(respuesta)
+
+    def rutas_local_state_navegador(self, proceso):
+        proceso = str(proceso or "").strip().lower()
+        local = os.environ.get("LOCALAPPDATA", "")
+        roaming = os.environ.get("APPDATA", "")
+
+        if proceso == "chrome.exe" and local:
+            return [Path(local) / "Google" / "Chrome" / "User Data" / "Local State"]
+        if proceso == "msedge.exe" and local:
+            return [Path(local) / "Microsoft" / "Edge" / "User Data" / "Local State"]
+        if proceso == "brave.exe" and local:
+            return [
+                Path(local)
+                / "BraveSoftware"
+                / "Brave-Browser"
+                / "User Data"
+                / "Local State"
+            ]
+        if proceso == "opera.exe" and roaming:
+            return [
+                Path(roaming)
+                / "Opera Software"
+                / "Opera Stable"
+                / "Local State"
+            ]
+
+        return []
+
+    def obtener_info_perfiles_navegador(self, proceso):
+        clave = str(proceso or "").strip().lower()
+        cache = self._cache_operativo_obtener(
+            "browser_profiles",
+            clave,
+            ttl=20.0,
+        )
+        if isinstance(cache, dict):
+            return dict(cache)
+
+        perfiles = {}
+
+        for ruta in self.rutas_local_state_navegador(proceso):
+            try:
+                if not ruta.is_file():
+                    continue
+
+                with open(ruta, "r", encoding="utf-8") as archivo:
+                    datos = json.load(archivo)
+
+                info_cache = (
+                    datos.get("profile", {}).get("info_cache", {}) or {}
+                )
+
+                for directorio, info in info_cache.items():
+                    if not isinstance(info, dict):
+                        continue
+
+                    perfiles[str(directorio)] = {
+                        "nombre": str(info.get("name", "") or ""),
+                        "cuenta": str(
+                            info.get("user_name", "")
+                            or info.get("gaia_name", "")
+                            or ""
+                        ),
+                    }
+
+                if perfiles:
+                    break
+            except Exception:
+                continue
+
+        self._cache_operativo_guardar("browser_profiles", clave, perfiles)
+        return dict(perfiles)
+
+    def resolver_perfil_desde_proceso(self, pid):
+        perfil = ""
+        user_data_dir = ""
+        visitados = set()
+        actual_pid = int(pid or 0)
+
+        for _ in range(8):
+            if not actual_pid or actual_pid in visitados:
+                break
+
+            visitados.add(actual_pid)
+
+            try:
+                proc = psutil.Process(actual_pid)
+                cmdline = proc.cmdline()
+
+                for indice, argumento in enumerate(cmdline):
+                    texto = str(argumento or "")
+                    minuscula = texto.lower()
+
+                    if minuscula.startswith("--profile-directory="):
+                        perfil = texto.split("=", 1)[1].strip('"')
+                    elif (
+                        minuscula == "--profile-directory"
+                        and indice + 1 < len(cmdline)
+                    ):
+                        perfil = str(cmdline[indice + 1]).strip('"')
+
+                    if minuscula.startswith("--user-data-dir="):
+                        user_data_dir = texto.split("=", 1)[1].strip('"')
+
+                if perfil:
+                    break
+
+                padre = proc.parent()
+                actual_pid = int(padre.pid) if padre else 0
+            except Exception:
+                break
+
+        return {
+            "perfil": perfil,
+            "user_data_dir": user_data_dir,
+        }
+
+    def resolver_identidad_navegador(self, pid, proceso, cuenta_uia=""):
+        proceso = str(proceso or "").strip().lower()
+        datos_proceso = self.resolver_perfil_desde_proceso(pid)
+        perfil = str(datos_proceso.get("perfil", "") or "").strip()
+        cuenta = str(cuenta_uia or "").strip()
+        perfiles = self.obtener_info_perfiles_navegador(proceso)
+
+        if perfil and perfil in perfiles and not cuenta:
+            info = perfiles.get(perfil, {})
+            cuenta = str(info.get("cuenta", "") or info.get("nombre", "") or "").strip()
+
+        if not perfil and cuenta and "@" in cuenta:
+            cuenta_l = cuenta.lower()
+            for directorio, info in perfiles.items():
+                usuario = str(info.get("cuenta", "") or "").strip().lower()
+                if usuario and usuario == cuenta_l:
+                    perfil = str(directorio)
+                    break
+
+        return {
+            "perfil": perfil,
+            "cuenta": cuenta,
+            "user_data_dir": str(datos_proceso.get("user_data_dir", "") or ""),
+        }
+
+    def resolver_recurso_software(self, pid, titulo, ejecutable=""):
+        """
+        Acepta un archivo como recurso solo cuando su nombre coincide
+        con el título de la ventana. Evita adivinar archivos internos.
+        """
+        if not pid:
+            return ""
+
+        titulo_l = str(titulo or "").strip().lower()
+        if not titulo_l:
+            return ""
+
+        ejecutable_l = str(ejecutable or "").strip().lower()
+
+        try:
+            archivos = psutil.Process(int(pid)).open_files()
+        except Exception:
+            return ""
+
+        for archivo in archivos or []:
+            ruta = str(getattr(archivo, "path", "") or "").strip()
+            if not ruta or (ejecutable_l and ruta.lower() == ejecutable_l):
+                continue
+
+            try:
+                nombre = Path(ruta).name
+                stem = Path(ruta).stem
+            except Exception:
+                continue
+
+            if (
+                nombre
+                and nombre.lower() in titulo_l
+            ) or (
+                stem
+                and len(stem) >= 3
+                and stem.lower() in titulo_l
+            ):
+                return ruta
+
+        return ""
+
+    def enriquecer_contexto_operativo(self, contexto):
+        if not contexto:
+            return contexto
+
+        resultado = dict(contexto)
+        hwnd = resultado.get("hwnd")
+        pid = resultado.get("pid")
+        proceso = str(resultado.get("proceso", "") or "").strip()
+        proceso_l = proceso.lower()
+        titulo = str(resultado.get("titulo", "") or "").strip()
+        clase = str(resultado.get("clase", "") or "").strip()
+        ejecutable = str(resultado.get("ejecutable", "") or "").strip()
+
+        geometria = self.obtener_geometria_ventana(hwnd)
+        if geometria:
+            resultado["geometria"] = geometria
+
+        clave_cache = (int(hwnd or 0), proceso_l, titulo)
+        caro = self._cache_operativo_obtener(
+            "context_metadata",
+            clave_cache,
+            ttl=0.75,
+        )
+        if isinstance(caro, dict):
+            resultado.update(caro)
+            return resultado
+
+        extra = {
+            "tipo_recurso": "",
+            "localizador": "",
+            "url": "",
+            "ruta_recurso": "",
+            "perfil_navegador": "",
+            "cuenta_navegador": "",
+        }
+
+        if self.es_navegador_proceso(proceso_l):
+            navegador = self.observar_navegador_uia(hwnd, titulo)
+            identidad = self.resolver_identidad_navegador(
+                pid,
+                proceso_l,
+                cuenta_uia=navegador.get("cuenta", ""),
+            )
+            url = str(navegador.get("url", "") or "").strip()
+
+            extra.update(
+                {
+                    "tipo_recurso": "web",
+                    "url": url,
+                    "localizador": url,
+                    "perfil_navegador": str(
+                        identidad.get("perfil", "") or ""
+                    ).strip(),
+                    "cuenta_navegador": str(
+                        identidad.get("cuenta", "") or ""
+                    ).strip(),
+                    "user_data_dir_navegador": str(
+                        identidad.get("user_data_dir", "") or ""
+                    ).strip(),
+                    "url_observable": bool(navegador.get("uia", False)),
+                }
+            )
+
+        elif proceso_l == "explorer.exe":
+            if clase in {"CabinetWClass", "ExploreWClass"}:
+                ruta = self.obtener_ruta_explorer_hwnd(hwnd, titulo)
+                if ruta:
+                    extra.update(
+                        {
+                            "tipo_recurso": (
+                                "carpeta" if Path(ruta).is_dir() else "recurso_windows"
+                            ),
+                            "ruta_recurso": ruta,
+                            "localizador": ruta,
+                        }
+                    )
+                else:
+                    extra["tipo_recurso"] = "explorador"
+            else:
+                extra["tipo_recurso"] = "windows"
+
+        else:
+            ruta_archivo = self.resolver_recurso_software(
+                pid,
+                titulo,
+                ejecutable,
+            )
+            if ruta_archivo:
+                extra.update(
+                    {
+                        "tipo_recurso": "archivo",
+                        "ruta_recurso": ruta_archivo,
+                        "localizador": ruta_archivo,
+                    }
+                )
+            elif ejecutable:
+                extra.update(
+                    {
+                        "tipo_recurso": "aplicacion",
+                        "localizador": ejecutable,
+                    }
+                )
+
+        self._cache_operativo_guardar(
+            "context_metadata",
+            clave_cache,
+            extra,
+        )
+        resultado.update(extra)
+        return resultado
+
+    def formatear_contexto_operativo(self, contexto):
+        if not contexto:
+            return "Sin contexto observable."
+
+        geometria = contexto.get("geometria") or {}
+        lineas = [
+            f"Proceso: {contexto.get('proceso') or '--'}",
+            f"Ventana: {contexto.get('titulo') or '--'}",
+            f"Tipo: {contexto.get('tipo_recurso') or '--'}",
+        ]
+
+        if contexto.get("tipo_recurso") == "web":
+            lineas.append(f"URL: {contexto.get('url') or 'no observable'}")
+            lineas.append(
+                "Perfil navegador: "
+                f"{contexto.get('perfil_navegador') or 'no identificado'}"
+            )
+            lineas.append(
+                "Cuenta asociada: "
+                f"{contexto.get('cuenta_navegador') or 'no identificada'}"
+            )
+        else:
+            if contexto.get("url"):
+                lineas.append(f"URL: {contexto.get('url')}")
+            if contexto.get("ruta_recurso"):
+                lineas.append(f"Ruta: {contexto.get('ruta_recurso')}")
+            if contexto.get("ejecutable") and not contexto.get("ruta_recurso"):
+                lineas.append(f"Ejecutable: {contexto.get('ejecutable')}")
+            if contexto.get("perfil_navegador"):
+                lineas.append(
+                    f"Perfil navegador: {contexto.get('perfil_navegador')}"
+                )
+            if contexto.get("cuenta_navegador"):
+                lineas.append(
+                    f"Cuenta asociada: {contexto.get('cuenta_navegador')}"
+                )
+
+        if geometria:
+            lineas.extend(
+                [
+                    "Posición: "
+                    f"X={geometria.get('x', '--')} Y={geometria.get('y', '--')}",
+                    "Tamaño: "
+                    f"{geometria.get('ancho', '--')}×{geometria.get('alto', '--')}",
+                    "Estado ventana: "
+                    + (
+                        "maximizada"
+                        if geometria.get("maximizada")
+                        else "minimizada"
+                        if geometria.get("minimizada")
+                        else "normal"
+                    ),
+                ]
+            )
+
+        return "\n".join(lineas)
+
+    def contexto_tiene_estado_operativo(self, contexto):
+        if not contexto:
+            return False
+
+        # Nunca interferir con Inicio, Search, barra de tareas o escritorio:
+        # esas superficies conservan el motor especial ya estable de BIN.
+        if self.contexto_es_superficie_transitoria_windows(contexto):
+            return False
+
+        proceso = str(contexto.get("proceso", "") or "").strip().lower()
+        clase = str(contexto.get("clase", "") or "").strip()
+        tipo = str(contexto.get("tipo_recurso", "") or "").strip().lower()
+
+        if proceso == "explorer.exe" and clase in {
+            "Shell_TrayWnd",
+            "Shell_SecondaryTrayWnd",
+            "Progman",
+            "WorkerW",
+        }:
+            return False
+
+        if tipo == "windows":
+            return False
+
+        # Para web no usamos solo geometría: debe existir al menos
+        # URL, perfil o cuenta para no confundir dos ventanas del navegador.
+        if tipo == "web":
+            return bool(
+                contexto.get("url")
+                or contexto.get("perfil_navegador")
+                or contexto.get("cuenta_navegador")
+            )
+
+        # Para Explorer exigimos la ruta concreta de la carpeta.
+        if proceso == "explorer.exe":
+            return bool(contexto.get("ruta_recurso"))
+
+        return bool(
+            contexto.get("localizador")
+            or contexto.get("ruta_recurso")
+            or contexto.get("geometria")
+        )
+
+    def localizador_contexto_bin(self, contexto):
+        if not contexto:
+            return ""
+
+        return str(
+            contexto.get("url")
+            or contexto.get("ruta_recurso")
+            or contexto.get("localizador")
+            or ""
+        ).strip()
+
+    def normalizar_localizador_bin(self, contexto):
+        valor = self.localizador_contexto_bin(contexto)
+        if not valor:
+            return ""
+
+        if str(contexto.get("tipo_recurso", "") or "").lower() == "web":
+            return self.normalizar_url_bin(valor).lower()
+
+        try:
+            return os.path.normcase(os.path.normpath(valor))
+        except Exception:
+            return valor.lower()
+
+    def identidad_contextos_operativos(self, esperado, actual):
+        """
+        True: coincide.
+        False: es otra identidad.
+        None: no observable.
+
+        En contexto web, una cuenta asociada confirmada tiene
+        prioridad sobre el nombre técnico del perfil.
+
+        La URL sigue siendo obligatoria cuando fue registrada
+        durante la demostración.
+        """
+
+        if not esperado or not actual:
+            return False
+
+        proceso_e = str(
+            esperado.get(
+                "proceso",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        proceso_a = str(
+            actual.get(
+                "proceso",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        if (
+            proceso_e
+            and proceso_a
+            and proceso_e != proceso_a
+        ):
+            return False
+
+        tipo_e = str(
+            esperado.get(
+                "tipo_recurso",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        cuenta_e = self.normalizar_cuenta_web_rescate(
+            esperado.get(
+                "cuenta_navegador",
+                "",
+            )
+        )
+
+        cuenta_a = self.normalizar_cuenta_web_rescate(
+            actual.get(
+                "cuenta_navegador",
+                "",
+            )
+        )
+
+        cuenta_confirma = bool(
+            tipo_e == "web"
+            and cuenta_e
+            and cuenta_a
+            and cuenta_e == cuenta_a
+        )
+
+        loc_e = self.normalizar_localizador_bin(
+            esperado
+        )
+
+        loc_a = self.normalizar_localizador_bin(
+            actual
+        )
+
+        # ====================================================
+        # URL / RECURSO
+        # ====================================================
+
+        if loc_e:
+            if not loc_a:
+                return None
+
+            if loc_e != loc_a:
+                return False
+
+        perfil_e = str(
+            esperado.get(
+                "perfil_navegador",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        perfil_a = str(
+            actual.get(
+                "perfil_navegador",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        # ====================================================
+        # PERFIL
+        # ====================================================
+        #
+        # Si la Gmail real coincide exactamente, Default /
+        # Profile N deja de ser una razón para rechazar
+        # la ventana.
+        # ====================================================
+
+        if perfil_e and not cuenta_confirma:
+            if (
+                perfil_a
+                and perfil_e != perfil_a
+            ):
+                return False
+
+            if not perfil_a:
+                if cuenta_e and cuenta_a:
+                    if cuenta_e != cuenta_a:
+                        return False
+
+                else:
+                    return None
+
+        # ====================================================
+        # CUENTA
+        # ====================================================
+
+        if cuenta_e:
+            if (
+                cuenta_a
+                and cuenta_e != cuenta_a
+            ):
+                return False
+
+            if not cuenta_a and not (
+                perfil_e
+                and perfil_a
+                and perfil_e == perfil_a
+            ):
+                return None
+
+        return (
+            True
+            if (
+                loc_e
+                or perfil_e
+                or cuenta_e
+                or proceso_e
+            )
+            else None
+        )
+    
+    def geometria_contextos_coincide(self, esperado, actual, tolerancia=8):
+        geo_e = esperado.get("geometria") or {}
+        if not geo_e:
+            return True
+
+        geo_a = actual.get("geometria") or {}
+        if not geo_a:
+            return False
+
+        if bool(geo_e.get("maximizada")) != bool(geo_a.get("maximizada")):
+            return False
+        if bool(geo_e.get("minimizada")) != bool(geo_a.get("minimizada")):
+            return False
+        if geo_e.get("maximizada"):
+            return True
+
+        for clave in ("x", "y", "ancho", "alto"):
+            if clave not in geo_e:
+                continue
+            try:
+                if abs(int(geo_e[clave]) - int(geo_a.get(clave))) > int(tolerancia):
+                    return False
+            except Exception:
+                return False
+
+        return True
+
+    def resolver_ventana_web_por_matricula_bin(self, esperado):
+        """
+        Reconstruye una matrícula web en cada revisión.
+
+        Firma completa:
+            título - clase - tipo_recurso - URL - perfil
+
+        Para no perder la misma ventana durante una navegación,
+        título y URL se consideran ESTADO. La identidad base usa
+        proceso + clase + tipo + perfil; la cuenta, cuando aparece,
+        tiene prioridad.
+        """
+
+        if str(esperado.get("tipo_recurso", "") or "").strip().lower() != "web":
+            return None
+
+        def texto(valor):
+            return " ".join(str(valor or "").strip().lower().split())
+
+        def firma_estado(contexto):
+            return " - ".join(
+                [
+                    texto(contexto.get("titulo", "")),
+                    texto(contexto.get("clase", "")),
+                    texto(contexto.get("tipo_recurso", "")),
+                    self.normalizar_url_bin(contexto.get("url", "")).lower(),
+                    texto(contexto.get("perfil_navegador", "")),
+                ]
+            )
+
+        def base_coincide(contexto):
+            proceso_e = texto(esperado.get("proceso", ""))
+            proceso_a = texto(contexto.get("proceso", ""))
+
+            if proceso_e and proceso_a and proceso_e != proceso_a:
+                return False
+
+            clase_e = texto(esperado.get("clase", ""))
+            clase_a = texto(contexto.get("clase", ""))
+
+            if clase_e and clase_a and clase_e != clase_a:
+                return False
+
+            tipo_a = texto(contexto.get("tipo_recurso", ""))
+
+            if tipo_a and tipo_a != "web":
+                return False
+
+            cuenta_e = self.normalizar_cuenta_web_rescate(
+                esperado.get("cuenta_navegador", "")
+            )
+
+            cuenta_a = self.normalizar_cuenta_web_rescate(
+                contexto.get("cuenta_navegador", "")
+            )
+
+            perfil_e = texto(
+                esperado.get(
+                    "perfil_navegador",
+                    "",
+                )
+            )
+
+            perfil_a = texto(
+                contexto.get(
+                    "perfil_navegador",
+                    "",
+                )
+            )
+
+            # La cuenta observada tiene máxima autoridad.
+            if cuenta_e and cuenta_a:
+                return cuenta_e == cuenta_a
+
+            # Si la cuenta desaparece temporalmente de UIA,
+            # el perfil conserva la identidad.
+            if perfil_e and perfil_a:
+                return perfil_e == perfil_a
+
+            # Faltan datos.
+            if cuenta_e or perfil_e:
+                return None
+
+            return bool(
+                proceso_e
+                and proceso_a
+            )
+
+        def puntuacion(contexto):
+            base = base_coincide(
+                contexto
+            )
+
+            if base is False:
+                return -100000
+
+            puntos = (
+                100
+                if base is True
+                else 10
+            )
+
+            cuenta_e = self.normalizar_cuenta_web_rescate(
+                esperado.get(
+                    "cuenta_navegador",
+                    "",
+                )
+            )
+
+            cuenta_a = self.normalizar_cuenta_web_rescate(
+                contexto.get(
+                    "cuenta_navegador",
+                    "",
+                )
+            )
+
+            if (
+                cuenta_e
+                and cuenta_a
+                and cuenta_e == cuenta_a
+            ):
+                puntos += 1000
+
+            perfil_e = texto(
+                esperado.get(
+                    "perfil_navegador",
+                    "",
+                )
+            )
+
+            perfil_a = texto(
+                contexto.get(
+                    "perfil_navegador",
+                    "",
+                )
+            )
+
+            if (
+                perfil_e
+                and perfil_a
+                and perfil_e == perfil_a
+            ):
+                puntos += 600
+
+            url_e = self.normalizar_url_bin(
+                esperado.get(
+                    "url",
+                    "",
+                )
+            ).lower()
+
+            url_a = self.normalizar_url_bin(
+                contexto.get(
+                    "url",
+                    "",
+                )
+            ).lower()
+
+            if (
+                url_e
+                and url_a
+                and url_e == url_a
+            ):
+                puntos += 300
+
+            if self.geometria_contextos_coincide(
+                esperado,
+                contexto,
+            ):
+                puntos += 50
+
+            return puntos
+
+        estado = self.obtener_estado_rescate_web(
+            esperado
+        )
+
+        # ====================================================
+        # SI YA EXISTE UNA MATRÍCULA FIJADA
+        # NO VOLVER A ELEGIR OTRA VENTANA
+        # ====================================================
+
+        try:
+            hwnd_fijo = int(
+                estado.get(
+                    "matricula_confirmada_hwnd",
+                    0,
+                )
+                or 0
+            )
+
+        except Exception:
+            hwnd_fijo = 0
+
+        if hwnd_fijo:
+            actuales = getattr(
+                self,
+                "_hwnds_ventanas_monitor_bin",
+                set(),
+            )
+
+            # El monitor de 250 ms nos dice si sigue viva.
+            if (
+                isinstance(
+                    actuales,
+                    set,
+                )
+                and hwnd_fijo not in actuales
+            ):
+                hwnd_fijo = 0
+
+            if hwnd_fijo:
+                self._cache_operativo_bin(
+                    "browser_uia"
+                ).clear()
+
+                self._cache_operativo_bin(
+                    "context_metadata"
+                ).clear()
+
+                contexto_fijo = (
+                    self.obtener_contexto_hwnd(
+                        hwnd_fijo,
+                        enriquecer=True,
+                    )
+                )
+
+                if contexto_fijo:
+                    base = base_coincide(
+                        contexto_fijo
+                    )
+
+                    # ----------------------------------------
+                    # TRES LECTURAS INCOMPATIBLES
+                    # ANTES DE SOLTAR LA MATRÍCULA
+                    # ----------------------------------------
+
+                    if base is False:
+                        fallos = (
+                            int(
+                                estado.get(
+                                    "matricula_fallos",
+                                    0,
+                                )
+                                or 0
+                            )
+                            + 1
+                        )
+
+                        estado[
+                            "matricula_fallos"
+                        ] = fallos
+
+                        if fallos < 3:
+                            return {
+                                "contexto": contexto_fijo,
+                                "confirmada": False,
+                                "esperando_confirmacion": True,
+                            }
+
+                    else:
+                        # Una lectura incompleta NO rompe
+                        # una matrícula ya fijada.
+                        estado[
+                            "matricula_fallos"
+                        ] = 0
+
+                        estado[
+                            "matricula_firma_estado"
+                        ] = firma_estado(
+                            contexto_fijo
+                        )
+
+                        return {
+                            "contexto": contexto_fijo,
+                            "confirmada": (
+                                base is True
+                            ),
+                            "esperando_confirmacion": (
+                                base is None
+                            ),
+                        }
+
+            # HWND desapareció o falló identidad 3 veces.
+            estado.pop(
+                "matricula_confirmada_hwnd",
+                None,
+            )
+
+            estado.pop(
+                "matricula_firma_estado",
+                None,
+            )
+
+            estado[
+                "matricula_fallos"
+            ] = 0
+
+        # ====================================================
+        # NO EXISTE OBJETIVO:
+        # RECONSTRUIR MATRÍCULAS
+        # ====================================================
+
+        candidatos = (
+            self.enumerar_ventanas_operativas(
+                esperado,
+                max_enriquecidas=24,
+            )
+        )
+
+        candidatos = [
+            contexto
+            for contexto
+            in candidatos
+            if base_coincide(
+                contexto
+            )
+            is not False
+        ]
+
+        if not candidatos:
+            return None
+
+        # ====================================================
+        # DETECTAR MATRÍCULAS DUPLICADAS
+        #
+        # título + clase + tipo + URL + perfil
+        # ====================================================
+
+        grupos = {}
+
+        for contexto in candidatos:
+            grupos.setdefault(
+                firma_estado(
+                    contexto
+                ),
+                [],
+            ).append(
+                contexto
+            )
+
+        unicas = []
+
+        for firma, grupo in grupos.items():
+            grupo.sort(
+                key=puntuacion,
+                reverse=True,
+            )
+
+            conservar = grupo[0]
+
+            unicas.append(
+                conservar
+            )
+
+            # -----------------------------------------------
+            # SI HAY MÁS DE UNA CON LA MISMA FIRMA,
+            # CONSERVAMOS UNA SOLA.
+            #
+            # WM_CLOSE.
+            # NO Alt+F4.
+            # -----------------------------------------------
+
+            for duplicada in grupo[1:]:
+                try:
+                    hwnd = int(
+                        duplicada.get(
+                            "hwnd",
+                            0,
+                        )
+                        or 0
+                    )
+
+                    if (
+                        sys.platform == "win32"
+                        and hwnd
+                        and ctypes.windll.user32.IsWindow(
+                            hwnd
+                        )
+                    ):
+                        ctypes.windll.user32.PostMessageW(
+                            hwnd,
+                            0x0010,
+                            0,
+                            0,
+                        )
+
+                        self.registrar_evento_bin(
+                            "CORRIGE",
+                            (
+                                "Ventana web duplicada: "
+                                "conservo una sola matrícula."
+                            ),
+                            (
+                                f"Firma:\n"
+                                f"{firma}\n\n"
+                                f"HWND conservado: "
+                                f"{conservar.get('hwnd') or '--'}\n"
+                                f"HWND cerrado: "
+                                f"{hwnd}"
+                            ),
+                        )
+
+                except Exception:
+                    pass
+
+        # ====================================================
+        # ESCOGER LA MEJOR MATRÍCULA
+        # ====================================================
+
+        unicas.sort(
+            key=puntuacion,
+            reverse=True,
+        )
+
+        seleccionada = (
+            unicas[0]
+        )
+
+        base = base_coincide(
+            seleccionada
+        )
+
+        # Todavía falta información.
+        if base is not True:
+            return {
+                "contexto": seleccionada,
+                "confirmada": False,
+                "esperando_confirmacion": True,
+            }
+
+        # ====================================================
+        # FIJAR HWND DURANTE ESTE PASO
+        # ====================================================
+
+        estado[
+            "matricula_confirmada_hwnd"
+        ] = int(
+            seleccionada.get(
+                "hwnd",
+                0,
+            )
+            or 0
+        )
+
+        estado[
+            "matricula_firma_estado"
+        ] = firma_estado(
+            seleccionada
+        )
+
+        estado[
+            "matricula_confirmada_en"
+        ] = time.monotonic()
+
+        estado[
+            "matricula_fallos"
+        ] = 0
+
+        self.registrar_evento_bin(
+            "ASOCIA",
+            (
+                "Fijo la matrícula temporal "
+                "de la ventana web."
+            ),
+            (
+                f"HWND: "
+                f"{seleccionada.get('hwnd') or '--'}\n"
+                f"Firma:\n"
+                f"{estado.get('matricula_firma_estado')}"
+            ),
+        )
+
+        return {
+            "contexto": seleccionada,
+            "confirmada": True,
+            "esperando_confirmacion": False,
+        }
+
+    def enumerar_ventanas_operativas(self, esperado, max_enriquecidas=8):
+        if sys.platform != "win32":
+            return []
+
+        user32 = ctypes.windll.user32
+        kernel32 = ctypes.windll.kernel32
+
+        try:
+            hwnd_bin = int(self.winId())
+            pid_bin = int(kernel32.GetCurrentProcessId())
+        except Exception:
+            hwnd_bin = 0
+            pid_bin = 0
+
+        proceso_e = str(esperado.get("proceso", "") or "").strip().lower()
+        titulo_e = str(esperado.get("titulo", "") or "").strip().lower()
+        clase_e = str(esperado.get("clase", "") or "").strip().lower()
+        candidatos = []
+
+        CALLBACK = ctypes.WINFUNCTYPE(
+            wintypes.BOOL,
+            wintypes.HWND,
+            wintypes.LPARAM,
+        )
+
+        def revisar(hwnd, lparam):
+            try:
+                if not user32.IsWindowVisible(hwnd) or int(hwnd) == hwnd_bin:
+                    return True
+
+                pid = wintypes.DWORD()
+                user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
+                if pid_bin and int(pid.value) == pid_bin:
+                    return True
+
+                try:
+                    proceso = psutil.Process(int(pid.value)).name()
+                except Exception:
+                    return True
+
+                if proceso_e and proceso.lower() != proceso_e:
+                    return True
+
+                longitud = user32.GetWindowTextLengthW(hwnd)
+                bt = ctypes.create_unicode_buffer(max(1, longitud + 1))
+                bc = ctypes.create_unicode_buffer(256)
+                user32.GetWindowTextW(hwnd, bt, len(bt))
+                user32.GetClassNameW(hwnd, bc, len(bc))
+                titulo = bt.value.strip()
+                clase = bc.value.strip()
+
+                puntos = 100 if proceso_e else 20
+
+                if clase_e:
+                    if clase.lower() == clase_e:
+                        puntos += 20
+                    elif clase_e in clase.lower() or clase.lower() in clase_e:
+                        puntos += 8
+
+                if titulo_e:
+                    if titulo.lower() == titulo_e:
+                        puntos += 20
+                    elif titulo_e in titulo.lower() or titulo.lower() in titulo_e:
+                        puntos += 10
+
+                candidatos.append(
+                    {
+                        "puntuacion": puntos,
+                        "hwnd": int(hwnd),
+                    }
+                )
+            except Exception:
+                pass
+            return True
+
+        try:
+            user32.EnumWindows(CALLBACK(revisar), 0)
+        except Exception:
+            return []
+
+        candidatos.sort(
+            key=lambda item: item.get("puntuacion", 0),
+            reverse=True,
+        )
+
+        resultado = []
+
+        for candidato in candidatos[: max(1, int(max_enriquecidas))]:
+            contexto = self.obtener_contexto_hwnd(
+                candidato.get("hwnd"),
+                enriquecer=True,
+            )
+            if contexto:
+                resultado.append(contexto)
+
+        return resultado
+
+    def buscar_ventana_estado_operativo(self, esperado):
+        # ====================================================
+        # WEB:
+        # MATRÍCULA RECONSTRUIBLE ANTES DEL BUSCADOR GENÉRICO
+        # ====================================================
+
+        if (
+            str(
+                esperado.get(
+                    "tipo_recurso",
+                    "",
+                )
+                or ""
+            ).strip().lower()
+            == "web"
+        ):
+            resultado_matricula = (
+                self.resolver_ventana_web_por_matricula_bin(
+                    esperado
+                )
+            )
+
+            if resultado_matricula:
+                contexto = (
+                    resultado_matricula.get(
+                        "contexto"
+                    )
+                    or {}
+                )
+
+                if contexto:
+                    coincide = (
+                        self.identidad_contextos_operativos(
+                            esperado,
+                            contexto,
+                        )
+                    )
+
+                    # =========================================
+                    # MATRÍCULA CONFIRMADA
+                    # =========================================
+                    #
+                    # Puede que la URL o geometría aún
+                    # estén mal.
+                    #
+                    # Eso NO significa que debamos buscar
+                    # otra ventana.
+                    # =========================================
+
+                    if resultado_matricula.get(
+                        "confirmada"
+                    ):
+                        estado_rescate = (
+                            self.obtener_estado_rescate_web(
+                                esperado
+                            )
+                        )
+
+                        estado_rescate[
+                            "cuenta_confirmada_hwnd"
+                        ] = int(
+                            contexto.get(
+                                "hwnd",
+                                0,
+                            )
+                            or 0
+                        )
+
+                        estado_rescate[
+                            "cuenta_confirmada_en"
+                        ] = (
+                            estado_rescate.get(
+                                "cuenta_confirmada_en"
+                            )
+                            or time.monotonic()
+                        )
+
+                        return {
+                            "ok": (
+                                coincide is True
+                            ),
+                            "contexto": contexto,
+                            "hwnd": contexto.get(
+                                "hwnd"
+                            ),
+                            "indeterminado": (
+                                coincide is None
+                            ),
+                            "conflicto": (
+                                coincide is False
+                            ),
+                            "matricula_confirmada": True,
+                        }
+
+                    # =========================================
+                    # HAY UNA CANDIDATA,
+                    # PERO FALTA CUENTA/PERFIL
+                    # =========================================
+
+                    if resultado_matricula.get(
+                        "esperando_confirmacion"
+                    ):
+                        return {
+                            "ok": False,
+                            "contexto": contexto,
+                            "hwnd": contexto.get(
+                                "hwnd"
+                            ),
+                            "indeterminado": True,
+                            "conflicto": False,
+                            "matricula_confirmada": False,
+                        }
+
+        # ====================================================
+        # SOFTWARE / EXPLORER / FALLBACK WEB
+        # ====================================================
+
+        candidatos = (
+            self.enumerar_ventanas_operativas(
+                esperado
+            )
+        )
+
+        indeterminada = None
+        conflictiva = None
+
+        for contexto in candidatos:
+            coincide = (
+                self.identidad_contextos_operativos(
+                    esperado,
+                    contexto,
+                )
+            )
+
+            if coincide is True:
+                return {
+                    "ok": True,
+                    "contexto": contexto,
+                    "hwnd": contexto.get(
+                        "hwnd"
+                    ),
+                    "indeterminado": False,
+                    "conflicto": False,
+                }
+
+            if (
+                coincide is None
+                and indeterminada is None
+            ):
+                indeterminada = contexto
+
+            if (
+                coincide is False
+                and conflictiva is None
+            ):
+                conflictiva = contexto
+
+        contexto_candidato = (
+            indeterminada
+            or conflictiva
+        )
+
+        return {
+            "ok": False,
+            "contexto": contexto_candidato,
+            "hwnd": (
+                contexto_candidato.get(
+                    "hwnd"
+                )
+                if contexto_candidato
+                else None
+            ),
+            "indeterminado": bool(
+                indeterminada
+            ),
+            "conflicto": bool(
+                conflictiva
+                and indeterminada is None
+            ),
+        }
+    
+    def aplicar_geometria_contexto(self, hwnd, esperado):
+        if sys.platform != "win32" or not hwnd:
+            return False
+
+        geometria = esperado.get("geometria") or {}
+        if not geometria:
+            return True
+
+        try:
+            user32 = ctypes.windll.user32
+            hwnd = int(hwnd)
+
+            if geometria.get("minimizada"):
+                user32.ShowWindow(hwnd, 6)
+                return True
+
+            if geometria.get("maximizada"):
+                user32.ShowWindow(hwnd, 3)
+                QApplication.processEvents()
+                return True
+
+            user32.ShowWindow(hwnd, 9)
+
+            correcto = bool(
+                user32.SetWindowPos(
+                    hwnd,
+                    0,
+                    int(geometria.get("x", 0)),
+                    int(geometria.get("y", 0)),
+                    max(1, int(geometria.get("ancho", 1))),
+                    max(1, int(geometria.get("alto", 1))),
+                    SWP_NOZORDER | SWP_NOACTIVATE,
+                )
+            )
+            QApplication.processEvents()
+            return correcto
+        except Exception:
+            return False
+
+    def activar_hwnd_operativo(self, hwnd):
+        if sys.platform != "win32" or not hwnd:
+            return False
+
+        try:
+            user32 = ctypes.windll.user32
+            hwnd = int(hwnd)
+
+            if user32.IsIconic(hwnd):
+                user32.ShowWindow(hwnd, 9)
+
+            user32.SetForegroundWindow(hwnd)
+            QApplication.processEvents()
+            return True
+        except Exception:
+            return False
+
+    def seleccionar_cuenta_web_uia(
+        self,
+        hwnd,
+        cuenta,
+    ):
+        """
+        Selecciona una cuenta ya visible/recordada en un selector web.
+
+        No escribe contraseñas ni intenta superar MFA.
+        Solamente selecciona una cuenta que Windows puede ver
+        mediante UI Automation.
+        """
+
+        if (
+            sys.platform != "win32"
+            or not hwnd
+        ):
+            return {
+                "ok": False,
+                "estado": "NO_APLICABLE",
+                "detalle": "La selección de cuenta requiere Windows.",
+            }
+
+        cuenta = str(
+            cuenta
+            or ""
+        ).strip()
+
+        if not cuenta:
+            return {
+                "ok": False,
+                "estado": "SIN_CUENTA",
+                "detalle": "No existe una cuenta esperada.",
+            }
+
+        cuenta_ps = cuenta.replace(
+            "'",
+            "''",
+        )
+
+        script = (
+            "$ErrorActionPreference='SilentlyContinue';"
+            "Add-Type -AssemblyName UIAutomationClient;"
+            f"$target='{cuenta_ps}';"
+            f"$root=[System.Windows.Automation.AutomationElement]::FromHandle([IntPtr]{int(hwnd)});"
+            "if($null -eq $root){exit};"
+            "$walker=[System.Windows.Automation.TreeWalker]::ControlViewWalker;"
+            "$all=$root.FindAll([System.Windows.Automation.TreeScope]::Descendants,"
+            "[System.Windows.Automation.Condition]::TrueCondition);"
+            "$resultado=$null;"
+            "foreach($e in $all){"
+            "$n=[string]$e.Current.Name;$v='';"
+            "try{$vp=$e.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern);"
+            "$v=[string]$vp.Current.Value}catch{};"
+            "if(($n -and $n.IndexOf($target,[System.StringComparison]::OrdinalIgnoreCase) -ge 0)"
+            " -or ($v -and $v.IndexOf($target,[System.StringComparison]::OrdinalIgnoreCase) -ge 0)){"
+            "$c=$e;$invocado=$false;$rect=$null;"
+            "for($i=0;$i -lt 5 -and $null -ne $c;$i++){"
+            "if($null -eq $rect){try{$r=$c.Current.BoundingRectangle;"
+            "if($r.Width -gt 2 -and $r.Height -gt 2){"
+            "$rect=[ordered]@{x=[int]$r.X;y=[int]$r.Y;"
+            "ancho=[int]$r.Width;alto=[int]$r.Height}}}catch{}};"
+            "try{$ip=$c.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern);"
+            "$ip.Invoke();$invocado=$true;break}catch{};"
+            "try{$sp=$c.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern);"
+            "$sp.Select();$invocado=$true;break}catch{};"
+            "try{$c=$walker.GetParent($c)}catch{$c=$null}"
+            "};"
+            "$resultado=[ordered]@{encontrado=$true;invocado=$invocado;"
+            "nombre=$n;valor=$v;rect=$rect};break"
+            "}};"
+            "if($null -eq $resultado){"
+            "$resultado=[ordered]@{encontrado=$false;invocado=$false;nombre='';valor='';rect=$null}};"
+            "$resultado|ConvertTo-Json -Compress -Depth 5"
+        )
+
+        salida = self._powershell_bin(
+            script,
+            timeout=3.0,
+        )
+
+        if not salida:
+            return {
+                "ok": False,
+                "estado": "NO_ENCONTRADA",
+                "detalle": (
+                    "UI Automation no encontró la cuenta visible."
+                ),
+            }
+
+        try:
+            datos = json.loads(
+                salida
+            )
+        except Exception:
+            return {
+                "ok": False,
+                "estado": "RESPUESTA_INVALIDA",
+                "detalle": salida,
+            }
+
+        if not datos.get(
+            "encontrado"
+        ):
+            return {
+                "ok": False,
+                "estado": "NO_ENCONTRADA",
+                "detalle": (
+                    f"No encontré '{cuenta}' en el selector visible."
+                ),
+            }
+
+        if datos.get(
+            "invocado"
+        ):
+            self._cache_operativo_bin(
+                "browser_uia"
+            ).clear()
+
+            self._cache_operativo_bin(
+                "context_metadata"
+            ).clear()
+
+            return {
+                "ok": True,
+                "estado": "SELECCIONADA_UIA",
+                "detalle": (
+                    f"Cuenta seleccionada por UI Automation: {cuenta}"
+                ),
+            }
+
+        rect = datos.get(
+            "rect"
+        ) or {}
+
+        try:
+            x = int(
+                rect.get("x")
+            ) + int(
+                rect.get("ancho")
+            ) // 2
+
+            y = int(
+                rect.get("y")
+            ) + int(
+                rect.get("alto")
+            ) // 2
+
+        except Exception:
+            return {
+                "ok": False,
+                "estado": "SIN_AREA_CLIC",
+                "detalle": (
+                    "Encontré la cuenta, pero Windows no entregó "
+                    "un área clicable."
+                ),
+            }
+
+        try:
+            user32 = ctypes.windll.user32
+
+            self.activar_hwnd_operativo(
+                hwnd
+            )
+
+            user32.SetCursorPos(
+                x,
+                y,
+            )
+
+            user32.mouse_event(
+                MOUSEEVENTF_LEFTDOWN,
+                0,
+                0,
+                0,
+                0,
+            )
+
+            user32.mouse_event(
+                MOUSEEVENTF_LEFTUP,
+                0,
+                0,
+                0,
+                0,
+            )
+
+            self._cache_operativo_bin(
+                "browser_uia"
+            ).clear()
+
+            self._cache_operativo_bin(
+                "context_metadata"
+            ).clear()
+
+            return {
+                "ok": True,
+                "estado": "SELECCIONADA_CLIC",
+                "detalle": (
+                    f"Cuenta seleccionada por texto visible: {cuenta}\n"
+                    f"Punto: X={x} Y={y}"
+                ),
+            }
+
+        except Exception as error:
+            return {
+                "ok": False,
+                "estado": "ERROR_CLIC",
+                "detalle": str(
+                    error
+                ),
+            }
+
+    def corregir_cuenta_web_en_ventana(
+        self,
+        esperado,
+        actual,
+    ):
+        """
+        Intenta corregir una cuenta Google dentro
+        de una ventana de navegador existente.
+
+        Tiene prioridad sobre abrir nuevas ventanas.
+        """
+
+        if not esperado or not actual:
+            return {
+                "aplicable": False,
+                "ok": False,
+                "bloquear_apertura": False,
+                "detalle": "",
+            }
+
+        tipo = str(
+            esperado.get(
+                "tipo_recurso",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        proceso_esperado = str(
+            esperado.get(
+                "proceso",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        proceso_actual = str(
+            actual.get(
+                "proceso",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        cuenta_esperada = str(
+            esperado.get(
+                "cuenta_navegador",
+                "",
+            )
+            or ""
+        ).strip()
+
+        cuenta_actual = str(
+            actual.get(
+                "cuenta_navegador",
+                "",
+            )
+            or ""
+        ).strip()
+
+        if (
+            tipo != "web"
+            or not cuenta_esperada
+            or not self.es_navegador_proceso(
+                proceso_esperado
+            )
+            or (
+                proceso_actual
+                and proceso_esperado
+                and proceso_actual
+                != proceso_esperado
+            )
+        ):
+            return {
+                "aplicable": False,
+                "ok": False,
+                "bloquear_apertura": False,
+                "detalle": "",
+            }
+
+        if (
+            cuenta_actual
+            and cuenta_actual.lower()
+            == cuenta_esperada.lower()
+        ):
+            return {
+                "aplicable": True,
+                "ok": True,
+                "bloquear_apertura": False,
+                "detalle": "La cuenta ya coincide.",
+            }
+
+        url_actual = self.normalizar_url_bin(
+            actual.get(
+                "url",
+                "",
+            )
+        ).lower()
+
+        titulo_actual = str(
+            actual.get(
+                "titulo",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        es_selector_google = any(
+            indicador in (
+                url_actual
+                + " "
+                + titulo_actual
+            )
+            for indicador in (
+                "accounts.google.",
+                "chooseaccount",
+                "signin",
+                "selecciona una cuenta",
+                "elige una cuenta",
+                "choose an account",
+            )
+        )
+
+        # No hacemos clic genérico sobre correos
+        # fuera del selector de Google.
+        if not es_selector_google:
+            return {
+                "aplicable": True,
+                "ok": False,
+                "bloquear_apertura": False,
+                "detalle": (
+                    "La cuenta no coincide, pero no hay un selector "
+                    "de Google visible. La corrección debe resolverse "
+                    "por perfil/apertura directa."
+                ),
+            }
+
+        hwnd = actual.get(
+            "hwnd"
+        )
+
+        if not hwnd:
+            return {
+                "aplicable": True,
+                "ok": False,
+                "bloquear_apertura": True,
+                "detalle": (
+                    "La ventana candidata no tiene HWND utilizable."
+                ),
+            }
+
+        seleccion = self.seleccionar_cuenta_web_uia(
+            hwnd,
+            cuenta_esperada,
+        )
+
+        if seleccion.get(
+            "ok"
+        ):
+            self.registrar_evento_bin(
+                "CORRIGE",
+                (
+                    "Selecciono la cuenta web recordada "
+                    "antes de continuar."
+                ),
+                (
+                    f"Cuenta esperada: {cuenta_esperada}\n"
+                    f"Cuenta actual: "
+                    f"{cuenta_actual or 'no identificada'}\n"
+                    f"URL actual: "
+                    f"{url_actual or 'no observable'}\n"
+                    + str(
+                        seleccion.get(
+                            "detalle",
+                            "",
+                        )
+                        or ""
+                    )
+                ),
+            )
+
+            return {
+                "aplicable": True,
+                "ok": True,
+                "bloquear_apertura": True,
+                "detalle": str(
+                    seleccion.get(
+                        "detalle",
+                        "",
+                    )
+                    or ""
+                ),
+            }
+
+        return {
+            "aplicable": True,
+            "ok": False,
+            "bloquear_apertura": True,
+            "detalle": str(
+                seleccion.get(
+                    "detalle",
+                    "",
+                )
+                or ""
+            ),
+        }
+
+    # ========================================================
+    # RESCATE WEB ROBUSTO
+    # ========================================================
+
+    def normalizar_cuenta_web_rescate(
+        self,
+        valor,
+    ):
+        texto = str(
+            valor
+            or ""
+        ).strip().lower()
+
+        if not texto:
+            return ""
+
+        coincidencia = re.search(
+            r"[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}",
+            texto,
+        )
+
+        if coincidencia:
+            return (
+                coincidencia
+                .group(0)
+                .lower()
+            )
+
+        return texto
+
+    def obtener_estado_rescate_web(
+        self,
+        esperado,
+    ):
+        cache = self._cache_operativo_bin(
+            "web_rescue_state"
+        )
+
+        clave = (
+            int(
+                getattr(
+                    self,
+                    "repeticion_ejecucion_real",
+                    0,
+                )
+                or 0
+            ),
+            int(
+                getattr(
+                    self,
+                    "indice_ejecucion_real",
+                    0,
+                )
+                or 0
+            ),
+            str(
+                getattr(
+                    self,
+                    "fase_ejecucion_real",
+                    "",
+                )
+                or ""
+            ),
+            self.clave_correccion_contexto(
+                esperado
+            ),
+        )
+
+        estado = cache.get(
+            clave
+        )
+
+        if not isinstance(
+            estado,
+            dict,
+        ):
+            if len(cache) > 60:
+                cache.clear()
+
+            estado = {
+                "barrido_5": False,
+                "barrido_12": False,
+                "reapertura_final": False,
+                "reapertura_final_en": 0.0,
+                "url_final_aplicada_en": 0.0,
+                "fallo_final": False,
+            }
+
+            cache[
+                clave
+            ] = estado
+
+        return estado
+
+    def barrer_ventanas_web_por_cuenta(
+        self,
+        esperado,
+        etiqueta="",
+    ):
+        cuenta_esperada = (
+            self.normalizar_cuenta_web_rescate(
+                esperado.get(
+                    "cuenta_navegador",
+                    "",
+                )
+            )
+        )
+
+        proceso_esperado = str(
+            esperado.get(
+                "proceso",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        if (
+            not cuenta_esperada
+            or not proceso_esperado
+        ):
+            return {
+                "ok": False,
+                "cantidad": 0,
+                "contexto": None,
+                "hwnd": None,
+                "primer_contexto": None,
+            }
+
+        # ====================================================
+        # LECTURA FRESCA
+        # ====================================================
+
+        self._cache_operativo_bin(
+            "browser_uia"
+        ).clear()
+
+        self._cache_operativo_bin(
+            "context_metadata"
+        ).clear()
+
+        hwnds = (
+            self.enumerar_hwnds_ventanas_visibles_bin()
+        )
+
+        candidatas = []
+
+        seleccionada = None
+
+        # ====================================================
+        # PRIMERA PASADA
+        #
+        # Resolver desde perfil local antes de utilizar UIA.
+        # ====================================================
+
+        for hwnd in hwnds:
+            contexto_base = (
+                self.obtener_contexto_hwnd(
+                    hwnd,
+                    enriquecer=False,
+                )
+            )
+
+            if not contexto_base:
+                continue
+
+            proceso_actual = str(
+                contexto_base.get(
+                    "proceso",
+                    "",
+                )
+                or ""
+            ).strip().lower()
+
+            if (
+                proceso_actual
+                != proceso_esperado
+            ):
+                continue
+
+            identidad = (
+                self.resolver_identidad_navegador(
+                    contexto_base.get(
+                        "pid"
+                    ),
+                    proceso_actual,
+                    cuenta_uia="",
+                )
+            )
+
+            contexto_rapido = dict(
+                contexto_base
+            )
+
+            contexto_rapido[
+                "tipo_recurso"
+            ] = "web"
+
+            contexto_rapido[
+                "perfil_navegador"
+            ] = str(
+                identidad.get(
+                    "perfil",
+                    "",
+                )
+                or ""
+            ).strip()
+
+            contexto_rapido[
+                "cuenta_navegador"
+            ] = str(
+                identidad.get(
+                    "cuenta",
+                    "",
+                )
+                or ""
+            ).strip()
+
+            candidatas.append(
+                contexto_rapido
+            )
+
+            cuenta_actual = (
+                self.normalizar_cuenta_web_rescate(
+                    contexto_rapido.get(
+                        "cuenta_navegador",
+                        "",
+                    )
+                )
+            )
+
+            if (
+                cuenta_actual
+                and cuenta_actual
+                == cuenta_esperada
+            ):
+                contexto_completo = (
+                    self.obtener_contexto_hwnd(
+                        hwnd,
+                        enriquecer=True,
+                    )
+                    or contexto_rapido
+                )
+
+                if not contexto_completo.get(
+                    "cuenta_navegador"
+                ):
+                    contexto_completo[
+                        "cuenta_navegador"
+                    ] = contexto_rapido.get(
+                        "cuenta_navegador",
+                        "",
+                    )
+
+                if not contexto_completo.get(
+                    "perfil_navegador"
+                ):
+                    contexto_completo[
+                        "perfil_navegador"
+                    ] = contexto_rapido.get(
+                        "perfil_navegador",
+                        "",
+                    )
+
+                seleccionada = (
+                    contexto_completo
+                )
+
+                break
+
+        # ====================================================
+        # SEGUNDA PASADA
+        #
+        # Si el perfil local no bastó, leer el contexto
+        # completo mediante UI Automation.
+        # ====================================================
+
+        if seleccionada is None:
+            for (
+                indice,
+                contexto_rapido,
+            ) in enumerate(
+                list(
+                    candidatas
+                )
+            ):
+                hwnd = (
+                    contexto_rapido.get(
+                        "hwnd"
+                    )
+                )
+
+                contexto_completo = (
+                    self.obtener_contexto_hwnd(
+                        hwnd,
+                        enriquecer=True,
+                    )
+                    or contexto_rapido
+                )
+
+                candidatas[
+                    indice
+                ] = contexto_completo
+
+                cuenta_actual = (
+                    self.normalizar_cuenta_web_rescate(
+                        contexto_completo.get(
+                            "cuenta_navegador",
+                            "",
+                        )
+                    )
+                )
+
+                if (
+                    cuenta_actual
+                    and cuenta_actual
+                    == cuenta_esperada
+                ):
+                    seleccionada = (
+                        contexto_completo
+                    )
+
+                    break
+
+        # ====================================================
+        # MOSTRAR EL BARRIDO EN CHAT BIN
+        # ====================================================
+
+        lineas = []
+
+        for (
+            indice,
+            contexto,
+        ) in enumerate(
+            candidatas,
+            start=1,
+        ):
+            lineas.append(
+                "VENTANA "
+                f"{indice}\n"
+                f"HWND: "
+                f"{contexto.get('hwnd') or '--'}\n"
+                f"Título: "
+                f"{contexto.get('titulo') or '--'}\n"
+                f"Perfil: "
+                f"{contexto.get('perfil_navegador') or 'no identificado'}\n"
+                f"Cuenta: "
+                f"{contexto.get('cuenta_navegador') or 'no identificada'}\n"
+                f"URL: "
+                f"{contexto.get('url') or 'no observable'}"
+            )
+
+        self.registrar_evento_bin(
+            "ANALIZA",
+            (
+                "Rescate web"
+                + (
+                    f" · {etiqueta}"
+                    if etiqueta
+                    else ""
+                )
+                + ": reviso todas las "
+                "ventanas visibles del navegador."
+            ),
+            (
+                f"Cuenta esperada: "
+                f"{cuenta_esperada}\n"
+                f"Ventanas encontradas: "
+                f"{len(candidatas)}\n\n"
+                + (
+                    "\n\n".join(
+                        lineas
+                    )
+                    if lineas
+                    else (
+                        "Sin ventanas "
+                        "del navegador."
+                    )
+                )
+            ),
+        )
+
+        return {
+            "ok": bool(
+                seleccionada
+            ),
+            "cantidad": len(
+                candidatas
+            ),
+            "contexto": seleccionada,
+            "hwnd": (
+                seleccionada.get(
+                    "hwnd"
+                )
+                if seleccionada
+                else None
+            ),
+            "primer_contexto": (
+                candidatas[0]
+                if candidatas
+                else None
+            ),
+        }
+
+    def aplicar_url_a_ventana_web(
+        self,
+        contexto,
+        esperado,
+    ):
+        if not contexto:
+            return {
+                "ok": False,
+                "cambio": False,
+                "detalle": (
+                    "No existe ventana web "
+                    "para aplicar la URL."
+                ),
+            }
+
+        hwnd = contexto.get(
+            "hwnd"
+        )
+
+        url = str(
+            esperado.get(
+                "url",
+                "",
+            )
+            or ""
+        ).strip()
+
+        if (
+            not hwnd
+            or not url
+        ):
+            return {
+                "ok": False,
+                "cambio": False,
+                "detalle": (
+                    "Falta HWND o "
+                    "URL esperada."
+                ),
+            }
+
+        url_esperada = (
+            self.normalizar_url_bin(
+                url
+            ).lower()
+        )
+
+        url_actual = (
+            self.normalizar_url_bin(
+                contexto.get(
+                    "url",
+                    "",
+                )
+            ).lower()
+        )
+
+        # ====================================================
+        # FIJAR LA VENTANA CUANDO LA CUENTA YA COINCIDE
+        # ====================================================
+        #
+        # Una vez que BIN encontró la Gmail correcta,
+        # esa ventana se convierte en la referencia del rescate.
+        #
+        # No debe olvidarla en el siguiente checkpoint
+        # ni volver a perseguir otra ventana de Chrome.
+        # ====================================================
+
+        cuenta_esperada = (
+            self.normalizar_cuenta_web_rescate(
+                esperado.get(
+                    "cuenta_navegador",
+                    "",
+                )
+            )
+        )
+
+        cuenta_actual = (
+            self.normalizar_cuenta_web_rescate(
+                contexto.get(
+                    "cuenta_navegador",
+                    "",
+                )
+            )
+        )
+
+        estado_rescate = None
+
+        if (
+            cuenta_esperada
+            and cuenta_actual
+            and cuenta_esperada
+            == cuenta_actual
+        ):
+            estado_rescate = (
+                self.obtener_estado_rescate_web(
+                    esperado
+                )
+            )
+
+            try:
+                hwnd_anterior = int(
+                    estado_rescate.get(
+                        "cuenta_confirmada_hwnd",
+                        0,
+                    )
+                    or 0
+                )
+
+            except Exception:
+                hwnd_anterior = 0
+
+            try:
+                hwnd_actual = int(
+                    hwnd
+                    or 0
+                )
+
+            except Exception:
+                hwnd_actual = 0
+
+            if (
+                hwnd_actual
+                and hwnd_actual
+                != hwnd_anterior
+            ):
+                ahora = time.monotonic()
+
+                estado_rescate[
+                    "cuenta_confirmada_hwnd"
+                ] = hwnd_actual
+
+                estado_rescate[
+                    "cuenta_confirmada_en"
+                ] = ahora
+
+                estado_rescate[
+                    "url_reintentos"
+                ] = 0
+
+                estado_rescate[
+                    "url_ultima_aplicacion_en"
+                ] = 0.0
+
+                estado_rescate[
+                    "fallo_final"
+                ] = False
+
+                # ------------------------------------------------
+                # La parte difícil ya se resolvió:
+                # encontramos la cuenta correcta.
+                #
+                # Reiniciamos UNA SOLA VEZ el tiempo de
+                # supervisión para permitir que Chrome termine
+                # login, redirecciones y carga de URL.
+                # ------------------------------------------------
+
+                self.espera_supervisor_acumulada_ms = 0
+
+                self.inicio_espera_supervisor_monotonic = (
+                    time.monotonic()
+                )
+
+                self.registrar_evento_bin(
+                    "READY",
+                    (
+                        "Cuenta web correcta confirmada. "
+                        "Fijo esta ventana como objetivo "
+                        "del rescate."
+                    ),
+                    (
+                        f"Cuenta: {cuenta_esperada}\n"
+                        f"HWND: {hwnd_actual}\n"
+                        "Reinicio únicamente el tiempo "
+                        "de estabilización de URL/geometría."
+                    ),
+                )
+
+            else:
+                estado_rescate[
+                    "fallo_final"
+                ] = False
+
+        if (
+            url_actual
+            and url_actual
+            == url_esperada
+        ):
+            return {
+                "ok": True,
+                "cambio": False,
+                "detalle": (
+                    "La ventana ya tiene "
+                    "la URL esperada."
+                ),
+            }
+
+        if not self.activar_hwnd_operativo(
+            hwnd
+        ):
+            return {
+                "ok": False,
+                "cambio": False,
+                "detalle": (
+                    "No pude activar la "
+                    "ventana web seleccionada."
+                ),
+            }
+
+        if not self.asegurar_controladores_replay():
+            return {
+                "ok": False,
+                "cambio": False,
+                "detalle": (
+                    "No pude preparar el "
+                    "teclado para aplicar la URL."
+                ),
+            }
+
+        time.sleep(
+            0.08
+        )
+
+        if not self.ejecutar_atajo_replay(
+            [
+                "Ctrl",
+            ],
+            "l",
+        ):
+            return {
+                "ok": False,
+                "cambio": False,
+                "detalle": (
+                    "Ctrl+L falló durante "
+                    "el rescate web."
+                ),
+            }
+
+        time.sleep(
+            0.05
+        )
+
+        try:
+            self.keyboard_replay.type(
+                url
+            )
+
+        except Exception as error:
+            return {
+                "ok": False,
+                "cambio": False,
+                "detalle": str(
+                    error
+                ),
+            }
+
+        if not self.ejecutar_atajo_replay(
+            [],
+            "enter",
+        ):
+            return {
+                "ok": False,
+                "cambio": False,
+                "detalle": (
+                    "Enter falló al aplicar "
+                    "la URL esperada."
+                ),
+            }
+
+        ahora_aplicacion = (
+            time.monotonic()
+        )
+
+        if estado_rescate is not None:
+            estado_rescate[
+                "url_final_aplicada_en"
+            ] = ahora_aplicacion
+
+            estado_rescate[
+                "url_ultima_aplicacion_en"
+            ] = ahora_aplicacion
+
+            estado_rescate[
+                "url_reintentos"
+            ] = (
+                int(
+                    estado_rescate.get(
+                        "url_reintentos",
+                        0,
+                    )
+                    or 0
+                )
+                + 1
+            )
+
+            estado_rescate[
+                "fallo_final"
+            ] = False
+
+        self._cache_operativo_bin(
+            "browser_uia"
+        ).clear()
+
+        self._cache_operativo_bin(
+            "context_metadata"
+        ).clear()
+
+        self.registrar_evento_bin(
+            "CORRIGE",
+            (
+                "Encontré la cuenta correcta "
+                "y aplico la URL recordada "
+                "sobre esa misma ventana."
+            ),
+            (
+                f"Cuenta: "
+                f"{esperado.get('cuenta_navegador') or '--'}\n"
+                f"URL: {url}\n"
+                f"HWND: {hwnd}"
+            ),
+        )
+
+        return {
+            "ok": True,
+            "cambio": True,
+            "detalle": (
+                "URL aplicada sobre la ventana "
+                "con la cuenta correcta."
+            ),
+        }
+
+    def cerrar_ventana_web_alt_f4(
+        self,
+        contexto,
+    ):
+        if (
+            not contexto
+            or not contexto.get(
+                "hwnd"
+            )
+        ):
+            return False
+
+        hwnd = contexto.get(
+            "hwnd"
+        )
+
+        if not self.activar_hwnd_operativo(
+            hwnd
+        ):
+            return False
+
+        time.sleep(
+            0.08
+        )
+
+        ok = (
+            self.ejecutar_atajo_replay(
+                [
+                    "Alt",
+                ],
+                "f4",
+            )
+        )
+
+        if ok:
+            self.registrar_evento_bin(
+                "CORRIGE",
+                (
+                    "Rescate web final: "
+                    "cierro la ventana candidata "
+                    "con Alt+F4."
+                ),
+                self.formatear_contexto_operativo(
+                    contexto
+                ),
+            )
+
+            self._cache_operativo_bin(
+                "browser_uia"
+            ).clear()
+
+            self._cache_operativo_bin(
+                "context_metadata"
+            ).clear()
+
+        return bool(
+            ok
+        )
+
+    def abrir_contexto_directamente(self, esperado):
+        proceso = str(
+            esperado.get(
+                "proceso",
+                "",
+            )
+            or ""
+        ).strip()
+
+        ejecutable = str(
+            esperado.get(
+                "ejecutable",
+                "",
+            )
+            or ""
+        ).strip()
+
+        tipo = str(
+            esperado.get(
+                "tipo_recurso",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        url = str(
+            esperado.get(
+                "url",
+                "",
+            )
+            or ""
+        ).strip()
+
+        ruta = str(
+            esperado.get(
+                "ruta_recurso",
+                "",
+            )
+            or ""
+        ).strip()
+
+        perfil = str(
+            esperado.get(
+                "perfil_navegador",
+                "",
+            )
+            or ""
+        ).strip()
+
+        cuenta = str(
+            esperado.get(
+                "cuenta_navegador",
+                "",
+            )
+            or ""
+        ).strip()
+
+        # ====================================================
+        # RESOLVER CUENTA → PERFIL DEL NAVEGADOR
+        # ====================================================
+        #
+        # Chrome no acepta una cuenta de Google como argumento
+        # de lanzamiento.
+        #
+        # La sesión de la cuenta vive dentro de un perfil:
+        #
+        #   cuenta registrada
+        #          ↓
+        #   Default / Profile 1 / Profile 2...
+        #          ↓
+        #   --profile-directory=<perfil>
+        #
+        # Si durante la demostración BIN reconoció la cuenta
+        # pero no consiguió guardar el nombre técnico del
+        # perfil, lo resolvemos nuevamente justo antes de
+        # ejecutar la acción correctiva.
+        # ====================================================
+
+        if (
+            tipo == "web"
+            and cuenta
+            and self.es_navegador_proceso(
+                proceso
+            )
+        ):
+            perfiles_disponibles = (
+                self.obtener_info_perfiles_navegador(
+                    proceso
+                )
+            )
+
+            cuenta_normalizada = (
+                cuenta
+                .strip()
+                .lower()
+            )
+
+            perfil_por_cuenta = ""
+
+            for (
+                directorio_perfil,
+                informacion_perfil,
+            ) in perfiles_disponibles.items():
+
+                cuenta_perfil = str(
+                    informacion_perfil.get(
+                        "cuenta",
+                        "",
+                    )
+                    or ""
+                ).strip().lower()
+
+                nombre_perfil = str(
+                    informacion_perfil.get(
+                        "nombre",
+                        "",
+                    )
+                    or ""
+                ).strip().lower()
+
+                if (
+                    cuenta_perfil
+                    and cuenta_perfil
+                    == cuenta_normalizada
+                ):
+                    perfil_por_cuenta = str(
+                        directorio_perfil
+                    ).strip()
+
+                    break
+
+                if (
+                    not cuenta_perfil
+                    and nombre_perfil
+                    and nombre_perfil
+                    == cuenta_normalizada
+                ):
+                    perfil_por_cuenta = str(
+                        directorio_perfil
+                    ).strip()
+
+                    break
+
+            # =================================================
+            # LA CUENTA TIENE PRIORIDAD SOBRE UN PERFIL DUDOSO
+            # =================================================
+            #
+            # Si Local State nos dice inequívocamente qué
+            # perfil corresponde a la cuenta recordada,
+            # utilizamos ese perfil.
+            # =================================================
+
+            if perfil_por_cuenta:
+                if (
+                    perfil
+                    and perfil.lower()
+                    != perfil_por_cuenta.lower()
+                ):
+                    self.registrar_evento_bin(
+                        "CORRIGE",
+                        (
+                            "El perfil recordado no coincide "
+                            "con la cuenta asociada."
+                        ),
+                        (
+                            f"Perfil recordado: {perfil}\n"
+                            f"Cuenta esperada: {cuenta}\n"
+                            f"Perfil resuelto: {perfil_por_cuenta}"
+                        ),
+                    )
+
+                perfil = perfil_por_cuenta
+
+                self.registrar_evento_bin(
+                    "RESUELVE",
+                    (
+                        "Cuenta asociada convertida "
+                        "a perfil de navegador."
+                    ),
+                    (
+                        f"Navegador: {proceso or '--'}\n"
+                        f"Cuenta: {cuenta}\n"
+                        f"Perfil: {perfil}\n"
+                        f"URL: {url or '--'}"
+                    ),
+                )
+
+            elif not perfil:
+                self.registrar_evento_bin(
+                    "ANALIZA",
+                    (
+                        "La cuenta está identificada, "
+                        "pero no pude relacionarla con "
+                        "un perfil local del navegador."
+                    ),
+                    (
+                        f"Navegador: {proceso or '--'}\n"
+                        f"Cuenta: {cuenta}\n"
+                        f"URL: {url or '--'}"
+                    ),
+                )
+
+        if tipo == "web" and url:
+            binario = self.resolver_ruta_aplicacion_windows(
+                proceso,
+                ejecutable,
+            )
+            comando = [binario or proceso]
+            if perfil:
+                comando.append("--profile-directory=" + perfil)
+            comando.extend(["--new-window", url])
+
+            try:
+                if not comando[0]:
+                    raise ValueError("Navegador no resuelto.")
+
+                subprocess.Popen(comando, close_fds=True)
+                return {
+                    "ok": True,
+                    "detalle": (
+                        f"Navegador: {proceso or comando[0]}\n"
+                        f"Perfil: {perfil or 'no identificado'}\n"
+                        f"URL: {url}"
+                    ),
+                }
+            except Exception as error:
+                return {"ok": False, "detalle": str(error)}
+
+        if ruta:
+            try:
+                resultado = ctypes.windll.shell32.ShellExecuteW(
+                    None,
+                    "open",
+                    ruta,
+                    None,
+                    None,
+                    1,
+                )
+                if int(resultado) > 32:
+                    return {
+                        "ok": True,
+                        "detalle": f"Recurso solicitado directamente:\n{ruta}",
+                    }
+
+                return {
+                    "ok": False,
+                    "detalle": "Windows no pudo abrir el recurso.",
+                }
+            except Exception as error:
+                return {"ok": False, "detalle": str(error)}
+
+        if proceso or ejecutable:
+            resultado = self.ejecutar_abrir_aplicacion(
+                {
+                    "consulta": Path(ejecutable).stem if ejecutable else proceso,
+                    "proceso": proceso,
+                    "ejecutable": ejecutable,
+                }
+            )
+            return {
+                "ok": bool(resultado.get("ok")),
+                "detalle": str(resultado.get("detalle", "") or ""),
+            }
+
+        return {
+            "ok": False,
+            "detalle": (
+                "El contexto no contiene un localizador "
+                "que BIN pueda abrir directamente."
+            ),
+        }
+
+    def clave_correccion_contexto(self, esperado):
+        return (
+            str(esperado.get("proceso", "") or "").lower(),
+            self.normalizar_localizador_bin(esperado),
+            str(esperado.get("perfil_navegador", "") or "").lower(),
+            str(esperado.get("cuenta_navegador", "") or "").lower(),
+        )
+
+    def correccion_apertura_en_cooldown(self, esperado, segundos=5.0):
+        cache = self._cache_operativo_bin("correction_launch")
+        clave = self.clave_correccion_contexto(esperado)
+        ahora = time.monotonic()
+
+        try:
+            anterior = float(cache.get(clave, 0.0) or 0.0)
+        except Exception:
+            anterior = 0.0
+
+        if anterior and ahora - anterior < float(segundos):
+            return True
+
+        cache[clave] = ahora
+        return False
+
+    def asegurar_estado_contexto_ejecucion(
+        self,
+        esperado,
+        permitir_abrir=True,
+        activar=False,
+    ):
+        """
+        Compara el estado recordado con el actual. Si el recurso falta,
+        lo abre directamente. Si la geometría difiere, la corrige.
+        """
+        if not esperado:
+            return {
+                "ok": False,
+                "decision": "WAIT",
+                "motivo": "No existe contexto esperado.",
+                "contexto_actual": None,
+            }
+
+        self.registrar_evento_bin(
+            "ANALIZA",
+            "Comparando estado recordado con Windows.",
+            "ESPERADO\n" + self.formatear_contexto_operativo(esperado),
+        )
+
+        busqueda = self.buscar_ventana_estado_operativo(
+            esperado
+        )
+
+        intentos = int(
+            getattr(
+                self,
+                "intentos_supervisor",
+                0,
+            )
+            or 0
+        )
+
+        tipo_esperado = str(
+            esperado.get(
+                "tipo_recurso",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        cuenta_esperada = (
+            self.normalizar_cuenta_web_rescate(
+                esperado.get(
+                    "cuenta_navegador",
+                    "",
+                )
+            )
+        )
+
+        proceso_esperado = str(
+            esperado.get(
+                "proceso",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        es_rescate_web = bool(
+            tipo_esperado == "web"
+            and cuenta_esperada
+            and self.es_navegador_proceso(
+                proceso_esperado
+            )
+        )
+
+        # ====================================================
+        # RESCATE WEB POR INTENTOS
+        #
+        # 1-4:
+        #   Si Chrome ya existe, no multiplicar ventanas.
+        #
+        # 5:
+        #   Revisar TODAS las ventanas.
+        #   Buscar Gmail.
+        #   Si aparece, tomar esa ventana y aplicarle URL.
+        #
+        # 6-11:
+        #   Continuar observando sin abrir duplicados.
+        #
+        # 12:
+        #   Segundo barrido total.
+        #
+        # Si falla:
+        #   Alt+F4
+        #   reapertura directa
+        #   evaluación final.
+        # ====================================================
+
+        if (
+            es_rescate_web
+            and not busqueda.get(
+                "ok"
+            )
+        ):
+            estado_rescate = (
+                self.obtener_estado_rescate_web(
+                    esperado
+                )
+            )
+
+            # =================================================
+            # PRIORIDAD ABSOLUTA A LA CUENTA YA CONFIRMADA
+            # =================================================
+            #
+            # Si un barrido anterior encontró la Gmail correcta,
+            # dejamos de perseguir otras ventanas.
+            #
+            # Reutilizamos exactamente ese HWND hasta confirmar:
+            #
+            # cuenta
+            # URL
+            # posición
+            # tamaño
+            # =================================================
+
+            try:
+                hwnd_cuenta_confirmada = int(
+                    estado_rescate.get(
+                        "cuenta_confirmada_hwnd",
+                        0,
+                    )
+                    or 0
+                )
+
+            except Exception:
+                hwnd_cuenta_confirmada = 0
+
+            if hwnd_cuenta_confirmada:
+                self._cache_operativo_bin(
+                    "browser_uia"
+                ).clear()
+
+                self._cache_operativo_bin(
+                    "context_metadata"
+                ).clear()
+
+                contexto_confirmado = (
+                    self.obtener_contexto_hwnd(
+                        hwnd_cuenta_confirmada,
+                        enriquecer=True,
+                    )
+                )
+
+                cuenta_confirmada_actual = (
+                    self.normalizar_cuenta_web_rescate(
+                        (
+                            contexto_confirmado
+                            or {}
+                        ).get(
+                            "cuenta_navegador",
+                            "",
+                        )
+                    )
+                )
+
+                perfil_esperado_matricula = str(
+                    esperado.get(
+                        "perfil_navegador",
+                        "",
+                    )
+                    or ""
+                ).strip().lower()
+
+                perfil_actual_matricula = str(
+                    (
+                        contexto_confirmado
+                        or {}
+                    ).get(
+                        "perfil_navegador",
+                        "",
+                    )
+                    or ""
+                ).strip().lower()
+
+                try:
+                    hwnd_matricula = int(
+                        estado_rescate.get(
+                            "matricula_confirmada_hwnd",
+                            0,
+                        )
+                        or 0
+                    )
+
+                except Exception:
+                    hwnd_matricula = 0
+
+                # =================================================
+                # VALIDAR MATRÍCULA
+                # =================================================
+                #
+                # 1. Si veo la cuenta:
+                #       la cuenta manda.
+                #
+                # 2. Si la cuenta no aparece:
+                #       el perfil puede confirmar identidad.
+                #
+                # 3. Si UIA no entrega ninguno momentáneamente:
+                #       conservar HWND y esperar otra actualización.
+                # =================================================
+
+                if (
+                    cuenta_esperada
+                    and cuenta_confirmada_actual
+                ):
+                    identidad_matricula = (
+                        cuenta_confirmada_actual
+                        == cuenta_esperada
+                    )
+
+                elif (
+                    perfil_esperado_matricula
+                    and perfil_actual_matricula
+                ):
+                    identidad_matricula = (
+                        perfil_actual_matricula
+                        == perfil_esperado_matricula
+                    )
+
+                elif (
+                    contexto_confirmado
+                    and hwnd_matricula
+                    == hwnd_cuenta_confirmada
+                ):
+                    identidad_matricula = None
+
+                else:
+                    identidad_matricula = False
+
+                # =================================================
+                # LECTURA INCOMPLETA
+                #
+                # NO abandonar la ventana.
+                # Esperar al monitor de 250 ms.
+                # =================================================
+
+                if (
+                    contexto_confirmado
+                    and identidad_matricula is None
+                ):
+                    return {
+                        "ok": False,
+                        "decision": "WAIT",
+                        "motivo": (
+                            "La matrícula fijada sigue viva, "
+                            "pero esta lectura no expuso "
+                            "cuenta/perfil. Espero la siguiente "
+                            "actualización."
+                        ),
+                        "contexto_actual": (
+                            contexto_confirmado
+                        ),
+                    }
+
+                # =================================================
+                # MATRÍCULA CORRECTA
+                # =================================================
+
+                if (
+                    contexto_confirmado
+                    and identidad_matricula is True
+                ):
+                    estado_rescate[
+                        "fallo_final"
+                    ] = False
+
+                    url_esperada_confirmada = (
+                        self.normalizar_url_bin(
+                            esperado.get(
+                                "url",
+                                "",
+                            )
+                        ).lower()
+                    )
+
+                    url_actual_confirmada = (
+                        self.normalizar_url_bin(
+                            contexto_confirmado.get(
+                                "url",
+                                "",
+                            )
+                        ).lower()
+                    )
+
+                    # =============================================
+                    # CUENTA + URL YA COINCIDEN
+                    # =============================================
+
+                    if (
+                        not url_esperada_confirmada
+                        or (
+                            url_actual_confirmada
+                            and url_actual_confirmada
+                            == url_esperada_confirmada
+                        )
+                    ):
+                        # -----------------------------------------
+                        # CORREGIR GEOMETRÍA SI HACE FALTA
+                        # -----------------------------------------
+
+                        if not self.geometria_contextos_coincide(
+                            esperado,
+                            contexto_confirmado,
+                        ):
+                            if not self.aplicar_geometria_contexto(
+                                hwnd_cuenta_confirmada,
+                                esperado,
+                            ):
+                                return {
+                                    "ok": False,
+                                    "decision": "WAIT",
+                                    "motivo": (
+                                        "La cuenta y URL ya coinciden, "
+                                        "pero todavía estoy corrigiendo "
+                                        "la geometría de la ventana."
+                                    ),
+                                    "contexto_actual": (
+                                        contexto_confirmado
+                                    ),
+                                }
+
+                            time.sleep(
+                                0.08
+                            )
+
+                            contexto_confirmado = (
+                                self.obtener_contexto_hwnd(
+                                    hwnd_cuenta_confirmada,
+                                    enriquecer=True,
+                                )
+                                or contexto_confirmado
+                            )
+
+                            if not self.geometria_contextos_coincide(
+                                esperado,
+                                contexto_confirmado,
+                            ):
+                                return {
+                                    "ok": False,
+                                    "decision": "WAIT",
+                                    "motivo": (
+                                        "La cuenta y URL son correctas. "
+                                        "Espero confirmación de posición "
+                                        "y tamaño."
+                                    ),
+                                    "contexto_actual": (
+                                        contexto_confirmado
+                                    ),
+                                }
+
+                        if activar:
+                            self.activar_hwnd_operativo(
+                                hwnd_cuenta_confirmada
+                            )
+
+                        if self.contexto_externo_valido(
+                            contexto_confirmado
+                        ):
+                            self.registrar_contexto_replay_valido(
+                                contexto_confirmado,
+                                hwnd_cuenta_confirmada,
+                            )
+
+                        self.registrar_evento_bin(
+                            "READY",
+                            (
+                                "Rescate web confirmado: "
+                                "cuenta, URL y geometría "
+                                "coinciden."
+                            ),
+                            self.formatear_contexto_operativo(
+                                contexto_confirmado
+                            ),
+                        )
+
+                        return {
+                            "ok": True,
+                            "decision": "READY",
+                            "motivo": (
+                                "La ventana fijada con la "
+                                "cuenta correcta quedó "
+                                "completamente confirmada."
+                            ),
+                            "contexto_actual": (
+                                contexto_confirmado
+                            ),
+                            "hwnd": (
+                                hwnd_cuenta_confirmada
+                            ),
+                        }
+
+                    # =============================================
+                    # CUENTA CORRECTA
+                    # PERO URL TODAVÍA INCORRECTA
+                    # =============================================
+
+                    ahora_rescate = (
+                        time.monotonic()
+                    )
+
+                    try:
+                        ultima_url = float(
+                            estado_rescate.get(
+                                "url_ultima_aplicacion_en",
+                                0.0,
+                            )
+                            or 0.0
+                        )
+
+                    except Exception:
+                        ultima_url = 0.0
+
+                    try:
+                        reintentos_url = int(
+                            estado_rescate.get(
+                                "url_reintentos",
+                                0,
+                            )
+                            or 0
+                        )
+
+                    except Exception:
+                        reintentos_url = 0
+
+                    try:
+                        cuenta_confirmada_en = float(
+                            estado_rescate.get(
+                                "cuenta_confirmada_en",
+                                ahora_rescate,
+                            )
+                            or ahora_rescate
+                        )
+
+                    except Exception:
+                        cuenta_confirmada_en = (
+                            ahora_rescate
+                        )
+
+                    # -----------------------------------------
+                    # HASTA 4 APLICACIONES DE URL
+                    #
+                    # Separadas 2.5 segundos.
+                    # -----------------------------------------
+
+                    if (
+                        reintentos_url < 4
+                        and (
+                            not ultima_url
+                            or (
+                                ahora_rescate
+                                - ultima_url
+                                >= 2.5
+                            )
+                        )
+                    ):
+                        resultado_url_confirmada = (
+                            self.aplicar_url_a_ventana_web(
+                                contexto_confirmado,
+                                esperado,
+                            )
+                        )
+
+                        return {
+                            "ok": False,
+                            "decision": "WAIT",
+                            "motivo": (
+                                resultado_url_confirmada.get(
+                                    "detalle",
+                                    (
+                                        "Reaplico la URL "
+                                        "sobre la cuenta correcta."
+                                    ),
+                                )
+                            ),
+                            "contexto_actual": (
+                                contexto_confirmado
+                            ),
+                        }
+
+                    # -----------------------------------------
+                    # GOOGLE / CHROME PUEDEN ESTAR HACIENDO:
+                    #
+                    # autenticación
+                    # redirección
+                    # restauración de sesión
+                    # carga
+                    #
+                    # No declaramos error a los 3 segundos.
+                    # -----------------------------------------
+
+                    if (
+                        ahora_rescate
+                        - cuenta_confirmada_en
+                        < 15.0
+                    ):
+                        return {
+                            "ok": False,
+                            "decision": "WAIT",
+                            "motivo": (
+                                "La cuenta correcta ya está "
+                                "fijada. Espero que termine "
+                                "la navegación antes de "
+                                "declarar un error."
+                            ),
+                            "contexto_actual": (
+                                contexto_confirmado
+                            ),
+                        }
+
+                    # -----------------------------------------
+                    # CUENTA CORRECTA,
+                    # 4 INTENTOS DE URL,
+                    # 15 SEGUNDOS,
+                    # Y AÚN NO COINCIDE.
+                    #
+                    # Ahora sí es un fallo real.
+                    # -----------------------------------------
+
+                    estado_rescate[
+                        "fallo_final"
+                    ] = True
+
+                    return {
+                        "ok": False,
+                        "decision": "FAILED",
+                        "motivo": (
+                            "La cuenta correcta quedó "
+                            "confirmada, pero la URL no "
+                            "coincidió después de "
+                            "4 correcciones y "
+                            "15 segundos de gracia."
+                        ),
+                        "contexto_actual": (
+                            contexto_confirmado
+                        ),
+                    }
+
+                # =================================================
+                # LA VENTANA FIJADA DESAPARECIÓ
+                # O CAMBIÓ DE CUENTA
+                # =================================================
+                #
+                # Solo entonces permitimos a BIN volver
+                # al sistema normal de búsqueda.
+                # =================================================
+
+                estado_rescate.pop(
+                    "cuenta_confirmada_hwnd",
+                    None,
+                )
+
+                estado_rescate.pop(
+                    "cuenta_confirmada_en",
+                    None,
+                )
+
+                estado_rescate.pop(
+                    "matricula_confirmada_hwnd",
+                    None,
+                )
+
+                estado_rescate.pop(
+                    "matricula_firma_estado",
+                    None,
+                )
+
+                estado_rescate[
+                    "matricula_fallos"
+                ] = 0
+
+                estado_rescate[
+                    "url_reintentos"
+                ] = 0
+
+                estado_rescate[
+                    "url_ultima_aplicacion_en"
+                ] = 0.0
+
+            if estado_rescate.get(
+                "fallo_final"
+            ):
+                
+                return {
+                    "ok": False,
+                    "decision": "FAILED",
+                    "motivo": (
+                        "El rescate web final no "
+                        "consiguió una ventana con "
+                        "la cuenta y URL esperadas."
+                    ),
+                    "contexto_actual": (
+                        busqueda.get(
+                            "contexto"
+                        )
+                    ),
+                }
+
+            contexto_parcial_web = (
+                busqueda.get(
+                    "contexto"
+                )
+            )
+
+            # =================================================
+            # DESPUÉS DE ALT+F4 + REAPERTURA
+            # =================================================
+
+            if estado_rescate.get(
+                "reapertura_final"
+            ):
+                barrido_final = (
+                    self.barrer_ventanas_web_por_cuenta(
+                        esperado,
+                        etiqueta="evaluación final",
+                    )
+                )
+
+                if barrido_final.get(
+                    "ok"
+                ):
+                    contexto_cuenta = (
+                        barrido_final.get(
+                            "contexto"
+                        )
+                    )
+
+                    url_esperada_final = (
+                        self.normalizar_url_bin(
+                            esperado.get(
+                                "url",
+                                "",
+                            )
+                        ).lower()
+                    )
+
+                    url_actual_final = (
+                        self.normalizar_url_bin(
+                            contexto_cuenta.get(
+                                "url",
+                                "",
+                            )
+                        ).lower()
+                    )
+
+                    # -----------------------------------------
+                    # CUENTA + URL CORRECTAS
+                    # -----------------------------------------
+
+                    if (
+                        url_esperada_final
+                        and url_actual_final
+                        == url_esperada_final
+                    ):
+                        busqueda = {
+                            "ok": True,
+                            "contexto": (
+                                contexto_cuenta
+                            ),
+                            "hwnd": (
+                                barrido_final.get(
+                                    "hwnd"
+                                )
+                            ),
+                            "indeterminado": False,
+                            "conflicto": False,
+                        }
+
+                    # -----------------------------------------
+                    # CUENTA CORRECTA / URL INCORRECTA
+                    # -----------------------------------------
+
+                    else:
+                        aplicada_en = float(
+                            estado_rescate.get(
+                                "url_final_aplicada_en",
+                                0.0,
+                            )
+                            or 0.0
+                        )
+
+                        if aplicada_en:
+                            if (
+                                time.monotonic()
+                                - aplicada_en
+                                < 3.0
+                            ):
+                                return {
+                                    "ok": False,
+                                    "decision": "WAIT",
+                                    "motivo": (
+                                        "La cuenta final coincide. "
+                                        "Espero a que termine de "
+                                        "cargar la URL aplicada."
+                                    ),
+                                    "contexto_actual": (
+                                        contexto_cuenta
+                                    ),
+                                }
+
+                            estado_rescate[
+                                "fallo_final"
+                            ] = True
+
+                            return {
+                                "ok": False,
+                                "decision": "FAILED",
+                                "motivo": (
+                                    "La cuenta correcta apareció "
+                                    "después del rescate final, "
+                                    "pero la URL no llegó "
+                                    "a coincidir."
+                                ),
+                                "contexto_actual": (
+                                    contexto_cuenta
+                                ),
+                            }
+
+                        resultado_url = (
+                            self.aplicar_url_a_ventana_web(
+                                contexto_cuenta,
+                                esperado,
+                            )
+                        )
+
+                        if resultado_url.get(
+                            "ok"
+                        ):
+                            estado_rescate[
+                                "url_final_aplicada_en"
+                            ] = time.monotonic()
+
+                            return {
+                                "ok": False,
+                                "decision": "WAIT",
+                                "motivo": (
+                                    "Encontré la cuenta después "
+                                    "del rescate final. "
+                                    "Apliqué la URL y espero "
+                                    "su confirmación."
+                                ),
+                                "contexto_actual": (
+                                    contexto_cuenta
+                                ),
+                            }
+
+                        estado_rescate[
+                            "fallo_final"
+                        ] = True
+
+                        return {
+                            "ok": False,
+                            "decision": "FAILED",
+                            "motivo": (
+                                resultado_url.get(
+                                    "detalle",
+                                    (
+                                        "No pude aplicar "
+                                        "la URL durante "
+                                        "el rescate final."
+                                    ),
+                                )
+                            ),
+                            "contexto_actual": (
+                                contexto_cuenta
+                            ),
+                        }
+
+                else:
+                    transcurrido_final = (
+                        time.monotonic()
+                        - float(
+                            estado_rescate.get(
+                                "reapertura_final_en",
+                                0.0,
+                            )
+                            or 0.0
+                        )
+                    )
+
+                    # Chrome puede tardar un poco
+                    # en exponer la cuenta.
+                    if transcurrido_final < 3.0:
+                        return {
+                            "ok": False,
+                            "decision": "WAIT",
+                            "motivo": (
+                                "Reapertura final enviada. "
+                                "Espero a que Chrome exponga "
+                                "la cuenta antes de la "
+                                "última decisión."
+                            ),
+                            "contexto_actual": (
+                                contexto_parcial_web
+                            ),
+                        }
+
+                    estado_rescate[
+                        "fallo_final"
+                    ] = True
+
+                    return {
+                        "ok": False,
+                        "decision": "FAILED",
+                        "motivo": (
+                            "Tras Alt+F4 y la "
+                            "reapertura final no apareció "
+                            "ninguna ventana con la "
+                            "cuenta esperada."
+                        ),
+                        "contexto_actual": (
+                            contexto_parcial_web
+                        ),
+                    }
+
+            # =================================================
+            # INTENTO 5
+            # PRIMER BARRIDO DE TODAS LAS VENTANAS
+            # =================================================
+
+            if (
+                intentos >= 5
+                and not estado_rescate.get(
+                    "barrido_5"
+                )
+            ):
+                estado_rescate[
+                    "barrido_5"
+                ] = True
+
+                barrido_5 = (
+                    self.barrer_ventanas_web_por_cuenta(
+                        esperado,
+                        etiqueta="intento 5",
+                    )
+                )
+
+                # ---------------------------------------------
+                # ENCONTRÓ LA CUENTA
+                # ---------------------------------------------
+
+                if barrido_5.get(
+                    "ok"
+                ):
+                    contexto_cuenta = (
+                        barrido_5.get(
+                            "contexto"
+                        )
+                    )
+
+                    resultado_url = (
+                        self.aplicar_url_a_ventana_web(
+                            contexto_cuenta,
+                            esperado,
+                        )
+                    )
+
+                    if (
+                        resultado_url.get(
+                            "ok"
+                        )
+                        and resultado_url.get(
+                            "cambio"
+                        )
+                    ):
+                        return {
+                            "ok": False,
+                            "decision": "WAIT",
+                            "motivo": (
+                                "Intento 5: encontré "
+                                "la cuenta correcta y "
+                                "apliqué la URL sobre "
+                                "esa misma ventana."
+                            ),
+                            "contexto_actual": (
+                                contexto_cuenta
+                            ),
+                        }
+
+                    if resultado_url.get(
+                        "ok"
+                    ):
+                        busqueda = {
+                            "ok": True,
+                            "contexto": (
+                                contexto_cuenta
+                            ),
+                            "hwnd": (
+                                barrido_5.get(
+                                    "hwnd"
+                                )
+                            ),
+                            "indeterminado": False,
+                            "conflicto": False,
+                        }
+
+                    else:
+                        return {
+                            "ok": False,
+                            "decision": "WAIT",
+                            "motivo": (
+                                "Intento 5: encontré "
+                                "la cuenta correcta, "
+                                "pero todavía no pude "
+                                "aplicar su URL."
+                            ),
+                            "contexto_actual": (
+                                contexto_cuenta
+                            ),
+                        }
+
+                # ---------------------------------------------
+                # HAY CHROME, PERO NINGUNA CUENTA COINCIDE
+                # ---------------------------------------------
+
+                elif (
+                    barrido_5.get(
+                        "cantidad",
+                        0,
+                    )
+                    > 0
+                ):
+                    return {
+                        "ok": False,
+                        "decision": "WAIT",
+                        "motivo": (
+                            "Intento 5: revisé todas "
+                            "las ventanas del navegador "
+                            "y ninguna tiene todavía "
+                            "la cuenta esperada."
+                        ),
+                        "contexto_actual": (
+                            contexto_parcial_web
+                        ),
+                    }
+
+            # =================================================
+            # INTENTOS 6 A 11
+            #
+            # NO ABRIR MÁS CHROME SI YA HAY UNO.
+            # =================================================
+
+            if (
+                not busqueda.get(
+                    "ok"
+                )
+                and 5 < intentos < 12
+                and contexto_parcial_web
+            ):
+                correccion_selector = (
+                    self.corregir_cuenta_web_en_ventana(
+                        esperado,
+                        contexto_parcial_web,
+                    )
+                )
+
+                return {
+                    "ok": False,
+                    "decision": "WAIT",
+                    "motivo": (
+                        correccion_selector.get(
+                            "detalle"
+                        )
+                        or (
+                            "Sigo observando las "
+                            "ventanas existentes sin "
+                            "abrir duplicados."
+                        )
+                    ),
+                    "contexto_actual": (
+                        contexto_parcial_web
+                    ),
+                }
+
+            # =================================================
+            # INTENTO 12
+            #
+            # SEGUNDO BARRIDO TOTAL.
+            # =================================================
+
+            if (
+                not busqueda.get(
+                    "ok"
+                )
+                and intentos >= 12
+                and not estado_rescate.get(
+                    "barrido_12"
+                )
+            ):
+                estado_rescate[
+                    "barrido_12"
+                ] = True
+
+                barrido_12 = (
+                    self.barrer_ventanas_web_por_cuenta(
+                        esperado,
+                        etiqueta="intento 12",
+                    )
+                )
+
+                # ---------------------------------------------
+                # SEGUNDO BARRIDO ENCUENTRA CUENTA
+                # ---------------------------------------------
+
+                if barrido_12.get(
+                    "ok"
+                ):
+                    contexto_cuenta = (
+                        barrido_12.get(
+                            "contexto"
+                        )
+                    )
+
+                    resultado_url = (
+                        self.aplicar_url_a_ventana_web(
+                            contexto_cuenta,
+                            esperado,
+                        )
+                    )
+
+                    if (
+                        resultado_url.get(
+                            "ok"
+                        )
+                        and resultado_url.get(
+                            "cambio"
+                        )
+                    ):
+                        return {
+                            "ok": False,
+                            "decision": "WAIT",
+                            "motivo": (
+                                "Intento 12: encontré "
+                                "la cuenta correcta y "
+                                "apliqué la URL sobre "
+                                "esa misma ventana."
+                            ),
+                            "contexto_actual": (
+                                contexto_cuenta
+                            ),
+                        }
+
+                    if resultado_url.get(
+                        "ok"
+                    ):
+                        busqueda = {
+                            "ok": True,
+                            "contexto": (
+                                contexto_cuenta
+                            ),
+                            "hwnd": (
+                                barrido_12.get(
+                                    "hwnd"
+                                )
+                            ),
+                            "indeterminado": False,
+                            "conflicto": False,
+                        }
+
+                # ---------------------------------------------
+                # SIGUE SIN COINCIDIR
+                #
+                # ALT + F4
+                # ↓
+                # REAPERTURA DIRECTA
+                # ↓
+                # ÚLTIMA EVALUACIÓN
+                # ---------------------------------------------
+
+                if not busqueda.get(
+                    "ok"
+                ):
+                    objetivo_cierre = (
+                        barrido_12.get(
+                            "primer_contexto"
+                        )
+                        or contexto_parcial_web
+                    )
+
+                    #if objetivo_cierre:
+                        #self.cerrar_ventana_web_alt_f4(
+                            #objetivo_cierre
+                        #)
+
+                    # Quitar cooldown de aperturas
+                    # anteriores para permitir
+                    # un único rescate final.
+                    self._cache_operativo_bin(
+                        "correction_launch"
+                    ).pop(
+                        self.clave_correccion_contexto(
+                            esperado
+                        ),
+                        None,
+                    )
+
+                    time.sleep(
+                        0.25
+                    )
+
+                    reapertura = (
+                        self.abrir_contexto_directamente(
+                            esperado
+                        )
+                    )
+
+                    estado_rescate[
+                        "reapertura_final"
+                    ] = True
+
+                    estado_rescate[
+                        "reapertura_final_en"
+                    ] = time.monotonic()
+
+                    if reapertura.get(
+                        "ok"
+                    ):
+                        self.registrar_evento_bin(
+                            "CORRIGE",
+                            (
+                                "Intento 12 agotado: "
+                                "después de Alt+F4 "
+                                "vuelvo a abrir el "
+                                "navegador con el "
+                                "contexto recordado."
+                            ),
+                            reapertura.get(
+                                "detalle",
+                                "",
+                            ),
+                        )
+
+                        return {
+                            "ok": False,
+                            "decision": "WAIT",
+                            "motivo": (
+                                "Rescate web final enviado. "
+                                "Haré una última evaluación."
+                            ),
+                            "contexto_actual": (
+                                objetivo_cierre
+                            ),
+                        }
+
+                    estado_rescate[
+                        "fallo_final"
+                    ] = True
+
+                    return {
+                        "ok": False,
+                        "decision": "FAILED",
+                        "motivo": (
+                            "El rescate final cerró "
+                            "la ventana candidata, "
+                            "pero no pudo reabrir "
+                            "el navegador esperado. "
+                            + str(
+                                reapertura.get(
+                                    "detalle",
+                                    "",
+                                )
+                                or ""
+                            )
+                        ),
+                        "contexto_actual": (
+                            objetivo_cierre
+                        ),
+                    }
+
+            # =================================================
+            # INTENTOS 1 A 4
+            #
+            # Si Chrome ya existe, esperar.
+            # No abrir otro.
+            # =================================================
+
+            if (
+                not busqueda.get(
+                    "ok"
+                )
+                and intentos < 5
+                and contexto_parcial_web
+            ):
+                correccion_selector = (
+                    self.corregir_cuenta_web_en_ventana(
+                        esperado,
+                        contexto_parcial_web,
+                    )
+                )
+
+                return {
+                    "ok": False,
+                    "decision": "WAIT",
+                    "motivo": (
+                        correccion_selector.get(
+                            "detalle"
+                        )
+                        or (
+                            "Existe una ventana del "
+                            "navegador; espero antes "
+                            "de abrir otra."
+                        )
+                    ),
+                    "contexto_actual": (
+                        contexto_parcial_web
+                    ),
+                }
+
+        if not busqueda.get("ok"):
+
+            contexto_parcial = busqueda.get("contexto")
+
+            # =================================================
+            # CUENTA WEB INCORRECTA / SELECTOR DE GOOGLE
+            # =================================================
+            #
+            # Si ya existe una ventana de Chrome candidata,
+            # primero intentamos corregirla.
+            #
+            # NO abrimos otra ventana mientras haya un selector
+            # de cuenta de Google pendiente.
+            # =================================================
+
+            if contexto_parcial:
+                correccion_cuenta = (
+                    self.corregir_cuenta_web_en_ventana(
+                        esperado,
+                        contexto_parcial,
+                    )
+                )
+
+                if correccion_cuenta.get("ok"):
+                    return {
+                        "ok": False,
+                        "decision": "WAIT",
+                        "motivo": (
+                            "Acción correctiva de cuenta enviada. "
+                            "Esperando nueva comprobación."
+                        ),
+                        "contexto_actual": contexto_parcial,
+                    }
+
+                if correccion_cuenta.get(
+                    "bloquear_apertura"
+                ):
+                    self.registrar_evento_bin(
+                        "VERIFICA",
+                        (
+                            "Hay un selector de cuenta activo. "
+                            "No abriré otra ventana de Chrome."
+                        ),
+                        (
+                            f"Cuenta esperada: "
+                            f"{esperado.get('cuenta_navegador') or '--'}\n"
+                            + str(
+                                correccion_cuenta.get(
+                                    "detalle",
+                                    "",
+                                )
+                                or ""
+                            )
+                        ),
+                    )
+
+                    return {
+                        "ok": False,
+                        "decision": "WAIT",
+                        "motivo": (
+                            "El selector de cuenta debe resolverse "
+                            "antes de abrir otra ventana."
+                        ),
+                        "contexto_actual": contexto_parcial,
+                    }
+
+            if busqueda.get("indeterminado"):
+                self.registrar_evento_bin(
+                    "VERIFICA",
+                    (
+                        "Encontré una ventana candidata, pero no puedo "
+                        "confirmar todavía su URL/ruta/perfil."
+                    ),
+                    (
+                        self.formatear_contexto_operativo(contexto_parcial)
+                        if contexto_parcial
+                        else ""
+                    ),
+                )
+
+                # Tras varias comprobaciones sin poder leer el identificador,
+                # BIN ejecuta la ruta directa recordada en vez de quedarse
+                # bloqueado indefinidamente.
+                intentos = int(
+                    getattr(
+                        self,
+                        "intentos_supervisor",
+                        0,
+                    )
+                    or 0
+                )
+
+                if (
+                    permitir_abrir
+                    and intentos >= 3
+                    and not self.correccion_apertura_en_cooldown(esperado)
+                ):
+                    apertura = self.abrir_contexto_directamente(esperado)
+
+                    if apertura.get("ok"):
+                        self.registrar_evento_bin(
+                            "CORRIGE",
+                            (
+                                "La identidad siguió sin ser legible tras "
+                                "varias comprobaciones. Fuerzo la apertura "
+                                "directa recordada."
+                            ),
+                            apertura.get("detalle", ""),
+                        )
+                        return {
+                            "ok": False,
+                            "decision": "WAIT",
+                            "motivo": (
+                                "Apertura correctiva forzada. "
+                                "Esperando nueva comprobación."
+                            ),
+                            "contexto_actual": contexto_parcial,
+                        }
+
+                return {
+                    "ok": False,
+                    "decision": "WAIT",
+                    "motivo": (
+                        "La identidad del recurso todavía no es "
+                        "observable con certeza."
+                    ),
+                    "contexto_actual": contexto_parcial,
+                }
+
+            if permitir_abrir:
+                if self.correccion_apertura_en_cooldown(esperado):
+                    return {
+                        "ok": False,
+                        "decision": "WAIT",
+                        "motivo": (
+                            "Ya lancé la apertura correctiva y estoy "
+                            "esperando a que aparezca el recurso."
+                        ),
+                        "contexto_actual": None,
+                    }
+
+                apertura = self.abrir_contexto_directamente(esperado)
+
+                if apertura.get("ok"):
+                    self.registrar_evento_bin(
+                        "CORRIGE",
+                        (
+                            "No encontré una ventana coincidente. "
+                            "Lanzo apertura directa."
+                        ),
+                        apertura.get("detalle", ""),
+                    )
+                    return {
+                        "ok": False,
+                        "decision": "WAIT",
+                        "motivo": (
+                            "Acción correctiva enviada. "
+                            "Esperando nueva comprobación."
+                        ),
+                        "contexto_actual": None,
+                    }
+
+                self.registrar_evento_bin(
+                    "ERROR",
+                    (
+                        "No encontré el recurso esperado y tampoco "
+                        "pude abrirlo directamente."
+                    ),
+                    apertura.get("detalle", ""),
+                )
+
+            return {
+                "ok": False,
+                "decision": "WAIT",
+                "motivo": "No existe todavía una ventana coincidente.",
+                "contexto_actual": None,
+            }
+
+        actual = busqueda.get("contexto")
+        hwnd = busqueda.get("hwnd")
+
+        self.registrar_evento_bin(
+            "VERIFICA",
+            "Ventana/recurso coincidente encontrado.",
+            "ACTUAL\n" + self.formatear_contexto_operativo(actual),
+        )
+
+        if not self.geometria_contextos_coincide(esperado, actual):
+            geo_e = esperado.get("geometria") or {}
+            geo_a = actual.get("geometria") or {}
+
+            self.registrar_evento_bin(
+                "CORRIGE",
+                (
+                    "La ventana correcta existe, pero su posición/tamaño "
+                    "no coincide."
+                ),
+                (
+                    "Recordado: "
+                    f"X={geo_e.get('x', '--')} Y={geo_e.get('y', '--')} · "
+                    f"{geo_e.get('ancho', '--')}×{geo_e.get('alto', '--')}\n"
+                    "Actual: "
+                    f"X={geo_a.get('x', '--')} Y={geo_a.get('y', '--')} · "
+                    f"{geo_a.get('ancho', '--')}×{geo_a.get('alto', '--')}"
+                ),
+            )
+
+            if not self.aplicar_geometria_contexto(hwnd, esperado):
+                return {
+                    "ok": False,
+                    "decision": "WAIT",
+                    "motivo": "No pude aplicar la geometría recordada.",
+                    "contexto_actual": actual,
+                }
+
+            time.sleep(0.08)
+            actualizado = self.obtener_contexto_hwnd(hwnd, enriquecer=True)
+
+            if (
+                actualizado
+                and self.geometria_contextos_coincide(esperado, actualizado)
+            ):
+                actual = actualizado
+                self.registrar_evento_bin(
+                    "READY",
+                    (
+                        "Acción correctiva confirmada: "
+                        "posición y tamaño coinciden."
+                    ),
+                    self.formatear_contexto_operativo(actual),
+                )
+            else:
+                return {
+                    "ok": False,
+                    "decision": "WAIT",
+                    "motivo": (
+                        "Apliqué la corrección de ventana, "
+                        "pero todavía no coincide."
+                    ),
+                    "contexto_actual": actualizado or actual,
+                }
+
+        if activar:
+            self.activar_hwnd_operativo(hwnd)
+
+        if self.contexto_externo_valido(actual):
+            self.registrar_contexto_replay_valido(actual, hwnd)
+
+        return {
+            "ok": True,
+            "decision": "READY",
+            "motivo": (
+                "Recurso, ventana y geometría coinciden "
+                "con la demostración."
+            ),
+            "contexto_actual": actual,
+            "hwnd": hwnd,
+        }
+
     def contexto_pertenece_a_bin(self, contexto):
         if not contexto:
             return False
@@ -8887,15 +13718,68 @@ class BIN(QMainWindow):
             + 10.0
         )
 
-        # BIN no debe recuperar el primer plano mientras
-        # el usuario o la automatización interactúan con Inicio.
+        # ====================================================
+        # BAJAR SOLO LA VENTANA PRINCIPAL DE BIN
+        # ====================================================
+        #
+        # Inicio / Search deben conservar el foreground real.
+        # La ventana principal de BIN deja de ser TOPMOST, pero
+        # la barra de ejecución permanece visible.
+        # ====================================================
+
         self.mantener_bin_visible_replay(
             False
         )
 
-        # La barra flotante también es otra ventana TOPMOST.
+        # ====================================================
+        # BARRA VISIBLE SIN ACTIVARLA
+        # ====================================================
+        #
+        # IMPORTANTE:
+        # QWidget.show() puede activar una ventana Tool en el
+        # instante equivocado y quitarle el foreground a Inicio.
+        # Aquí usamos directamente SW_SHOWNOACTIVATE +
+        # SWP_NOACTIVATE. Así el botón DETENER ACCIÓN sigue
+        # visible sin robarle el foco al menú Inicio.
+        # ====================================================
+
         if self.barra_ejecucion is not None:
-            self.barra_ejecucion.hide()
+
+            if sys.platform == "win32":
+
+                try:
+                    user32 = ctypes.windll.user32
+
+                    hwnd_barra = int(
+                        self.barra_ejecucion.winId()
+                    )
+
+                    # SW_SHOWNOACTIVATE = 4
+                    user32.ShowWindow(
+                        hwnd_barra,
+                        4,
+                    )
+
+                    user32.SetWindowPos(
+                        hwnd_barra,
+                        HWND_TOPMOST,
+                        0,
+                        0,
+                        0,
+                        0,
+                        (
+                            SWP_NOMOVE
+                            | SWP_NOSIZE
+                            | SWP_NOACTIVATE
+                            | SWP_SHOWWINDOW
+                        ),
+                    )
+
+                except Exception:
+                    pass
+
+            else:
+                self.barra_ejecucion.show()
 
         QApplication.processEvents()
 
@@ -9117,6 +14001,51 @@ class BIN(QMainWindow):
                 "detalle": "No existe una acción para preparar.",
             }
 
+        contexto = accion.get("contexto_objetivo")
+
+        # Las demostraciones nuevas llevan estado operativo completo.
+        if self.contexto_tiene_estado_operativo(contexto):
+            operativo = self.asegurar_estado_contexto_ejecucion(
+                contexto,
+                permitir_abrir=True,
+                activar=True,
+            )
+
+            if operativo.get("ok"):
+                confirmado = operativo.get("contexto_actual")
+
+                if confirmado:
+                    self.registrar_contexto_replay_valido(
+                        confirmado,
+                        operativo.get("hwnd"),
+                    )
+
+                return {
+                    "ok": True,
+                    "estado": "CONFIRMADO",
+                    "recuperable": False,
+                    "metodo": "supervisor_operativo",
+                    "detalle": operativo.get(
+                        "motivo",
+                        "Estado operativo confirmado.",
+                    ),
+                    "contexto": confirmado,
+                    "hwnd": operativo.get("hwnd"),
+                }
+
+            return {
+                "ok": False,
+                "estado": "ESTADO_OPERATIVO_NO_CONFIRMADO",
+                "recuperable": True,
+                "metodo": "supervisor_operativo",
+                "detalle": operativo.get(
+                    "motivo",
+                    "El estado operativo todavía no coincide.",
+                ),
+                "contexto": operativo.get("contexto_actual"),
+            }
+
+        # Compatibilidad intacta con tareas antiguas.
         if not self.accion_requiere_contexto_activo(accion):
             return {
                 "ok": True,
@@ -9126,7 +14055,6 @@ class BIN(QMainWindow):
                 "detalle": "La acción no requiere activar un contexto previo.",
             }
 
-        contexto = accion.get("contexto_objetivo")
         resultado = self.resolver_contexto_teclado_replay(
             contexto,
             permitir_foreground_externo=permitir_foreground_externo,
@@ -9143,8 +14071,6 @@ class BIN(QMainWindow):
                 )
             return resultado
 
-        # Un contexto no confirmado es una transición recuperable. No debe
-        # disparar fallback ni ERROR antes de que el supervisor pueda esperar.
         resultado = dict(resultado)
         resultado.setdefault("estado", "CONTEXTO_NO_CONFIRMADO")
         resultado.setdefault("recuperable", True)
@@ -9197,9 +14123,17 @@ class BIN(QMainWindow):
         if tipo in {
             "doble_click",
             "abrir_elemento",
+            "abrir_aplicacion",
+            "ajustar_ventana",
             "cambiar_aplicacion",
             "cerrar_ventana",
         }:
+            if tipo == "abrir_aplicacion":
+                return 600
+
+            if tipo == "ajustar_ventana":
+                return 180
+
             return 350
         if tipo in {"click", "click_derecho", "abrir_menu_contextual", "arrastrar"}:
             return 220
@@ -9297,6 +14231,42 @@ class BIN(QMainWindow):
         contexto_despues = (
             accion_ejecutada.get("contexto_despues") if accion_ejecutada else None
         )
+
+        # BLOQUE 2: comparar el estado real antes de permitir el siguiente paso.
+        contexto_operativo_esperado = None
+
+        if self.contexto_tiene_estado_operativo(contexto_siguiente):
+            contexto_operativo_esperado = contexto_siguiente
+        elif self.contexto_tiene_estado_operativo(contexto_despues):
+            contexto_operativo_esperado = contexto_despues
+
+        if contexto_operativo_esperado:
+            operativo = self.asegurar_estado_contexto_ejecucion(
+                contexto_operativo_esperado,
+                permitir_abrir=True,
+                activar=False,
+            )
+
+            if operativo.get("ok"):
+                return {
+                    "decision": "READY",
+                    "motivo": operativo.get(
+                        "motivo",
+                        "Estado operativo confirmado.",
+                    ),
+                    "fuente": "supervisor_operativo",
+                    "contexto_actual": operativo.get("contexto_actual"),
+                }
+
+            return {
+                "decision": operativo.get("decision", "WAIT"),
+                "motivo": operativo.get(
+                    "motivo",
+                    "Esperando acción correctiva.",
+                ),
+                "fuente": "supervisor_operativo",
+                "contexto_actual": operativo.get("contexto_actual"),
+            }
 
         # ====================================================
         # SUPERVISAR APERTURA DIRECTA DE UNA APLICACIÓN
@@ -9512,31 +14482,78 @@ class BIN(QMainWindow):
             ),
         }
 
-    def completar_accion_real_supervisada(self, tarea):
+    def completar_accion_real_supervisada(
+        self,
+        tarea,
+    ):
+        numero_completado = (
+            self.indice_ejecucion_real
+            + 1
+        )
+
+        self.registrar_evento_bin(
+            "READY",
+            (
+                f"Acción {numero_completado}/"
+                f"{len(self.plan_ejecucion_actual)} "
+                "confirmada."
+            ),
+            "El supervisor autorizó continuar.",
+        )
+
         self.ejecuciones_reales_completadas += 1
         self.indice_ejecucion_real += 1
 
-        total = max(1, self.ejecuciones_reales_totales)
-        tarea["ejecuciones_reales_completadas"] = self.ejecuciones_reales_completadas
+        total = max(
+            1,
+            self.ejecuciones_reales_totales,
+        )
+
+        tarea[
+            "ejecuciones_reales_completadas"
+        ] = (
+            self.ejecuciones_reales_completadas
+        )
+
         tarea["progreso"] = min(
             100,
-            int((self.ejecuciones_reales_completadas / total) * 100),
+            int(
+                (
+                    self.ejecuciones_reales_completadas
+                    / total
+                )
+                * 100
+            ),
         )
 
         tarea["detalle_estado"] = (
-            f"Repetición {self.repeticion_ejecucion_real}/"
-            f"{tarea['repeticiones_totales']} · Acción "
+            f"Repetición "
+            f"{self.repeticion_ejecucion_real}/"
+            f"{tarea['repeticiones_totales']} · "
+            "Acción "
             f"{min(self.indice_ejecucion_real, len(self.plan_ejecucion_actual))}/"
             f"{len(self.plan_ejecucion_actual)} · OK"
         )
-        tarea["accion_actual_indice"] = None
+
+        tarea[
+            "accion_actual_indice"
+        ] = None
 
         self.refrescar_panel_acciones()
-        self.fase_ejecucion_real = "espera_accion"
-        self.accion_real_actual = None
-        self.resultado_accion_real_actual = None
-        self.programar_siguiente_accion_real(tarea)
 
+        self.fase_ejecucion_real = (
+            "espera_accion"
+        )
+
+        self.accion_real_actual = None
+
+        self.resultado_accion_real_actual = (
+            None
+        )
+
+        self.programar_siguiente_accion_real(
+            tarea
+        )
     def formatear_error_supervisor(
         self,
         tarea,
@@ -9831,6 +14848,171 @@ class BIN(QMainWindow):
         )
 
         contexto = accion.get("contexto_objetivo")
+
+        # ====================================================
+        # ACCIÓN COMPILADA: ABRIR APLICACIÓN DIRECTAMENTE
+        # ====================================================
+
+        if tipo == "abrir_aplicacion":
+            datos = (
+                accion.get(
+                    "datos"
+                )
+                or {}
+            )
+
+            proceso = str(
+                datos.get(
+                    "proceso",
+                    "",
+                )
+                or ""
+            ).strip()
+
+            ejecutable = str(
+                datos.get(
+                    "ejecutable",
+                    "",
+                )
+                or ""
+            ).strip()
+
+            self.registrar_evento_bin(
+                "EJECUTA",
+                (
+                    "Apertura directa de aplicación"
+                    + (
+                        f": {proceso}"
+                        if proceso
+                        else ""
+                    )
+                ),
+                (
+                    ejecutable
+                    if ejecutable
+                    else "Resolviendo ejecutable..."
+                ),
+            )
+
+            resultado = (
+                self.ejecutar_abrir_aplicacion(
+                    datos
+                )
+            )
+
+            if resultado.get(
+                "ok"
+            ):
+                self.registrar_evento_bin(
+                    "ENVIADO",
+                    (
+                        "Windows recibió la apertura "
+                        "directa de la aplicación."
+                    ),
+                    resultado.get(
+                        "detalle",
+                        "",
+                    ),
+                )
+
+                return resultado
+
+            fallback = (
+                accion.get(
+                    "fallback"
+                )
+                or accion.get(
+                    "demostracion_original"
+                )
+            )
+
+            if fallback:
+                self.registrar_evento_bin(
+                    "FALLBACK",
+                    (
+                        "La apertura directa no pudo "
+                        "enviarse. Uso la demostración "
+                        "física original."
+                    ),
+                    resultado.get(
+                        "detalle",
+                        "",
+                    ),
+                )
+
+                return (
+                    self.ejecutar_accion_original_real(
+                        fallback,
+                        tarea,
+                    )
+                )
+
+            self.registrar_evento_bin(
+                "ERROR",
+                (
+                    "No pude abrir la aplicación "
+                    "y no existe fallback."
+                ),
+                resultado.get(
+                    "detalle",
+                    "",
+                ),
+            )
+
+            return resultado
+
+        # ====================================================
+        # ACCIÓN COMPILADA: AJUSTAR ESTADO DE UNA VENTANA
+        # ====================================================
+        #
+        # Cuando durante la demostración el usuario mueve o
+        # redimensiona una ventana, BIN no reproduce el arrastre
+        # absoluto. Conserva el arrastre original como fallback,
+        # pero la ejecución principal consiste en localizar la
+        # misma ventana/recurso y restaurar su geometría.
+        # ====================================================
+
+        if tipo == "ajustar_ventana":
+            esperado = (
+                accion.get("contexto_objetivo")
+                or (accion.get("datos") or {}).get("contexto_recordado")
+                or accion.get("contexto_despues")
+            )
+
+            self.registrar_evento_bin(
+                "EJECUTA",
+                "Restaurando estado recordado de la ventana.",
+                self.formatear_contexto_operativo(esperado),
+            )
+
+            resultado_estado = self.asegurar_estado_contexto_ejecucion(
+                esperado,
+                permitir_abrir=True,
+                activar=True,
+            )
+
+            if resultado_estado.get("ok"):
+                return {
+                    "ok": True,
+                    "estado": "CONFIRMADO",
+                    "recuperable": False,
+                    "metodo": "supervisor_operativo",
+                    "detalle": resultado_estado.get(
+                        "motivo",
+                        "Posición y tamaño restaurados.",
+                    ),
+                }
+
+            return {
+                "ok": False,
+                "estado": "ESTADO_OPERATIVO_NO_CONFIRMADO",
+                "recuperable": True,
+                "metodo": "supervisor_operativo",
+                "detalle": resultado_estado.get(
+                    "motivo",
+                    "La ventana todavía no coincide con el estado recordado.",
+                ),
+            }
 
         if tipo in {
             "click",
@@ -11392,10 +16574,19 @@ class BIN(QMainWindow):
             AMARILLO,
         )
 
-        self.actualizar_chat_bin(
-            f"{tarea['nombre']} — repetición "
-            f"{self.repeticion_ejecucion_real}/{tarea['repeticiones_totales']} · "
-            f"acción {numero_accion}/{cantidad_acciones}: {descripcion}"
+        self.registrar_evento_bin(
+            "PASO",
+            (
+                f"{tarea['nombre']} — repetición "
+                f"{self.repeticion_ejecucion_real}/"
+                f"{tarea['repeticiones_totales']} · "
+                f"acción {numero_accion}/"
+                f"{cantidad_acciones}"
+            ),
+            (
+                f"{descripcion}\n"
+                f"Tipo: {accion.get('tipo', 'desconocido')}"
+            ),
         )
 
         self.actualizar_tarjeta_tarea(tarea["id"])
@@ -11433,6 +16624,15 @@ class BIN(QMainWindow):
                 f"{preparacion.get('detalle', '')}",
             )
             return
+
+        self.registrar_evento_bin(
+            "CONTEXTO",
+            "Contexto listo para ejecutar la acción.",
+            preparacion.get(
+                "detalle",
+                "",
+            ),
+        )
 
         tarea["detalle_estado"] = (
             f"Repetición {self.repeticion_ejecucion_real}/"
@@ -11544,6 +16744,21 @@ class BIN(QMainWindow):
         resultado.setdefault("estado", "ENVIADO")
         resultado.setdefault("recuperable", False)
 
+        self.registrar_evento_bin(
+            "ENVIADO",
+            (
+                f"Acción {numero_accion}/"
+                f"{cantidad_acciones} enviada."
+            ),
+            (
+                f"Método: "
+                f"{resultado.get('metodo', 'desconocido')}\n"
+                f"Estado: "
+                f"{resultado.get('estado', 'ENVIADO')}\n"
+                f"{resultado.get('detalle', '')}"
+            ),
+        )
+
         self.resultado_accion_real_actual = resultado
         self.registrar_contexto_replay_valido(self.obtener_contexto_ventana_activa())
 
@@ -11559,6 +16774,628 @@ class BIN(QMainWindow):
             modo="postaccion",
             delay_inicial_ms=self.delay_minimo_supervision_accion(accion),
         )
+
+    # ========================================================
+    # RESCATE FINAL HACIA LA VENTANA DEL PASO SIGUIENTE
+    # ========================================================
+
+    def accion_permite_rescate_siguiente_ventana(
+        self,
+        accion,
+    ):
+        if not accion:
+            return False
+
+        tipo = str(
+            accion.get(
+                "tipo",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        # ----------------------------------------------------
+        # CLIC
+        # ----------------------------------------------------
+
+        if tipo in {
+            "click",
+            "doble_click",
+        }:
+            return True
+
+        # ----------------------------------------------------
+        # ENTER / TAB GRABADOS FÍSICAMENTE
+        # ----------------------------------------------------
+
+        if tipo == "tecla":
+            tecla = str(
+                accion.get(
+                    "tecla",
+                    "",
+                )
+                or ""
+            ).strip().lower()
+
+            modificadores = [
+                str(valor or "").strip().lower()
+                for valor
+                in (
+                    accion.get(
+                        "modificadores",
+                        [],
+                    )
+                    or []
+                )
+                if str(valor or "").strip()
+            ]
+
+            return (
+                not modificadores
+                and tecla
+                in {
+                    "enter",
+                    "return",
+                    "tab",
+                }
+            )
+
+        # ----------------------------------------------------
+        # ENTER / TAB CREADOS COMO COMANDO
+        # ----------------------------------------------------
+
+        if tipo == "comando_teclado":
+            parametros = [
+                parametro
+                for parametro
+                in (
+                    accion.get(
+                        "parametros",
+                        [],
+                    )
+                    or []
+                )
+                if str(
+                    parametro.get(
+                        "tecla",
+                        "",
+                    )
+                    or ""
+                ).strip()
+            ]
+
+            if len(parametros) != 1:
+                return False
+
+            parametro = parametros[0]
+
+            tecla = str(
+                parametro.get(
+                    "tecla",
+                    "",
+                )
+                or ""
+            ).strip().lower()
+
+            try:
+                repeticiones = max(
+                    1,
+                    int(
+                        parametro.get(
+                            "repeticiones",
+                            1,
+                        )
+                        or 1
+                    ),
+                )
+            except Exception:
+                repeticiones = 1
+
+            return (
+                tecla
+                in {
+                    "enter",
+                    "return",
+                    "tab",
+                }
+                and repeticiones == 1
+            )
+
+        return False
+
+    def contexto_materializable_rescate(
+        self,
+        contexto,
+    ):
+        if not isinstance(
+            contexto,
+            dict,
+        ):
+            return False
+
+        if not contexto:
+            return False
+
+        if self.contexto_pertenece_a_bin(
+            contexto
+        ):
+            return False
+
+        if self.contexto_es_superficie_transitoria_windows(
+            contexto
+        ):
+            return False
+
+        tipo = str(
+            contexto.get(
+                "tipo_recurso",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        proceso = str(
+            contexto.get(
+                "proceso",
+                "",
+            )
+            or ""
+        ).strip()
+
+        ejecutable = str(
+            contexto.get(
+                "ejecutable",
+                "",
+            )
+            or ""
+        ).strip()
+
+        url = str(
+            contexto.get(
+                "url",
+                "",
+            )
+            or ""
+        ).strip()
+
+        ruta = str(
+            contexto.get(
+                "ruta_recurso",
+                "",
+            )
+            or ""
+        ).strip()
+
+        # ----------------------------------------------------
+        # WEB
+        # Debe existir una URL concreta y un navegador.
+        # ----------------------------------------------------
+
+        if tipo == "web":
+            return bool(
+                url
+                and (
+                    proceso
+                    or ejecutable
+                )
+            )
+
+        # ----------------------------------------------------
+        # EXPLORADOR DE WINDOWS
+        # No sirve solo saber que es explorer.exe.
+        # Debemos conocer la carpeta/recurso.
+        # ----------------------------------------------------
+
+        if proceso.lower() == "explorer.exe":
+            return bool(
+                ruta
+            )
+
+        # ----------------------------------------------------
+        # ARCHIVO / CARPETA / RECURSO WINDOWS
+        # ----------------------------------------------------
+
+        if ruta:
+            return True
+
+        # ----------------------------------------------------
+        # SOFTWARE
+        # ----------------------------------------------------
+
+        if ejecutable:
+            return True
+
+        if proceso:
+            return True
+
+        return False
+
+    def obtener_contexto_rescate_siguiente_ventana(
+        self,
+        siguiente_accion,
+    ):
+        if not siguiente_accion:
+            return None
+
+        # ----------------------------------------------------
+        # PRIMERO:
+        # usar la ventana donde debe ejecutarse
+        # el siguiente paso.
+        # ----------------------------------------------------
+
+        for clave in (
+            "contexto_objetivo",
+            "contexto_despues",
+        ):
+            contexto = (
+                siguiente_accion.get(
+                    clave
+                )
+            )
+
+            if self.contexto_materializable_rescate(
+                contexto
+            ):
+                return dict(
+                    contexto
+                )
+
+        # ----------------------------------------------------
+        # SI EL SIGUIENTE PASO ES ABRIR APLICACIÓN,
+        # construir el contexto desde sus propios datos.
+        # ----------------------------------------------------
+
+        tipo = str(
+            siguiente_accion.get(
+                "tipo",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        if tipo == "abrir_aplicacion":
+            datos = (
+                siguiente_accion.get(
+                    "datos"
+                )
+                or {}
+            )
+
+            proceso = str(
+                datos.get(
+                    "proceso",
+                    "",
+                )
+                or ""
+            ).strip()
+
+            ejecutable = str(
+                datos.get(
+                    "ejecutable",
+                    "",
+                )
+                or ""
+            ).strip()
+
+            if (
+                proceso
+                or ejecutable
+            ):
+                esperado = {
+                    "tipo_recurso": "aplicacion",
+                    "proceso": proceso,
+                    "ejecutable": ejecutable,
+                }
+
+                contexto_despues = (
+                    siguiente_accion.get(
+                        "contexto_despues"
+                    )
+                    or {}
+                )
+
+                geometria = (
+                    contexto_despues.get(
+                        "geometria"
+                    )
+                )
+
+                if geometria:
+                    esperado[
+                        "geometria"
+                    ] = dict(
+                        geometria
+                    )
+
+                return esperado
+
+        return None
+
+    def intentar_rescate_siguiente_ventana(
+        self,
+        tarea,
+        accion,
+        estado_fallo,
+        motivo_fallo,
+    ):
+        # ----------------------------------------------------
+        # SOLO:
+        # clic / doble clic / Enter / Tab
+        # ----------------------------------------------------
+
+        if not self.accion_permite_rescate_siguiente_ventana(
+            accion
+        ):
+            return False
+
+        siguiente_accion = (
+            self.obtener_siguiente_accion_plan_real()
+        )
+
+        if not siguiente_accion:
+            return False
+
+        esperado = (
+            self.obtener_contexto_rescate_siguiente_ventana(
+                siguiente_accion
+            )
+        )
+
+        # ----------------------------------------------------
+        # EL SIGUIENTE PASO NO REPRESENTA UNA VENTANA
+        # MATERIALIZABLE.
+        #
+        # En ese caso NO saltamos nada.
+        # El error normal continúa.
+        # ----------------------------------------------------
+
+        if not esperado:
+            return False
+
+        # ----------------------------------------------------
+        # EVITAR SALTAR UN CLIC / ENTER / TAB
+        # CUANDO EL PASO SIGUIENTE SIGUE ESTANDO
+        # EN EL MISMO RECURSO.
+        # ----------------------------------------------------
+
+        contexto_origen = (
+            accion.get(
+                "contexto_objetivo"
+            )
+            or accion.get(
+                "contexto_despues"
+            )
+            or {}
+        )
+
+        if self.contexto_materializable_rescate(
+            contexto_origen
+        ):
+            try:
+                misma_identidad = (
+                    self.identidad_contextos_operativos(
+                        contexto_origen,
+                        esperado,
+                    )
+                )
+            except Exception:
+                misma_identidad = False
+
+            if misma_identidad is True:
+                return False
+
+        numero_fallido = (
+            self.indice_ejecucion_real
+            + 1
+        )
+
+        numero_siguiente = (
+            self.indice_ejecucion_real
+            + 2
+        )
+
+        self.registrar_evento_bin(
+            "FALLBACK",
+            (
+                f"RESCATE FINAL · "
+                f"Acción {numero_fallido} "
+                f"terminó en {estado_fallo}."
+            ),
+            (
+                f"Acción fallida: "
+                f"{accion.get('descripcion', 'Acción')}\n"
+                f"Paso siguiente: "
+                f"{siguiente_accion.get('descripcion', 'Acción')}\n"
+                f"{motivo_fallo}\n\n"
+                "VENTANA A MATERIALIZAR\n"
+                + self.formatear_contexto_operativo(
+                    esperado
+                )
+            ),
+        )
+
+        # ----------------------------------------------------
+        # QUITAR COOLDOWN DE APERTURA
+        # PORQUE ESTE ES EL RESCATE FINAL.
+        # ----------------------------------------------------
+
+        try:
+            self._cache_operativo_bin(
+                "correction_launch"
+            ).pop(
+                self.clave_correccion_contexto(
+                    esperado
+                ),
+                None,
+            )
+        except Exception:
+            pass
+
+        # ----------------------------------------------------
+        # USAR EL SUPERVISOR QUE YA TIENE BIN.
+        #
+        # Él se encarga de:
+        # - software
+        # - carpetas / Windows
+        # - Chrome
+        # - URL
+        # - cuenta / perfil
+        # - posición
+        # - tamaño
+        # - maximizado / minimizado
+        # ----------------------------------------------------
+
+        try:
+            rescate = (
+                self.asegurar_estado_contexto_ejecucion(
+                    esperado,
+                    permitir_abrir=True,
+                    activar=True,
+                )
+            )
+        except Exception as error:
+            self.registrar_evento_bin(
+                "ERROR",
+                "Falló el rescate final.",
+                str(
+                    error
+                ),
+            )
+
+            return False
+
+        decision_rescate = str(
+            rescate.get(
+                "decision",
+                "WAIT",
+            )
+            or "WAIT"
+        ).strip().upper()
+
+        if (
+            decision_rescate
+            == "FAILED"
+        ):
+            return False
+
+        if (
+            not rescate.get(
+                "ok"
+            )
+            and decision_rescate
+            not in {
+                "WAIT",
+                "READY",
+            }
+        ):
+            return False
+
+        # ----------------------------------------------------
+        # EL RESCATE FUE ACEPTADO.
+        #
+        # OMITIMOS ÚNICAMENTE LA ACCIÓN QUE FALLÓ.
+        # NO OMITIMOS EL PASO SIGUIENTE.
+        #
+        # El paso siguiente volverá a comprobar la ventana
+        # antes de ejecutarse.
+        # ----------------------------------------------------
+
+        self.registrar_evento_bin(
+            "FALLBACK",
+            (
+                f"Acción {numero_fallido} omitida. "
+                f"Continúo con la acción "
+                f"{numero_siguiente}."
+            ),
+            (
+                rescate.get(
+                    "motivo"
+                )
+                or (
+                    "La ventana siguiente quedó "
+                    "en proceso de apertura/corrección."
+                )
+            ),
+        )
+
+        self.ejecuciones_reales_completadas += 1
+        self.indice_ejecucion_real += 1
+
+        total = max(
+            1,
+            self.ejecuciones_reales_totales,
+        )
+
+        tarea[
+            "ejecuciones_reales_completadas"
+        ] = (
+            self.ejecuciones_reales_completadas
+        )
+
+        tarea["progreso"] = min(
+            100,
+            int(
+                (
+                    self.ejecuciones_reales_completadas
+                    / total
+                )
+                * 100
+            ),
+        )
+
+        tarea["detalle_estado"] = (
+            f"Repetición "
+            f"{self.repeticion_ejecucion_real}/"
+            f"{tarea['repeticiones_totales']} · "
+            f"Acción {numero_fallido} omitida "
+            "por rescate"
+        )
+
+        tarea[
+            "accion_actual_indice"
+        ] = None
+
+        # ----------------------------------------------------
+        # LIMPIAR EL SUPERVISOR DE LA ACCIÓN FALLIDA
+        # ----------------------------------------------------
+
+        self.fase_ejecucion_real = (
+            "espera_accion"
+        )
+
+        self.accion_real_actual = None
+        self.resultado_accion_real_actual = None
+
+        self.supervisor_hubo_wait = False
+        self.espera_supervisor_acumulada_ms = 0
+        self.inicio_espera_supervisor_monotonic = None
+        self.intentos_supervisor = 0
+        self.ultima_decision_supervisor = None
+        self.ultimo_motivo_supervisor = ""
+        self.delay_ejecucion_restante_ms = 0
+
+        self.refrescar_panel_acciones()
+
+        self.actualizar_tarjeta_tarea(
+            tarea["id"]
+        )
+
+        self.guardar_estado_ejecutor_real_en_tarea(
+            tarea
+        )
+
+        # ----------------------------------------------------
+        # CONTINUAR CON EL PASO SIGUIENTE.
+        #
+        # Ese paso hará su propia PRE-ACCIÓN y verificará
+        # que URL/cuenta/geometría estén correctas.
+        # ----------------------------------------------------
+
+        self.programar_siguiente_accion_real(
+            tarea
+        )
+
+        return True
 
     def procesar_checkpoint_accion_real(self):
         tarea = self.obtener_tarea_ejecutando()
@@ -11670,9 +17507,102 @@ class BIN(QMainWindow):
             contexto_actual,
         )
 
-        esperado_ms = self.tiempo_espera_supervisor_ms()
+        proceso_actual = ""
+
+        if contexto_actual:
+            proceso_actual = str(
+                contexto_actual.get(
+                    "proceso",
+                    "",
+                )
+                or ""
+            ).strip()
+
+        self.registrar_evento_bin(
+            "VERIFICA",
+            (
+                f"Supervisor: {decision}"
+            ),
+            (
+                f"Intento: {self.intentos_supervisor}\n"
+                f"Fuente: "
+                f"{resultado.get('fuente', 'determinista')}\n"
+                f"Proceso actual: "
+                f"{proceso_actual or 'sin confirmar'}\n"
+                f"{motivo}"
+            ),
+        )
+
+        esperado_ms = (
+            self.tiempo_espera_supervisor_ms()
+        )
+
+        timeout_supervisor_actual_ms = (
+            self.timeout_supervisor_ms
+        )
+
+        contexto_timeout = None
+
+        if modo == "preaccion":
+            contexto_timeout = (
+                accion.get(
+                    "contexto_objetivo"
+                )
+                or {}
+            )
+
+        elif siguiente_accion:
+            contexto_timeout = (
+                siguiente_accion.get(
+                    "contexto_objetivo"
+                )
+                or {}
+            )
+
+        else:
+            contexto_timeout = (
+                accion.get(
+                    "contexto_despues"
+                )
+                or {}
+            )
+
+        if (
+            str(
+                contexto_timeout.get(
+                    "tipo_recurso",
+                    "",
+                )
+                or ""
+            ).strip().lower()
+            == "web"
+            and contexto_timeout.get(
+                "cuenta_navegador"
+            )
+        ):
+            # Las comprobaciones de cuenta pueden
+            # utilizar UI Automation.
+            #
+            # Permitimos:
+            #
+            # intento 5
+            # ↓
+            # intento 12
+            # ↓
+            # Alt+F4
+            # ↓
+            # reapertura
+            # ↓
+            # evaluación final.
+            timeout_supervisor_actual_ms = max(
+                int(
+                    timeout_supervisor_actual_ms
+                ),
+                45_000,
+            )
 
         if decision == "READY":
+
             if self.supervisor_hubo_wait:
                 self.actualizar_chat_bin(
                     f"Sistema listo para continuar '{tarea['nombre']}'."
@@ -11736,35 +17666,97 @@ class BIN(QMainWindow):
 
             return
 
-        if esperado_ms >= self.timeout_supervisor_ms:
+        if esperado_ms >= timeout_supervisor_actual_ms:
+            motivo_timeout = (
+                motivo
+                or (
+                    "El sistema no confirmó un estado "
+                    "listo antes del timeout."
+                )
+            )
+
+            # =================================================
+            # ÚLTIMO RESCATE
+            #
+            # Si falló:
+            # - clic
+            # - doble clic
+            # - Enter
+            # - Tab
+            #
+            # mirar el paso siguiente.
+            #
+            # Si el siguiente paso necesita otra ventana,
+            # BIN intenta materializarla directamente y
+            # omite únicamente el disparador fallido.
+            # =================================================
+
+            if self.intentar_rescate_siguiente_ventana(
+                tarea,
+                accion,
+                "TIMEOUT",
+                motivo_timeout,
+            ):
+                return
+
+            # =================================================
+            # NO HABÍA RESCATE POSIBLE
+            # → ERROR NORMAL
+            # =================================================
+
             self.finalizar_ejecucion_con_error(
                 tarea,
                 self.formatear_error_supervisor(
                     tarea,
                     accion,
                     estado="TIMEOUT",
-                    motivo=(
-                        motivo
-                        or "El sistema no confirmó un estado listo antes del timeout."
-                    ),
+                    motivo=motivo_timeout,
                     contexto_actual=contexto_actual,
                     esperado_ms=esperado_ms,
                 ),
             )
+
             return
 
         if decision == "FAILED":
+            motivo_failed = (
+                motivo
+                or (
+                    "El supervisor detectó "
+                    "un fallo no recuperable."
+                )
+            )
+
+            # =================================================
+            # ÚLTIMO RESCATE ANTES DE FINALIZAR
+            # =================================================
+
+            if self.intentar_rescate_siguiente_ventana(
+                tarea,
+                accion,
+                "FAILED",
+                motivo_failed,
+            ):
+                return
+
+            # =================================================
+            # EL PASO SIGUIENTE NO ERA UNA VENTANA
+            # O NO PUDO MATERIALIZARSE.
+            # → ERROR DEFINITIVO
+            # =================================================
+
             self.finalizar_ejecucion_con_error(
                 tarea,
                 self.formatear_error_supervisor(
                     tarea,
                     accion,
                     estado="FAILED",
-                    motivo=motivo or "El supervisor detectó un fallo no recuperable.",
+                    motivo=motivo_failed,
                     contexto_actual=contexto_actual,
                     esperado_ms=esperado_ms,
                 ),
             )
+
             return
 
         # WAIT y AMBIGUOUS son recuperables. Mantener la misma acción
@@ -12361,14 +18353,20 @@ class BIN(QMainWindow):
                 "BIN está disponible."
             )
 
-        self.actualizar_chat_bin(
-            f"Finalicé '{tarea['nombre']}' tras "
-            f"{repeticiones} repetición(es). "
-            + (
-                "Próxima ejecución: " + self.formatear_proxima_ejecucion(proxima)
+        self.registrar_evento_bin(
+            "FINALIZA",
+            (
+                f"Finalicé '{tarea['nombre']}' tras "
+                f"{repeticiones} repetición(es)."
+            ),
+            (
+                "Próxima ejecución: "
+                + self.formatear_proxima_ejecucion(
+                    proxima
+                )
                 if proxima
                 else "No tiene una próxima ejecución."
-            )
+            ),
         )
 
         self.limpiar_panel_accion(
@@ -12457,7 +18455,11 @@ class BIN(QMainWindow):
                 "ERROR DE EJECUCIÓN\n\n" f"{tarea['nombre']}\n\n" f"{mensaje}"
             )
 
-        self.actualizar_chat_bin(f"Error en '{tarea['nombre']}': " f"{mensaje}")
+        self.registrar_evento_bin(
+            "ERROR",
+            f"Error en '{tarea['nombre']}'.",
+            mensaje,
+        )
 
         self.actualizar_tarjeta_tarea(tarea["id"])
         self.refrescar_panel_acciones()
@@ -12897,22 +18899,7 @@ class BIN(QMainWindow):
             )
 
             # =================================================
-            # NORMALIZAR VK DE LETRAS Y NÚMEROS
-            # =================================================
-            #
-            # Con combinaciones como:
-            #
-            # Ctrl + Shift + 1
-            #
-            # pynput puede devolver:
-            #
-            # char = None
-            # vk   = 49
-            #
-            # 49 es realmente la tecla "1".
-            #
-            # No queremos guardar "VK_49".
-            # Queremos guardar "1".
+            # NORMALIZAR VK DE LETRAS, NÚMEROS Y NUMPAD
             # =================================================
 
             nombre_vk = None
@@ -12933,7 +18920,6 @@ class BIN(QMainWindow):
                     # NÚMEROS SUPERIORES 0 - 9
                     #
                     # VK_0 = 48
-                    # VK_1 = 49
                     # ...
                     # VK_9 = 57
                     # -----------------------------------------
@@ -12955,6 +18941,40 @@ class BIN(QMainWindow):
                         nombre_vk = chr(
                             vk_entero
                         ).lower()
+
+                    # -----------------------------------------
+                    # TECLADO NUMÉRICO 0 - 9
+                    #
+                    # VK_NUMPAD0 = 96
+                    # VK_NUMPAD1 = 97
+                    # VK_NUMPAD2 = 98
+                    # ...
+                    # VK_NUMPAD9 = 105
+                    # -----------------------------------------
+
+                    elif 96 <= vk_entero <= 105:
+                        nombre_vk = str(
+                            vk_entero - 96
+                        )
+
+                    # -----------------------------------------
+                    # OPERADORES DEL TECLADO NUMÉRICO
+                    # -----------------------------------------
+
+                    elif vk_entero == 106:
+                        nombre_vk = "*"
+
+                    elif vk_entero == 107:
+                        nombre_vk = "+"
+
+                    elif vk_entero == 109:
+                        nombre_vk = "-"
+
+                    elif vk_entero == 110:
+                        nombre_vk = "."
+
+                    elif vk_entero == 111:
+                        nombre_vk = "/"
 
             # =================================================
             # ELEGIR NOMBRE REAL
@@ -12982,8 +19002,13 @@ class BIN(QMainWindow):
             # IDENTIFICADOR FÍSICO
             # =================================================
             #
-            # Conservamos el VK para que DOWN y UP de la misma
-            # tecla sigan identificándose correctamente.
+            # Conservamos el VK original como ID.
+            #
+            # Así DOWN y UP continúan correspondiendo a la
+            # misma tecla física aunque mostremos:
+            #
+            # VK_98  -> 2
+            # VK_101 -> 5
             # =================================================
 
             identificador = (
@@ -12995,13 +19020,7 @@ class BIN(QMainWindow):
             return {
                 "id": identificador,
                 "nombre": nombre,
-
-                # Si pynput no entregó carácter porque había
-                # modificadores, dejamos caracter como None.
-                #
-                # El replay utilizará "nombre", por ejemplo "1".
                 "caracter": caracter,
-
                 "vk": vk,
                 "especial": False,
             }
@@ -13023,8 +19042,7 @@ class BIN(QMainWindow):
             "caracter": None,
             "vk": None,
             "especial": True,
-        }
-    
+        }  
     # ========================================================
     # ¿EL PUNTO PERTENECE A BIN?
     # ========================================================
@@ -13323,44 +19341,600 @@ class BIN(QMainWindow):
             "descripcion": descripcion,
             "contexto_objetivo": contexto_objetivo,
             "contexto_despues": None,
-            "capturado_en": (datetime.now().isoformat()),
+            "capturado_en": (
+                datetime.now().isoformat()
+            ),
         }
 
         if datos_extra:
-            accion.update(datos_extra)
+            accion.update(
+                datos_extra
+            )
 
-        self.rutina_borrador.append(accion)
+        self.rutina_borrador.append(
+            accion
+        )
+
+        detalle = (
+            f"Tipo de acción: {tipo}\n"
+            + self.formatear_contexto_operativo(contexto_objetivo)
+        )
+
+        self.registrar_evento_bin(
+            "OBSERVA",
+            (
+                f"Paso {nuevo_id}: "
+                f"{descripcion}"
+            ),
+            detalle,
+        )
 
         return nuevo_id
 
     # ========================================================
-    # COMPLETAR CONTEXTO DESPUÉS DE UNA ACCIÓN
-    # ========================================================
+
+    def contexto_es_lanzador_aplicaciones(
+        self,
+        contexto,
+    ):
+        """
+        Devuelve True únicamente cuando el clic parece provenir
+        de una superficie de Windows usada para lanzar aplicaciones.
+
+        Evitamos compilar clics dentro de una carpeta normal de
+        Explorer porque podrían estar abriendo un archivo y no
+        simplemente una aplicación.
+        """
+
+        if not contexto:
+            return False
+
+        proceso = str(
+            contexto.get(
+                "proceso",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        clase = str(
+            contexto.get(
+                "clase",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        if proceso in {
+            "startmenuexperiencehost.exe",
+            "shellexperiencehost.exe",
+            "searchhost.exe",
+            "searchapp.exe",
+        }:
+            return True
+
+        if proceso != "explorer.exe":
+            return False
+
+        clases_shell = {
+            "shell_traywnd",
+            "shell_secondarytraywnd",
+            "progman",
+            "workerw",
+        }
+
+        return (
+            clase
+            in clases_shell
+        )
+
+    def compilar_apertura_aplicacion_desde_accion(
+        self,
+        accion,
+    ):
+        """
+        Si un clic demostrado sobre una superficie de lanzamiento
+        abrió una aplicación distinta, sustituye el replay por
+        coordenadas por una apertura directa del ejecutable.
+
+        La demostración física original se conserva como fallback.
+        """
+
+        if not accion:
+            return False
+
+        tipo = str(
+            accion.get(
+                "tipo",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        if tipo not in {
+            "click",
+            "doble_click",
+        }:
+            return False
+
+        contexto_antes = (
+            accion.get(
+                "contexto_objetivo"
+            )
+            or {}
+        )
+
+        contexto_despues = (
+            accion.get(
+                "contexto_despues"
+            )
+            or {}
+        )
+
+        proceso_antes = str(
+            contexto_antes.get(
+                "proceso",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        proceso_despues = str(
+            contexto_despues.get(
+                "proceso",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        ejecutable = str(
+            contexto_despues.get(
+                "ejecutable",
+                "",
+            )
+            or ""
+        ).strip()
+
+        if (
+            not proceso_despues
+            or proceso_despues
+            == proceso_antes
+        ):
+            return False
+
+        procesos_no_compilables = {
+            "explorer.exe",
+            "startmenuexperiencehost.exe",
+            "shellexperiencehost.exe",
+            "searchhost.exe",
+            "searchapp.exe",
+            "applicationframehost.exe",
+            "python.exe",
+            "pythonw.exe",
+        }
+
+        if (
+            proceso_despues
+            in procesos_no_compilables
+        ):
+            return False
+
+        if not self.contexto_es_lanzador_aplicaciones(
+            contexto_antes
+        ):
+            self.registrar_evento_bin(
+                "ANALIZA",
+                (
+                    "Detecté un cambio de aplicación "
+                    f"hacia {proceso_despues}, pero mantengo "
+                    "la acción física."
+                ),
+                (
+                    "El clic no provino de una superficie "
+                    "de lanzamiento segura. Puede tratarse "
+                    "de un archivo, enlace o función interna."
+                ),
+            )
+
+            return False
+
+        # ====================================================
+        # RESOLVER EJECUTABLE SIN PERDER LA DETECCIÓN
+        # ====================================================
+        #
+        # Antes BIN descartaba una apertura si psutil no
+        # entregaba inmediatamente la ruta del .exe.
+        #
+        # Eso es demasiado estricto para aplicaciones de
+        # Windows/UWP y para procesos que tardan en exponer
+        # su ruta. Primero intentamos resolverla por las rutas
+        # que BIN ya conoce. Si no aparece, conservamos el
+        # proceso y compilamos igualmente con fallback físico.
+        # ====================================================
+
+        ruta_resuelta = self.resolver_ruta_aplicacion_windows(
+            proceso_despues,
+            ejecutable,
+        )
+
+        if ruta_resuelta:
+            ejecutable = str(
+                ruta_resuelta
+            )
+
+        ruta_valida = False
+
+        if ejecutable:
+            try:
+                ruta_valida = Path(
+                    ejecutable
+                ).is_file()
+
+            except Exception:
+                ruta_valida = False
+
+        if not ruta_valida:
+            ejecutable = ""
+
+            self.registrar_evento_bin(
+                "ANALIZA",
+                (
+                    f"Detecté {proceso_despues}, "
+                    "pero todavía no tengo una ruta "
+                    "de ejecutable estable."
+                ),
+                (
+                    "Conservo el nombre real del proceso "
+                    "y compilo la apertura con el clic "
+                    "original como fallback."
+                ),
+            )
+
+        original = json.loads(
+            json.dumps(
+                accion,
+                ensure_ascii=False,
+            )
+        )
+
+        accion_id = original.get(
+            "id"
+        )
+
+        capturado_en = original.get(
+            "capturado_en"
+        )
+
+        nombre = (
+            Path(
+                ejecutable
+            ).stem
+            or Path(
+                proceso_despues
+            ).stem
+            or proceso_despues
+        )
+
+        accion.clear()
+
+        accion.update(
+            {
+                "id": accion_id,
+                "tipo": "abrir_aplicacion",
+                "origen": "compilacion_bin",
+                "descripcion": (
+                    "Abrir aplicación · "
+                    f"{nombre}"
+                ),
+                "contexto_objetivo": None,
+                "contexto_despues": (
+                    contexto_despues
+                ),
+                "capturado_en": capturado_en,
+                "datos": {
+                    "consulta": nombre,
+                    "proceso": proceso_despues,
+                    "ejecutable": ejecutable,
+                },
+                "compilada_por_bin": True,
+                "confianza": "alta",
+                "demostracion_original": (
+                    original
+                ),
+                "fallback": (
+                    original
+                ),
+            }
+        )
+
+        self.registrar_evento_bin(
+            "COMPILA",
+            (
+                f"Paso {accion_id}: "
+                "reemplazo el clic demostrado "
+                "por apertura directa."
+            ),
+            (
+                f"Aplicación: {nombre}\n"
+                f"Proceso: {proceso_despues}\n"
+                f"Ejecutable: {ejecutable}\n"
+                "El clic original queda guardado "
+                "como fallback."
+            ),
+        )
+
+        return True
+
+    def obtener_accion_borrador_por_id(
+        self,
+        accion_id,
+    ):
+        for accion in reversed(self.rutina_borrador):
+            ids_origen = accion.get("ids_origen", [])
+
+            if ids_origen:
+                if accion_id in ids_origen:
+                    return accion
+                continue
+
+            if accion.get("id") == accion_id:
+                return accion
+
+        return None
+
+    def geometria_cambio_significativo(
+        self,
+        contexto_antes,
+        contexto_despues,
+        tolerancia=8,
+    ):
+        if not contexto_antes or not contexto_despues:
+            return False
+
+        geo_antes = contexto_antes.get("geometria") or {}
+        geo_despues = contexto_despues.get("geometria") or {}
+
+        if not geo_antes or not geo_despues:
+            return False
+
+        if bool(geo_antes.get("maximizada")) != bool(geo_despues.get("maximizada")):
+            return True
+
+        if bool(geo_antes.get("minimizada")) != bool(geo_despues.get("minimizada")):
+            return True
+
+        for clave in ("x", "y", "ancho", "alto"):
+            try:
+                if abs(
+                    int(geo_antes.get(clave, 0))
+                    - int(geo_despues.get(clave, 0))
+                ) > int(tolerancia):
+                    return True
+            except Exception:
+                continue
+
+        return False
+
+    def compilar_ajuste_ventana_desde_arrastre(
+        self,
+        accion,
+    ):
+        """
+        Convierte únicamente los arrastres que realmente cambiaron
+        la geometría de la MISMA ventana en una acción correctiva.
+
+        Un arrastre interno (slider, objeto, archivo, selección, etc.)
+        conserva su reproducción física original.
+        """
+        if not accion:
+            return False
+
+        tipo = str(accion.get("tipo", "") or "").strip().lower()
+
+        if tipo not in {
+            "arrastrar",
+            "arrastre_central",
+            "arrastre_derecho",
+        }:
+            return False
+
+        antes = accion.get("contexto_objetivo") or {}
+        despues = accion.get("contexto_despues") or {}
+
+        if not antes or not despues:
+            return False
+
+        proceso_antes = str(antes.get("proceso", "") or "").strip().lower()
+        proceso_despues = str(despues.get("proceso", "") or "").strip().lower()
+
+        if not proceso_antes or proceso_antes != proceso_despues:
+            return False
+
+        hwnd_antes = antes.get("hwnd")
+        hwnd_despues = despues.get("hwnd")
+
+        if hwnd_antes and hwnd_despues and int(hwnd_antes) != int(hwnd_despues):
+            return False
+
+        identidad = self.identidad_contextos_operativos(antes, despues)
+
+        if identidad is False:
+            return False
+
+        if not self.geometria_cambio_significativo(antes, despues):
+            return False
+
+        original = json.loads(
+            json.dumps(
+                accion,
+                ensure_ascii=False,
+            )
+        )
+
+        accion_id = original.get("id")
+        capturado_en = original.get("capturado_en")
+
+        titulo = str(
+            despues.get("titulo")
+            or despues.get("proceso")
+            or "Ventana"
+        ).strip()
+
+        geo_antes = antes.get("geometria") or {}
+        geo_despues = despues.get("geometria") or {}
+
+        accion.clear()
+        accion.update(
+            {
+                "id": accion_id,
+                "tipo": "ajustar_ventana",
+                "origen": "compilacion_bin_estado",
+                "descripcion": f"Ajustar ventana · {titulo}",
+                "contexto_objetivo": despues,
+                "contexto_despues": despues,
+                "capturado_en": capturado_en,
+                "datos": {
+                    "contexto_recordado": despues,
+                },
+                "compilada_por_bin": True,
+                "confianza": "alta",
+                "demostracion_original": original,
+                "fallback": original,
+            }
+        )
+
+        self.registrar_evento_bin(
+            "COMPILA",
+            (
+                f"Paso {accion_id}: el arrastre cambió la geometría "
+                "de la ventana. Lo convierto en una corrección de estado."
+            ),
+            (
+                "ANTES\n"
+                f"X={geo_antes.get('x', '--')} Y={geo_antes.get('y', '--')} · "
+                f"{geo_antes.get('ancho', '--')}×{geo_antes.get('alto', '--')}\n\n"
+                "OBJETIVO RECORDADO\n"
+                f"X={geo_despues.get('x', '--')} Y={geo_despues.get('y', '--')} · "
+                f"{geo_despues.get('ancho', '--')}×{geo_despues.get('alto', '--')}\n"
+                "El arrastre físico original queda guardado como fallback."
+            ),
+        )
+
+        return True
+
+    def observar_resultado_accion_global(
+        self,
+        accion_id,
+        intento=1,
+        max_intentos=16,
+    ):
+        """
+        Reobserva el resultado de un clic de lanzamiento durante varios
+        segundos. Esto evita perder aplicaciones que tardan más de 450 ms
+        en tomar el foreground después de hacer clic en Inicio.
+        """
+        accion = self.obtener_accion_borrador_por_id(accion_id)
+
+        if not accion:
+            return
+
+        contexto_despues = self.obtener_contexto_ventana_activa()
+
+        if contexto_despues:
+            accion["contexto_despues"] = contexto_despues
+
+        antes = accion.get("contexto_objetivo") or {}
+        despues = accion.get("contexto_despues") or {}
+
+        self.registrar_evento_bin(
+            "CONTEXTO",
+            (
+                f"Analizando resultado del paso {accion_id} "
+                f"· observación {intento}/{max_intentos}."
+            ),
+            (
+                "ANTES\n"
+                + self.formatear_contexto_operativo(antes)
+                + "\n\nDESPUÉS\n"
+                + self.formatear_contexto_operativo(despues)
+            ),
+        )
+
+        if self.compilar_apertura_aplicacion_desde_accion(accion):
+            return
+
+        if self.compilar_ajuste_ventana_desde_arrastre(accion):
+            return
+
+        tipo = str(accion.get("tipo", "") or "").strip().lower()
+
+        es_click_lanzador = (
+            tipo in {"click", "doble_click"}
+            and self.contexto_es_lanzador_aplicaciones(antes)
+        )
+
+        if not es_click_lanzador:
+            return
+
+        proceso_antes = str(antes.get("proceso", "") or "").strip().lower()
+        proceso_despues = str(despues.get("proceso", "") or "").strip().lower()
+
+        resultado_aun_transitorio = (
+            not proceso_despues
+            or proceso_despues == proceso_antes
+            or self.contexto_es_superficie_transitoria_windows(despues)
+            or proceso_despues == "explorer.exe"
+        )
+
+        if not resultado_aun_transitorio:
+            # Ya apareció otro proceso, pero si no se pudo compilar por
+            # falta temporal del ejecutable damos un par de observaciones
+            # adicionales antes de rendirnos.
+            resultado_aun_transitorio = not bool(
+                str(despues.get("ejecutable", "") or "").strip()
+            )
+
+        if resultado_aun_transitorio and intento < max_intentos:
+            self.registrar_evento_bin(
+                "ANALIZA",
+                "El clic de Inicio todavía no produjo una aplicación confirmada.",
+                (
+                    "Mantengo el clic original y vuelvo a observar.\n"
+                    f"Próxima comprobación: {intento + 1}/{max_intentos}."
+                ),
+            )
+
+            QTimer.singleShot(
+                250,
+                lambda accion_id=accion_id, intento=intento + 1, max_intentos=max_intentos:
+                self.observar_resultado_accion_global(
+                    accion_id,
+                    intento,
+                    max_intentos,
+                ),
+            )
+
+            return
+
+        self.registrar_evento_bin(
+            "ANALIZA",
+            "No pude confirmar una apertura de aplicación producida por ese clic.",
+            (
+                "La acción física original se conserva. "
+                "En esta versión no compilo aperturas realizadas con Enter."
+            ),
+        )
 
     def completar_contexto_accion_global(
         self,
         accion_id,
     ):
-        contexto_despues = self.obtener_contexto_ventana_activa()
+        self.observar_resultado_accion_global(
+            accion_id,
+            intento=1,
+            max_intentos=16,
+        )
 
-        for accion in reversed(self.rutina_borrador):
-            ids_origen = accion.get(
-                "ids_origen",
-                [],
-            )
-
-            if ids_origen:
-                if accion_id not in ids_origen:
-                    continue
-            elif accion.get("id") != accion_id:
-                continue
-
-            accion["contexto_despues"] = contexto_despues
-
-            return
-
-    # ========================================================
-    # FIRMA DE CONTEXTO PARA AGRUPACIÓN
     # ========================================================
 
     def firma_contexto_agrupacion(
@@ -15619,7 +22193,6 @@ class BIN(QMainWindow):
                             (
                                 "Comando · "
                                 "Llamar menú de Windows · "
-                                "Win · antes 1s · después 3s"
                             ),
                             None,
                             {
@@ -15635,8 +22208,6 @@ class BIN(QMainWindow):
                                         "repeticiones": 1,
                                     }
                                 ],
-                                "espera_antes_ms": 1000,
-                                "espera_despues_ms": 3000,
                             },
                         )
 
@@ -16741,7 +23312,11 @@ class BIN(QMainWindow):
     # LEER CONTEXTO DE UNA VENTANA DE WINDOWS
     # ========================================================
 
-    def obtener_contexto_hwnd(self, hwnd):
+    def obtener_contexto_hwnd(
+        self,
+        hwnd,
+        enriquecer=True,
+    ):
         if sys.platform != "win32" or not hwnd:
             return None
 
@@ -16772,9 +23347,7 @@ class BIN(QMainWindow):
             user32.GetWindowThreadProcessId.restype = wintypes.DWORD
 
             hwnd = int(hwnd)
-
             longitud = user32.GetWindowTextLengthW(hwnd)
-
             buffer_titulo = ctypes.create_unicode_buffer(max(1, longitud + 1))
 
             user32.GetWindowTextW(
@@ -16784,7 +23357,6 @@ class BIN(QMainWindow):
             )
 
             buffer_clase = ctypes.create_unicode_buffer(256)
-
             user32.GetClassNameW(
                 hwnd,
                 buffer_clase,
@@ -16792,7 +23364,6 @@ class BIN(QMainWindow):
             )
 
             pid = wintypes.DWORD()
-
             user32.GetWindowThreadProcessId(
                 hwnd,
                 ctypes.byref(pid),
@@ -16802,45 +23373,26 @@ class BIN(QMainWindow):
             ejecutable = ""
 
             if pid.value:
-
                 try:
-
                     proceso_objeto = psutil.Process(pid.value)
-
                     proceso = proceso_objeto.name()
 
                     try:
-
                         ejecutable = proceso_objeto.exe()
-
                     except (
                         psutil.NoSuchProcess,
                         psutil.AccessDenied,
                         psutil.ZombieProcess,
                     ):
-
                         ejecutable = ""
-
                 except (
                     psutil.NoSuchProcess,
                     psutil.AccessDenied,
                     psutil.ZombieProcess,
                 ):
+                    pass
 
-                    proceso = ""
-                    ejecutable = ""
-
-                try:
-                    proceso = psutil.Process(pid.value).name()
-
-                except (
-                    psutil.NoSuchProcess,
-                    psutil.AccessDenied,
-                    psutil.ZombieProcess,
-                ):
-                    proceso = ""
-
-            return {
+            contexto = {
                 "hwnd": hwnd,
                 "pid": int(pid.value),
                 "proceso": proceso,
@@ -16848,6 +23400,15 @@ class BIN(QMainWindow):
                 "titulo": buffer_titulo.value.strip(),
                 "clase": buffer_clase.value.strip(),
             }
+
+            if enriquecer:
+                return self.enriquecer_contexto_operativo(contexto)
+
+            geometria = self.obtener_geometria_ventana(hwnd)
+            if geometria:
+                contexto["geometria"] = geometria
+
+            return contexto
 
         except Exception:
             return None
@@ -18197,6 +24758,537 @@ class BIN(QMainWindow):
         self.hilo_captura = None
 
     # ========================================================
+    # MONITOR CONTINUO DE VENTANAS DE WINDOWS
+    # ========================================================
+
+    def enumerar_hwnds_ventanas_visibles_bin(
+        self,
+    ):
+        """
+        Obtiene únicamente los HWND visibles de nivel superior.
+
+        Esta lectura es deliberadamente liviana:
+        no consulta URL, UI Automation ni metadatos pesados
+        en cada ciclo. Los datos completos se leen solamente
+        cuando aparece una ventana nueva.
+        """
+
+        if sys.platform != "win32":
+            return set()
+
+        try:
+            user32 = ctypes.windll.user32
+            kernel32 = ctypes.windll.kernel32
+
+            pid_bin = int(
+                kernel32.GetCurrentProcessId()
+            )
+
+            ventanas = set()
+
+            WNDENUMPROC = ctypes.WINFUNCTYPE(
+                wintypes.BOOL,
+                wintypes.HWND,
+                wintypes.LPARAM,
+            )
+
+            def callback(
+                hwnd,
+                lparam,
+            ):
+                try:
+                    hwnd = int(hwnd)
+
+                    if not hwnd:
+                        return True
+
+                    if not user32.IsWindowVisible(
+                        hwnd
+                    ):
+                        return True
+
+                    pid = wintypes.DWORD()
+
+                    user32.GetWindowThreadProcessId(
+                        hwnd,
+                        ctypes.byref(pid),
+                    )
+
+                    if int(pid.value) == pid_bin:
+                        return True
+
+                    ventanas.add(
+                        hwnd
+                    )
+
+                except Exception:
+                    pass
+
+                return True
+
+            user32.EnumWindows(
+                WNDENUMPROC(callback),
+                0,
+            )
+
+            return ventanas
+
+        except Exception:
+            return set()
+
+    def buscar_click_lanzador_reciente_bin(
+        self,
+        detectado_en,
+        ventana_contexto,
+        ventana_segundos=6.0,
+    ):
+        """
+        Busca el clic/doble clic de lanzamiento más reciente
+        que razonablemente pudo producir la ventana nueva.
+
+        Importante:
+        una ventana puede aparecer ANTES de que el clic simple
+        termine de confirmarse como acción, por eso el monitor
+        conserva las ventanas nuevas durante unos segundos.
+        """
+
+        if not self.grabando:
+            return None
+
+        if not self.rutina_en_borrador:
+            return None
+
+        try:
+            limite = max(
+                1.0,
+                float(
+                    ventana_segundos
+                ),
+            )
+        except Exception:
+            limite = 6.0
+
+        proceso_nuevo = str(
+            (ventana_contexto or {}).get(
+                "proceso",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        if not proceso_nuevo:
+            return None
+
+        for accion in reversed(
+            self.rutina_borrador[-20:]
+        ):
+            tipo = str(
+                accion.get(
+                    "tipo",
+                    "",
+                )
+                or ""
+            ).strip().lower()
+
+            if tipo not in {
+                "click",
+                "doble_click",
+            }:
+                continue
+
+            contexto_antes = (
+                accion.get(
+                    "contexto_objetivo"
+                )
+                or {}
+            )
+
+            if not self.contexto_es_lanzador_aplicaciones(
+                contexto_antes
+            ):
+                continue
+
+            marca = accion.get(
+                "capturado_en"
+            )
+
+            if not marca:
+                continue
+
+            try:
+                momento_accion = (
+                    datetime.fromisoformat(
+                        str(
+                            marca
+                        )
+                    )
+                )
+
+                diferencia = abs(
+                    (
+                        detectado_en
+                        - momento_accion
+                    ).total_seconds()
+                )
+
+            except Exception:
+                continue
+
+            if diferencia > limite:
+                continue
+
+            proceso_antes = str(
+                contexto_antes.get(
+                    "proceso",
+                    "",
+                )
+                or ""
+            ).strip().lower()
+
+            if (
+                proceso_antes
+                and proceso_nuevo
+                == proceso_antes
+            ):
+                continue
+
+            return accion
+
+        return None
+
+    def monitorizar_cambios_ventanas_bin(
+        self,
+    ):
+        """
+        Mantiene un inventario liviano de ventanas visibles.
+
+        Detecta:
+        - ventanas que aparecen;
+        - ventanas que desaparecen.
+
+        Durante una demostración, una ventana nueva se conserva
+        temporalmente para poder asociarla al clic de lanzamiento
+        incluso si Windows abrió la aplicación antes de que BIN
+        terminara de confirmar el clic simple/doble clic.
+        """
+
+        if sys.platform != "win32":
+            return
+
+        actuales = (
+            self.enumerar_hwnds_ventanas_visibles_bin()
+        )
+
+        anteriores = getattr(
+            self,
+            "_hwnds_ventanas_monitor_bin",
+            None,
+        )
+
+        # Primera lectura = línea base.
+        # No debemos considerar como "nuevas" todas las
+        # ventanas que ya estaban abiertas al iniciar BIN.
+        if anteriores is None:
+            self._hwnds_ventanas_monitor_bin = (
+                set(
+                    actuales
+                )
+            )
+
+            self._contextos_ventanas_monitor_bin = {}
+
+            self._ventanas_nuevas_pendientes_bin = []
+
+            return
+
+        anteriores = set(
+            anteriores
+        )
+
+        nuevos = (
+            actuales
+            - anteriores
+        )
+
+        cerrados = (
+            anteriores
+            - actuales
+        )
+
+        self._hwnds_ventanas_monitor_bin = (
+            set(
+                actuales
+            )
+        )
+
+        contextos_conocidos = getattr(
+            self,
+            "_contextos_ventanas_monitor_bin",
+            None,
+        )
+
+        if not isinstance(
+            contextos_conocidos,
+            dict,
+        ):
+            contextos_conocidos = {}
+
+            self._contextos_ventanas_monitor_bin = (
+                contextos_conocidos
+            )
+
+        pendientes = getattr(
+            self,
+            "_ventanas_nuevas_pendientes_bin",
+            None,
+        )
+
+        if not isinstance(
+            pendientes,
+            list,
+        ):
+            pendientes = []
+
+            self._ventanas_nuevas_pendientes_bin = (
+                pendientes
+            )
+
+        # ====================================================
+        # VENTANAS NUEVAS
+        # ====================================================
+
+        for hwnd in nuevos:
+            contexto = self.obtener_contexto_hwnd(
+                hwnd,
+                enriquecer=False,
+            )
+
+            if not contexto:
+                continue
+
+            if self.contexto_pertenece_a_bin(
+                contexto
+            ):
+                continue
+
+            contextos_conocidos[
+                int(
+                    hwnd
+                )
+            ] = dict(
+                contexto
+            )
+
+            # Inicio / Search son superficies transitorias.
+            # Las observamos como parte de Windows, pero no
+            # las confundimos con la aplicación lanzada.
+            if self.contexto_es_superficie_transitoria_windows(
+                contexto
+            ):
+                continue
+
+            momento = datetime.now()
+
+            if (
+                self.grabando
+                or self.ejecucion_fisica_activa
+            ):
+                self.registrar_evento_bin(
+                    "VENTANA ABIERTA",
+                    (
+                        "Windows informó una nueva "
+                        "ventana visible."
+                    ),
+                    self.formatear_contexto_operativo(
+                        contexto
+                    ),
+                )
+
+            if self.grabando:
+                pendientes.append(
+                    {
+                        "hwnd": int(
+                            hwnd
+                        ),
+                        "detectado_en": momento,
+                        "momento_monotonic": time.monotonic(),
+                        "contexto": dict(
+                            contexto
+                        ),
+                    }
+                )
+
+        # ====================================================
+        # VENTANAS CERRADAS
+        # ====================================================
+
+        for hwnd in cerrados:
+            contexto = contextos_conocidos.pop(
+                int(
+                    hwnd
+                ),
+                None,
+            )
+
+            if (
+                contexto
+                and not self.contexto_es_superficie_transitoria_windows(
+                    contexto
+                )
+                and (
+                    self.grabando
+                    or self.ejecucion_fisica_activa
+                )
+            ):
+                self.registrar_evento_bin(
+                    "VENTANA CERRADA",
+                    (
+                        "Windows informó que una "
+                        "ventana dejó de existir."
+                    ),
+                    self.formatear_contexto_operativo(
+                        contexto
+                    ),
+                )
+
+        # ====================================================
+        # ASOCIAR VENTANAS NUEVAS A CLICS DE LANZAMIENTO
+        # ====================================================
+
+        ahora_monotonic = time.monotonic()
+
+        pendientes_vigentes = []
+
+        for pendiente in pendientes:
+            try:
+                edad = (
+                    ahora_monotonic
+                    - float(
+                        pendiente.get(
+                            "momento_monotonic",
+                            0.0,
+                        )
+                        or 0.0
+                    )
+                )
+            except Exception:
+                edad = 999.0
+
+            if edad > 6.0:
+                continue
+
+            hwnd = int(
+                pendiente.get(
+                    "hwnd",
+                    0,
+                )
+                or 0
+            )
+
+            if (
+                not hwnd
+                or hwnd not in actuales
+            ):
+                continue
+
+            contexto = (
+                pendiente.get(
+                    "contexto"
+                )
+                or {}
+            )
+
+            accion = (
+                self.buscar_click_lanzador_reciente_bin(
+                    pendiente.get(
+                        "detectado_en",
+                        datetime.now(),
+                    ),
+                    contexto,
+                    ventana_segundos=6.0,
+                )
+            )
+
+            if accion is None:
+                pendientes_vigentes.append(
+                    pendiente
+                )
+
+                continue
+
+            # Volvemos a leer la ventana justo al asociarla.
+            # Así obtenemos el ejecutable/posición más recientes
+            # sin hacer consultas pesadas en cada tick.
+            contexto_actual = self.obtener_contexto_hwnd(
+                hwnd,
+                enriquecer=False,
+            )
+
+            if contexto_actual:
+                contexto = contexto_actual
+
+                pendiente[
+                    "contexto"
+                ] = dict(
+                    contexto
+                )
+
+            accion[
+                "contexto_despues"
+            ] = dict(
+                contexto
+            )
+
+            self.registrar_evento_bin(
+                "ASOCIA",
+                (
+                    f"Paso {accion.get('id')}: "
+                    "la ventana nueva coincide temporalmente "
+                    "con el clic de lanzamiento."
+                ),
+                (
+                    "CLIC DE ORIGEN\n"
+                    + self.formatear_contexto_operativo(
+                        accion.get(
+                            "contexto_objetivo"
+                        )
+                        or {}
+                    )
+                    + "\n\nVENTANA ABIERTA\n"
+                    + self.formatear_contexto_operativo(
+                        contexto
+                    )
+                ),
+            )
+
+            compilada = (
+                self.compilar_apertura_aplicacion_desde_accion(
+                    accion
+                )
+            )
+
+            if not compilada:
+                # Aunque no pueda compilar la apertura directa,
+                # la acción conserva contexto_despues con el
+                # software real que apareció.
+                self.registrar_evento_bin(
+                    "DETECTA",
+                    (
+                        f"Paso {accion.get('id')}: "
+                        "software abierto detectado."
+                    ),
+                    self.formatear_contexto_operativo(
+                        contexto
+                    ),
+                )
+
+        self._ventanas_nuevas_pendientes_bin = (
+            pendientes_vigentes[
+                -20:
+            ]
+        )
+
+    # ========================================================
     # TEMPORIZADORES
     # ========================================================
 
@@ -18215,6 +25307,20 @@ class BIN(QMainWindow):
         self.timer_motor = QTimer(self)
         self.timer_motor.timeout.connect(self.actualizar_motor_ejecucion)
         self.timer_motor.start(250)
+
+        # MONITOR CONTINUO DE VENTANAS
+        #
+        # Mantiene una línea base aun cuando BIN no está grabando,
+        # para que al comenzar una demostración pueda distinguir
+        # una ventana que YA existía de una que acaba de abrirse.
+        self.timer_ventanas_bin = QTimer(self)
+        self.timer_ventanas_bin.timeout.connect(
+            self.monitorizar_cambios_ventanas_bin
+        )
+        self.timer_ventanas_bin.start(250)
+
+        # Crear inmediatamente la línea base.
+        self.monitorizar_cambios_ventanas_bin()
 
         # SCHEDULER AUTOMÁTICO
         self.timer_scheduler = QTimer(self)

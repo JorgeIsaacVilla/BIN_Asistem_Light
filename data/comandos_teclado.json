@@ -327,5 +327,20 @@
             }
         ],
         "personalizado": true
+    },
+    {
+        "id": "custom-20260902050507381128",
+        "nombre": "escribir chrome",
+        "parametros": [
+            {
+                "tecla": "Space",
+                "repeticiones": 1
+            },
+            {
+                "tecla": "chrome",
+                "repeticiones": 1
+            }
+        ],
+        "personalizado": true
     }
 ]
