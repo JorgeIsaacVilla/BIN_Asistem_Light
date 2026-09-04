@@ -1,5 +1,7 @@
-#v1.6.15
-
+#v1.6.13
+# Etapa 2 - Part 2: auditoría sincronizada por generaciones
+# Segundo bloque web semántico deshabilitado: la matrícula web usa
+# perfil/cuenta del navegador + URL confirmada únicamente desde omnibox.
 import sys
 import json
 import os
@@ -9,7 +11,6 @@ import ctypes
 import time
 import shutil
 import subprocess
-import html
 from ctypes import wintypes
 
 try:
@@ -60,7 +61,6 @@ from PySide6.QtWidgets import (
     QDoubleSpinBox,
     QFileDialog,
     QStackedWidget,
-    QSizePolicy,
 )
 
 # ============================================================
@@ -86,8 +86,6 @@ AZUL = "#59baff"
 ROJO = "#ff5364"
 GRIS = "#858d9a"
 MORADO = "#b982ff"
-AMARILLO_FLUORESCENTE = "#efff00"
-VERDE_FLUORESCENTE = "#39ff14"
 
 
 # ============================================================
@@ -1046,22 +1044,10 @@ class CommandLibraryDialog(QDialog):
             self.comando_seleccionado = None
 
             if tipo == "click_derecho":
-
-                self.tipo_click_mouse.setCurrentText(
-                    "Derecho"
-                )
-
-            elif tipo == "doble_click":
-
-                self.tipo_click_mouse.setCurrentText(
-                    "Doble clic"
-                )
-
+                self.tipo_click_mouse.setCurrentText("Derecho")
             else:
+                self.tipo_click_mouse.setCurrentText("Izquierdo")
 
-                self.tipo_click_mouse.setCurrentText(
-                    "Izquierdo"
-                )
             if tipo == "doble_click":
                 cantidad = 2
             else:
@@ -1184,42 +1170,11 @@ class CommandLibraryDialog(QDialog):
     # TEXTO DE UN COMANDO
     # ========================================================
 
-    def texto_comando(
-        self,
-        comando,
-        limite_destino=52,
-    ):
-        if str(
-            comando.get(
-                "tipo_comando",
-                "",
-            )
-            or ""
-        ).lower() == "ventana":
-
-            ventana = (
-                comando.get(
-                    "ventana"
-                )
-                or {}
-            )
-
-            tipo = str(
-                ventana.get(
-                    "tipo_ventana",
-                    "Ventana",
-                )
-                or "Ventana"
-            ).upper()
-
-            software = str(
-                ventana.get(
-                    "software_nombre",
-                    "",
-                )
-                or ""
-            ).strip()
-
+    def texto_comando(self, comando):
+        if str(comando.get("tipo_comando", "") or "").lower() == "ventana":
+            ventana = comando.get("ventana") or {}
+            tipo = str(ventana.get("tipo_ventana", "Ventana") or "Ventana").upper()
+            software = str(ventana.get("software_nombre", "") or "").strip()
             destino = str(
                 ventana.get("url")
                 or ventana.get("ruta_recurso")
@@ -1227,83 +1182,31 @@ class CommandLibraryDialog(QDialog):
                 or ""
             ).strip()
 
-            partes = [
-                f"VENTANA · {tipo}"
-            ]
-
+            partes = [f"VENTANA · {tipo}"]
             if software:
-                partes.append(
-                    software
-                )
-
+                partes.append(software)
             if destino:
-                destino_visual = destino
+                partes.append(destino)
 
-                if (
-                    limite_destino is not None
-                    and len(destino_visual)
-                    > int(limite_destino)
-                ):
-                    limite = max(
-                        12,
-                        int(
-                            limite_destino
-                        ),
-                    )
-
-                    destino_visual = (
-                        destino_visual[
-                            : limite - 1
-                        ]
-                        + "…"
-                    )
-
-                partes.append(
-                    destino_visual
-                )
-
-            return " · ".join(
-                partes
-            )
+            return " · ".join(partes)
 
         partes = []
 
-        for parametro in comando.get(
-            "parametros",
-            [],
-        ):
-            tecla = str(
-                parametro.get(
-                    "tecla",
-                    "",
-                )
-                or ""
-            ).strip()
+        for parametro in comando.get("parametros", []):
+            tecla = str(parametro.get("tecla", "") or "").strip()
 
             repeticiones = max(
                 1,
-                int(
-                    parametro.get(
-                        "repeticiones",
-                        1,
-                    )
-                    or 1
-                ),
+                int(parametro.get("repeticiones", 1) or 1),
             )
 
             if repeticiones > 1:
-                partes.append(
-                    f"{tecla}^{repeticiones}"
-                )
+                partes.append(f"{tecla}^{repeticiones}")
             else:
-                partes.append(
-                    tecla
-                )
+                partes.append(tecla)
 
-        return " + ".join(
-            partes
-        )
-    
+        return " + ".join(partes)
+
     # ========================================================
     # INTERFAZ
     # ========================================================
@@ -1351,27 +1254,9 @@ class CommandLibraryDialog(QDialog):
         biblioteca_layout.addWidget(self.scroll_comandos, 1)
 
         self.label_seleccionado = QLabel("Ningún comando seleccionado")
-
-        self.label_seleccionado.setWordWrap(
-            True
-        )
-
-        self.label_seleccionado.setObjectName(
-            "textoSecundario"
-        )
-
-        self.label_seleccionado.setMinimumWidth(
-            0
-        )
-
-        self.label_seleccionado.setSizePolicy(
-            QSizePolicy.Ignored,
-            QSizePolicy.Preferred,
-        )
-
-        biblioteca_layout.addWidget(
-            self.label_seleccionado
-        )
+        self.label_seleccionado.setWordWrap(True)
+        self.label_seleccionado.setObjectName("textoSecundario")
+        biblioteca_layout.addWidget(self.label_seleccionado)
 
         self.boton_agregar_accion = QPushButton("AGREGAR ACCIÓN")
         self.boton_agregar_accion.setObjectName("botonPrincipal")
@@ -1461,36 +1346,14 @@ class CommandLibraryDialog(QDialog):
         formulario_mouse = QFormLayout()
 
         self.tipo_click_mouse = QComboBox()
-        self.tipo_click_mouse.addItems(["Izquierdo", "Doble clic", "Derecho"])
+        self.tipo_click_mouse.addItems(["Izquierdo", "Derecho"])
         formulario_mouse.addRow("Botón:", self.tipo_click_mouse)
 
         self.cantidad_click_mouse = QSpinBox()
-
-        self.cantidad_click_mouse.setRange(
-            1,
-            2,
-        )
-
-        self.cantidad_click_mouse.setValue(
-            1
-        )
-
-        self.cantidad_click_mouse.setToolTip(
-            "1 = clic normal\n2 = doble clic"
-        )
-
-        formulario_mouse.addRow(
-            "Veces:",
-            self.cantidad_click_mouse,
-        )
-
-        self.tipo_click_mouse.currentTextChanged.connect(
-            self.actualizar_tipo_click_manual
-        )
-
-        self.actualizar_tipo_click_manual(
-            self.tipo_click_mouse.currentText()
-        )
+        self.cantidad_click_mouse.setRange(1, 2)
+        self.cantidad_click_mouse.setValue(1)
+        self.cantidad_click_mouse.setToolTip("1 = clic normal\n2 = doble clic")
+        formulario_mouse.addRow("Veces:", self.cantidad_click_mouse)
 
         self.coordenada_mouse_x = QSpinBox()
         self.coordenada_mouse_x.setRange(-32768, 32767)
@@ -3115,10 +2978,6 @@ class CommandLibraryDialog(QDialog):
                 "filaComando"
             )
 
-            fila.setMinimumWidth(
-                0
-            )
-
             fila_layout = QHBoxLayout(
                 fila
             )
@@ -3139,20 +2998,6 @@ class CommandLibraryDialog(QDialog):
 
             boton.setMinimumHeight(
                 52
-            )
-
-            boton.setMinimumWidth(
-                0
-            )
-
-            boton.setSizePolicy(
-                QSizePolicy.Ignored,
-                QSizePolicy.Preferred,
-            )
-
-            boton.setToolTip(
-                f"{comando.get('nombre', 'Comando')}\n"
-                f"{self.texto_comando(comando, limite_destino=None)}"
             )
 
             boton.clicked.connect(
@@ -3275,62 +3120,20 @@ class CommandLibraryDialog(QDialog):
         self.boton_agregar_accion.setEnabled(True)
 
     # ========================================================
-    # TIPO DE CLIC MANUAL
-    # ========================================================
-
-    def actualizar_tipo_click_manual(
-        self,
-        texto,
-    ):
-        texto = str(
-            texto
-            or ""
-        ).strip()
-
-        if texto == "Doble clic":
-
-            self.cantidad_click_mouse.setValue(
-                2
-            )
-
-            self.cantidad_click_mouse.setEnabled(
-                False
-            )
-
-        elif texto == "Derecho":
-
-            self.cantidad_click_mouse.setValue(
-                1
-            )
-
-            self.cantidad_click_mouse.setEnabled(
-                False
-            )
-
-        else:
-
-            self.cantidad_click_mouse.setValue(
-                1
-            )
-
-            self.cantidad_click_mouse.setEnabled(
-                True
-            )
-
-    # ========================================================
     # SELECCIONAR CLIC COMO ACCIÓN
     # ========================================================
 
     def seleccionar_click_mouse(
         self,
     ):
-        self.cambiar_modo_constructor(
-            "clic"
-        )
+        self.cambiar_modo_constructor("clic")
 
         self.modo_mouse_seleccionado = True
+
         self.modo_ventana_seleccionado = False
+
         self.usar_accion_original = False
+
         self.comando_seleccionado = None
 
         boton = (
@@ -3338,30 +3141,10 @@ class CommandLibraryDialog(QDialog):
             .currentText()
         )
 
-        # Siempre existe un valor inicial.
-        cantidad = max(
-            1,
-            min(
-                2,
-                self.cantidad_click_mouse.value(),
-            ),
+        cantidad = (
+            self.cantidad_click_mouse
+            .value()
         )
-
-        if boton == "Doble clic":
-
-            cantidad = 2
-
-            self.cantidad_click_mouse.setValue(
-                2
-            )
-
-        elif boton == "Derecho":
-
-            cantidad = 1
-
-            self.cantidad_click_mouse.setValue(
-                1
-            )
 
         x = (
             self.coordenada_mouse_x
@@ -3383,7 +3166,7 @@ class CommandLibraryDialog(QDialog):
         self.boton_agregar_accion.setEnabled(
             True
         )
-        
+
     # ========================================================
     # CAPTURAR COORDENADAS CON EL MOUSE
     # ========================================================
@@ -3450,7 +3233,7 @@ class CommandLibraryDialog(QDialog):
             self.listener_captura_coordenadas = (
                 pynput_mouse.Listener(
                     on_click=capturar,
-                    suppress=False,
+                    suppress=True,
                 )
             )
 
@@ -3757,28 +3540,12 @@ class CommandLibraryDialog(QDialog):
             x = self.coordenada_mouse_x.value()
             y = self.coordenada_mouse_y.value()
 
-            es_derecho = (
-                boton_mouse
-                == "derecho"
-            )
-
-            es_doble = (
-                "doble"
-                in boton_mouse
-            )
-
-            if es_doble:
-
-                cantidad = 2
-
-            elif es_derecho:
-
-                cantidad = 1
+            es_derecho = boton_mouse == "derecho"
 
             if es_derecho:
                 tipo_accion = "click_derecho"
                 nombre_accion = "Clic derecho"
-            elif es_doble or cantidad == 2:
+            elif cantidad == 2:
                 tipo_accion = "doble_click"
                 nombre_accion = "Doble clic izquierdo"
             else:
@@ -4369,15 +4136,6 @@ class TaskCard(QFrame):
             "panel"
         )
 
-        self.contenedor_contexto.setMinimumWidth(
-            0
-        )
-
-        self.contenedor_contexto.setSizePolicy(
-            QSizePolicy.Expanding,
-            QSizePolicy.Maximum,
-        )
-
         contexto_layout = QVBoxLayout(
             self.contenedor_contexto
         )
@@ -4391,10 +4149,6 @@ class TaskCard(QFrame):
 
         contexto_layout.setSpacing(
             6
-        )
-
-        contexto_layout.setAlignment(
-            Qt.AlignTop
         )
 
         self.editor_contexto = QTextEdit()
@@ -4412,16 +4166,11 @@ class TaskCard(QFrame):
         )
 
         self.editor_contexto.setMinimumHeight(
-            88
+            46
         )
 
         self.editor_contexto.setMaximumHeight(
-            110
-        )
-
-        self.editor_contexto.setSizePolicy(
-            QSizePolicy.Expanding,
-            QSizePolicy.Fixed,
+            60
         )
 
         self.editor_contexto.setVerticalScrollBarPolicy(
@@ -4477,9 +4226,7 @@ class TaskCard(QFrame):
         )
 
         layout.addWidget(
-            self.contenedor_contexto,
-            0,
-            Qt.AlignTop,
+            self.contenedor_contexto
         )
 
         # ----------------------------------------------------
@@ -4704,7 +4451,7 @@ class TaskCard(QFrame):
         self.estado.setStyleSheet(f"""
             color: {color};
             font-weight: 800;
-            font-size: 14px;
+            font-size: 10px;
             """)
 
         intervalo = (
@@ -4982,11 +4729,6 @@ class BIN(QMainWindow):
         self.plan_ejecucion_actual = []
         self.offsets_ejecucion_actual_ms = []
         self.plan_ejecucion_usa_semantica = False
-
-        # La demostración física manda. BIN puede observar contexto,
-        # pero no reemplaza automáticamente los pasos grabados.
-        self.compilacion_automatica_demostracion = False
-
         self.indice_ejecucion_real = 0
         self.repeticion_ejecucion_real = 1
         self.ejecucion_fisica_activa = False
@@ -6783,15 +6525,6 @@ class BIN(QMainWindow):
             """
         )
 
-        contenedor_mensaje_chat.setMinimumWidth(
-            0
-        )
-
-        contenedor_mensaje_chat.setSizePolicy(
-            QSizePolicy.Expanding,
-            QSizePolicy.Preferred,
-        )
-
         mensaje_layout = QVBoxLayout(
             contenedor_mensaje_chat
         )
@@ -6815,22 +6548,9 @@ class BIN(QMainWindow):
             True
         )
 
-        self.mensaje_chat.setTextFormat(
-            Qt.RichText
-        )
-
         self.mensaje_chat.setAlignment(
             Qt.AlignTop
             | Qt.AlignLeft
-        )
-
-        self.mensaje_chat.setMinimumWidth(
-            0
-        )
-
-        self.mensaje_chat.setSizePolicy(
-            QSizePolicy.Ignored,
-            QSizePolicy.Preferred,
         )
 
         self.mensaje_chat.setStyleSheet(
@@ -6961,8 +6681,8 @@ class BIN(QMainWindow):
 
         acciones_layout.addWidget(self.boton_limpiar_panel)
 
-        self.boton_guardar_rutina = QPushButton("GUARDAR RUTINA")
-        self.boton_guardar_rutina.setObjectName("botonGuardarRutina")
+        self.boton_guardar_rutina = QPushButton("GUARDAR TAREA")
+        self.boton_guardar_rutina.setObjectName("botonPrincipal")
         self.boton_guardar_rutina.clicked.connect(self.guardar_rutina_como_tarea)
         self.boton_guardar_rutina.setEnabled(False)
 
@@ -8120,15 +7840,6 @@ class BIN(QMainWindow):
             "background: transparent; border: none;"
         )
 
-        contenedor.setMinimumWidth(
-            0
-        )
-
-        contenedor.setSizePolicy(
-            QSizePolicy.Expanding,
-            QSizePolicy.Preferred,
-        )
-
         contenido_layout = QVBoxLayout(
             contenedor
         )
@@ -8148,22 +7859,9 @@ class BIN(QMainWindow):
             True
         )
 
-        self.mensaje_chat_expandido.setTextFormat(
-            Qt.RichText
-        )
-
         self.mensaje_chat_expandido.setAlignment(
             Qt.AlignTop
             | Qt.AlignLeft
-        )
-
-        self.mensaje_chat_expandido.setMinimumWidth(
-            0
-        )
-
-        self.mensaje_chat_expandido.setSizePolicy(
-            QSizePolicy.Ignored,
-            QSizePolicy.Preferred,
         )
 
         self.mensaje_chat_expandido.setStyleSheet(
@@ -8275,7 +7973,7 @@ class BIN(QMainWindow):
         )
 
         if self.chat_expandido:
-            historial = "".join(
+            historial = "\n\n".join(
                 self.historial_chat_bin
             )
 
@@ -8391,190 +8089,22 @@ class BIN(QMainWindow):
                 barra.maximum()
             )
 
-    def _texto_chat_html(
-        self,
-        texto,
-    ):
-        texto = str(
-            texto
-            or ""
-        )
-
-        lineas_html = []
-
-        for linea in texto.split(
-            "\n"
-        ):
-            partes = re.split(
-                r"(\s+)",
-                linea,
-            )
-
-            partes_html = []
-
-            for parte in partes:
-                if not parte:
-                    continue
-
-                if parte.isspace():
-                    partes_html.append(
-                        html.escape(
-                            parte
-                        )
-                    )
-
-                    continue
-
-                # Un token extremadamente largo, como una URL,
-                # recibe puntos invisibles de salto.
-                if len(parte) > 48:
-                    fragmentos = [
-                        parte[
-                            indice:
-                            indice + 48
-                        ]
-                        for indice in range(
-                            0,
-                            len(parte),
-                            48,
-                        )
-                    ]
-
-                    partes_html.append(
-                        "\u200b".join(
-                            html.escape(
-                                fragmento
-                            )
-                            for fragmento
-                            in fragmentos
-                        )
-                    )
-
-                else:
-                    partes_html.append(
-                        html.escape(
-                            parte
-                        )
-                    )
-
-            lineas_html.append(
-                "".join(
-                    partes_html
-                )
-            )
-
-        return "<br>".join(
-            lineas_html
-        )
-    
-    def _renderizar_historial_chat(
-        self,
-    ):
-        texto_historial = "".join(
-            self.historial_chat_bin
-        )
-
-        if hasattr(
-            self,
-            "mensaje_chat",
-        ):
-            self.mensaje_chat.setText(
-                texto_historial
-            )
-
-            QTimer.singleShot(
-                0,
-                self._bajar_scroll_chat,
-            )
-
-        if hasattr(
-            self,
-            "mensaje_chat_expandido",
-        ):
-            self.mensaje_chat_expandido.setText(
-                texto_historial
-            )
-
-            QTimer.singleShot(
-                0,
-                self._bajar_scroll_chat_expandido,
-            )
-
-    def registrar_mensaje_usuario(
-        self,
-        mensaje,
-    ):
-        mensaje = str(
-            mensaje
-            or ""
-        ).strip()
-
-        if not mensaje:
-            return
-
-        nombre = str(
-            self.configuracion.get(
-                "nombre_usuario",
-                "",
-            )
-            or "USUARIO"
-        ).strip()
-
-        if not nombre:
-            nombre = "USUARIO"
-
-        bloque = (
-            '<div align="right" '
-            'style="margin-top:7px; margin-bottom:7px;">'
-
-            f'<span style="color:{VERDE_FLUORESCENTE}; '
-            'font-weight:900;">'
-            f'{self._texto_chat_html(nombre)}'
-            '</span>'
-
-            '<br>'
-
-            f'<span style="color:{TEXTO};">'
-            f'{self._texto_chat_html(mensaje)}'
-            '</span>'
-
-            '</div>'
-        )
-
-        self.historial_chat_bin.append(
-            bloque
-        )
-
-        limite = max(
-            50,
-            int(
-                getattr(
-                    self,
-                    "max_historial_chat_bin",
-                    500,
-                )
-                or 500
-            ),
-        )
-
-        if len(
-            self.historial_chat_bin
-        ) > limite:
-
-            self.historial_chat_bin = (
-                self.historial_chat_bin[
-                    -limite:
-                ]
-            )
-
-        self._renderizar_historial_chat()
-
     def registrar_evento_bin(
         self,
         categoria,
         mensaje,
         detalle=None,
     ):
+        """
+        Registro operativo visible de BIN.
+
+        Muestra hechos observados, decisiones deterministas,
+        acciones enviadas, verificaciones y errores.
+
+        No expone razonamiento interno oculto de modelos;
+        registra únicamente el estado operativo real del sistema.
+        """
+
         categoria = str(
             categoria
             or "INFO"
@@ -8594,43 +8124,16 @@ class BIN(QMainWindow):
             "%H:%M:%S"
         )
 
-        cuerpo = (
-            self._texto_chat_html(
-                mensaje
-            )
+        bloque = (
+            f"[{hora}] {categoria}\n"
+            f"{mensaje}"
         )
 
         if detalle:
-
-            cuerpo += (
-                "<br>"
-                + self._texto_chat_html(
-                    detalle
-                )
+            bloque += (
+                "\n"
+                + detalle
             )
-
-        bloque = (
-            '<div align="left" '
-            'style="margin-top:7px; margin-bottom:7px;">'
-
-            f'<span style="color:{AMARILLO_FLUORESCENTE}; '
-            'font-weight:900;">'
-            'BIN'
-            '</span>'
-
-            f'<span style="color:{TEXTO_SECUNDARIO};">'
-            f' [{hora}] '
-            f'{self._texto_chat_html(categoria)}'
-            '</span>'
-
-            '<br>'
-
-            f'<span style="color:{TEXTO};">'
-            f'{cuerpo}'
-            '</span>'
-
-            '</div>'
-        )
 
         self.ultimo_chat_sistema = (
             mensaje
@@ -8661,15 +8164,42 @@ class BIN(QMainWindow):
         if len(
             self.historial_chat_bin
         ) > limite:
-
             self.historial_chat_bin = (
                 self.historial_chat_bin[
                     -limite:
                 ]
             )
 
-        self._renderizar_historial_chat()
-        
+        texto_historial = "\n\n".join(
+            self.historial_chat_bin
+        )
+
+        if hasattr(
+            self,
+            "mensaje_chat",
+        ):
+            self.mensaje_chat.setText(
+                texto_historial
+            )
+
+            QTimer.singleShot(
+                0,
+                self._bajar_scroll_chat,
+            )
+
+        if hasattr(
+            self,
+            "mensaje_chat_expandido",
+        ):
+            self.mensaje_chat_expandido.setText(
+                texto_historial
+            )
+
+            QTimer.singleShot(
+                0,
+                self._bajar_scroll_chat_expandido,
+            )
+
     def actualizar_chat_bin(
         self,
         mensaje,
@@ -8688,12 +8218,6 @@ class BIN(QMainWindow):
             return
 
         self.entrada_chat.clear()
-
-        # Mostrar inmediatamente el mensaje del usuario
-        # a la derecha del chat.
-        self.registrar_mensaje_usuario(
-            texto
-        )
 
         if self.tarea_seleccionada_id is None:
             self.actualizar_chat_bin(
@@ -8789,7 +8313,7 @@ class BIN(QMainWindow):
         if self.rutina_en_borrador:
             self.titulo_tarea_acciones.setText("RUTINA NUEVA")
             self.boton_agregar_accion.setEnabled(not self.grabando)
-            self.boton_guardar_rutina.setText("GUARDAR RUTINA")
+            self.boton_guardar_rutina.setText("GUARDAR TAREA")
             self.boton_guardar_rutina.setEnabled(
                 not self.grabando
                 and self.inicio_grabacion is None
@@ -8823,7 +8347,7 @@ class BIN(QMainWindow):
         else:
             self.titulo_tarea_acciones.setText("NINGUNA TAREA SELECCIONADA")
             self.boton_agregar_accion.setEnabled(False)
-            self.boton_guardar_rutina.setText("GUARDAR RUTINA")
+            self.boton_guardar_rutina.setText("GUARDAR TAREA")
             self.boton_guardar_rutina.setEnabled(False)
 
             aviso = QLabel(
@@ -23383,7 +22907,10 @@ class BIN(QMainWindow):
 
         self._omitir_traer_bin_al_frente_una_vez = False
 
-        if not hay_tareas_en_cola:
+        if (
+            not hay_tareas_en_cola
+            and not omitir_bin_al_frente
+        ):
             QTimer.singleShot(
                 50,
                 self.traer_bin_al_frente,
@@ -25299,14 +24826,6 @@ class BIN(QMainWindow):
         if not accion:
             return
 
-        # Una observación tardía no debe modificar un paso anterior
-        # cuando el usuario ya continuó con la demostración.
-        if (
-            self.rutina_borrador
-            and self.rutina_borrador[-1] is not accion
-        ):
-            return
-
         contexto_despues = self.obtener_contexto_ventana_activa()
 
         if contexto_despues:
@@ -25385,25 +24904,14 @@ class BIN(QMainWindow):
 
             return
 
-        if resultado_aun_transitorio:
-            self.registrar_evento_bin(
-                "ANALIZA",
-                "No pude confirmar todavía el resultado de ese clic.",
-                (
-                    "La acción física original se conserva sin cambios."
-                ),
-            )
-        else:
-            self.registrar_evento_bin(
-                "DETECTA",
-                "Contexto posterior confirmado sin reinterpretar el paso.",
-                (
-                    "BIN conserva el clic físico exactamente como fue grabado.\n\n"
-                    + self.formatear_contexto_operativo(
-                        despues
-                    )
-                ),
-            )
+        self.registrar_evento_bin(
+            "ANALIZA",
+            "No pude confirmar una apertura de aplicación producida por ese clic.",
+            (
+                "La acción física original se conserva. "
+                "En esta versión no compilo aperturas realizadas con Enter."
+            ),
+        )
 
     def completar_contexto_accion_global(
         self,
@@ -30635,31 +30143,14 @@ class BIN(QMainWindow):
             # anterior.
             # ================================================
 
-            pista_identidad_nativa = (
-                self.observar_identidad_navegador_nativa_uia(
-                    hwnd,
-                    proceso,
-                )
-            )
-
             identidad = (
                 self.resolver_identidad_navegador(
                     contexto_base.get(
                         "pid"
                     ),
                     proceso,
-                    cuenta_uia=(
-                        pista_identidad_nativa.get(
-                            "cuenta",
-                            "",
-                        )
-                    ),
-                    perfil_uia=(
-                        pista_identidad_nativa.get(
-                            "perfil",
-                            "",
-                        )
-                    ),
+                    cuenta_uia="",
+                    perfil_uia="",
                 )
             )
 
@@ -31989,63 +31480,6 @@ class BIN(QMainWindow):
 
             }}
 
-            QPushButton#botonGuardarRutina {{
-
-                background-color:
-                    {BORGONA_OSCURO};
-
-                border:
-                    1px solid
-                    {BORGONA_CLARO};
-
-                color:
-                    #ff88a1;
-
-                font-weight:
-                    bold;
-
-            }}
-
-
-            QPushButton#botonGuardarRutina:hover {{
-
-                background-color:
-                    {BORGONA};
-
-                border:
-                    1px solid
-                    #ff718f;
-
-                color:
-                    #ffffff;
-
-            }}
-
-
-            QPushButton#botonGuardarRutina:pressed {{
-
-                background-color:
-                    {BORGONA_CLARO};
-
-                color:
-                    #ffffff;
-
-            }}
-
-
-            QPushButton#botonGuardarRutina:disabled {{
-
-                background-color:
-                    #1a0d12;
-
-                border:
-                    1px solid
-                    #5d2838;
-
-                color:
-                    #76505c;
-
-            }}
 
             QPushButton#botonEliminar {{
 

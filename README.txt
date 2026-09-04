@@ -1,8 +1,8 @@
 BIN IA ASISTEM — LIGHT
-V1.6.13
+V1.6.15
 
 ============================================================
-BIN IA ASISTEM — LIGHT v1.6.13
+BIN IA ASISTEM — LIGHT v1.6.15
 ============================================================
 
 BIN Light es una versión ligera de BIN orientada a la
@@ -72,7 +72,7 @@ python main.py
 IMPORTANTE — ESTA VERSIÓN NO UTILIZA IA LOCAL
 ============================================================
 
-BIN Light v1.6.13 no incorpora un modelo de inteligencia
+BIN Light v1.6.15 no incorpora un modelo de inteligencia
 artificial local.
 
 Las decisiones durante una automatización son realizadas por
@@ -278,6 +278,13 @@ Menos pasos significan menos puntos posibles de fallo.
 
 12. Si es un entrenamiento que no requiere uso de software, y son tareas repetitivas, Se sugiere limpiar de acciones innecesarias el panel de acción; de tal manera, que la instrucción sea más directa.
 
+13. Verifica constantemente las sesiones de las cuentas en los buscadores, que estén abiertas, ya que en ocaciones, el sistema las cierra automaticamente, o por borrado de cookies.
+
+14. En lo que sea posible, se recomienda ejecutar acciónes de llamados solo con clics en lo que sea posible.
+
+15. Despues de una entrenar o grabar una rutina, es recomendable leer los minipronts y limpiar los scrolls y clics que se requieran para llamar una ventana, para que la IA llame la ventana directamente.
+
+16. Si no se tiene dominio completo del software, se recomienda dividir la tarea en secciónes ejemoplo Tarea 1: organizar mesa de trabajo 1:00 PM / tarea 2: Ejecutar acción Publicar en redes sociales 1:05 PM. Tarea 3: cerrar ventanas de mesa de trabajo 1:45 PM
 
 ============================================================
 CONSIDERACIONES PARA AUTOMATIZACIONES WEB
@@ -328,7 +335,7 @@ BIN IA Asistem — Light
 
 Versión estable:
 
-v1.6.13
+v1.6.15
 
 
 Esta versión ha sido probada realizando una secuencia completa
