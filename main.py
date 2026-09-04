@@ -4768,17 +4768,75 @@ class TaskEditorDialog(QDialog):
 
         self.duracion = QTimeEdit()
 
-        self.duracion.setDisplayFormat("HH:mm:ss")
+        self.duracion.setDisplayFormat(
+            "HH:mm:ss"
+        )
 
-        self.duracion.setTime(QTime(0, 0, 0))
+        self.duracion.setTime(
+            QTime(
+                0,
+                0,
+                0,
+            )
+        )
 
         # La duración estimada la calcula BIN.
         # El usuario puede verla, pero no modificarla.
-        self.duracion.setReadOnly(True)
+        self.duracion.setReadOnly(
+            True
+        )
 
-        formulario.addRow("Duración estimada:", self.duracion)
+        formulario.addRow(
+            "Duración estimada:",
+            self.duracion,
+        )
 
-        principal.addLayout(formulario)
+        # ----------------------------------------------------
+        # LIMPIEZA DE MESA DE TRABAJO
+        # ----------------------------------------------------
+
+        self.limpieza_ventanas = QComboBox()
+
+        self.limpieza_ventanas.addItems(
+            [
+                "Ninguna",
+                "Antes",
+                "Después",
+                "Antes y después",
+            ]
+        )
+
+        self.limpieza_ventanas.setCurrentText(
+            "Ninguna"
+        )
+
+        formulario.addRow(
+            "Limpieza de mesa:",
+            self.limpieza_ventanas,
+        )
+
+        principal.addLayout(
+            formulario
+        )
+
+        nota_limpieza = QLabel(
+            "Permite organizar las automatizaciones por bloques. "
+            "Puedes limpiar la mesa antes de preparar un entorno, "
+            "conservarla entre tareas relacionadas o limpiarla "
+            "cuando termine un bloque de trabajo."
+        )
+
+        nota_limpieza.setWordWrap(
+            True
+        )
+
+        nota_limpieza.setObjectName(
+            "textoSecundario"
+        )
+
+        principal.addWidget(
+            nota_limpieza
+        )
 
         # ----------------------------------------------------
         # DÍAS
@@ -4863,13 +4921,34 @@ class TaskEditorDialog(QDialog):
 
             self.hora.setTime(hora)
 
-        duracion = QTime.fromString(tarea.get("duracion", "00:10:00"), "HH:mm:ss")
+        duracion = QTime.fromString(
+            tarea.get(
+                "duracion",
+                "00:10:00",
+            ),
+            "HH:mm:ss",
+        )
 
         if duracion.isValid():
 
-            self.duracion.setTime(duracion)
+            self.duracion.setTime(
+                duracion
+            )
 
-        dias_tarea = tarea.get("dias", [])
+        self.limpieza_ventanas.setCurrentText(
+            str(
+                tarea.get(
+                    "limpieza_ventanas",
+                    "Ninguna",
+                )
+                or "Ninguna"
+            )
+        )
+
+        dias_tarea = tarea.get(
+            "dias",
+            [],
+        )
 
         for indice, check in enumerate(self.check_dias):
 
@@ -4909,6 +4988,9 @@ class TaskEditorDialog(QDialog):
             "intervalo_unidad": self.intervalo_unidad.currentText(),
             "dias": self.obtener_dias(),
             "duracion": duracion.toString("HH:mm:ss"),
+            "limpieza_ventanas": (
+                self.limpieza_ventanas.currentText()
+            ),
         }
 
     # ========================================================
@@ -5481,11 +5563,20 @@ class TaskCard(QFrame):
         acciones = self.tarea.get("acciones", [])
         texto_acciones = f"{len(acciones)} acción(es)" if acciones else "SIN ACCIONES"
 
+        limpieza = str(
+            self.tarea.get(
+                "limpieza_ventanas",
+                "Ninguna",
+            )
+            or "Ninguna"
+        )
+
         self.info.setText(
             f"Veces: {self.tarea.get('veces', 1)}"
             f"    |    Cada: {intervalo}\n"
             f"Días: {dias_a_texto(self.tarea.get('dias', []))}"
-            f"    |    {texto_acciones}"
+            f"    |    {texto_acciones}\n"
+            f"Limpieza: {limpieza}"
         )
 
         self.proxima.setText(
@@ -5995,7 +6086,16 @@ class BIN(QMainWindow):
                 "contexto",
                 "",
             )
-            tarea.setdefault("acciones_semanticas", [])
+
+            tarea.setdefault(
+                "limpieza_ventanas",
+                "Ninguna",
+            )
+
+            tarea.setdefault(
+                "acciones_semanticas",
+                [],
+            )
             tarea.setdefault("accion_actual_indice", None)
             tarea.setdefault("duracion_origen", "legacy")
             tarea.setdefault("ejecucion_real_indice", 0)
@@ -6154,8 +6254,6 @@ class BIN(QMainWindow):
             "despertar_pc_automaticamente": False,
             "anticipacion_despertar_minutos": 15,
             "sesion_sin_contrasena_confirmada": False,
-
-            "limpieza_ventanas": "Ninguna",
 
             # ================================================
             # MODOS DE OPERACIÓN — FUTURO
@@ -6452,15 +6550,50 @@ class BIN(QMainWindow):
 
     def aplicar_limpieza_ventanas_configurada(
         self,
+        tarea,
         momento,
     ):
+        if not tarea:
+            return 0
+
         opcion = str(
-            self.configuracion.get(
+            tarea.get(
                 "limpieza_ventanas",
                 "Ninguna",
             )
             or "Ninguna"
         ).strip().lower()
+
+        momento = str(
+            momento
+            or ""
+        ).strip().lower()
+
+        ejecutar = False
+
+        if momento == "antes":
+
+            ejecutar = opcion in {
+                "antes",
+                "antes y después",
+            }
+
+        elif momento == "después":
+
+            ejecutar = opcion in {
+                "después",
+                "antes y después",
+            }
+
+        if not ejecutar:
+            return 0
+
+        return self.limpiar_mesa_trabajo_ventanas(
+            motivo=(
+                f"{momento} · "
+                f"{tarea.get('nombre', 'Tarea')}"
+            )
+        )
 
         momento = str(
             momento
@@ -9053,57 +9186,6 @@ class BIN(QMainWindow):
             despertar_pc_automaticamente.isChecked()
         )
 
-        # ----------------------------------------------------
-        # LIMPIEZA DE VENTANAS
-        # ----------------------------------------------------
-
-        limpieza_ventanas = QComboBox()
-
-        limpieza_ventanas.addItems(
-            [
-                "Antes",
-                "Después",
-                "Antes y después",
-                "Ninguna",
-            ]
-        )
-
-        limpieza_ventanas.setCurrentText(
-            str(
-                self.configuracion.get(
-                    "limpieza_ventanas",
-                    "Ninguna",
-                )
-            )
-        )
-
-        formulario.addRow(
-            "Limpieza de ventanas:",
-            limpieza_ventanas,
-        )
-
-        nota_limpieza = QLabel(
-            "Limpia la mesa de trabajo solicitando el cierre "
-            "normal de las ventanas abiertas antes y/o después "
-            "de una tarea. BIN, el escritorio y la barra de "
-            "tareas quedan protegidos. Si un programa tiene "
-            "cambios sin guardar, puede mostrar su aviso normal "
-            "de confirmación."
-        )
-
-        nota_limpieza.setWordWrap(
-            True
-        )
-
-        nota_limpieza.setObjectName(
-            "textoSecundario"
-        )
-
-        formulario.addRow(
-            "",
-            nota_limpieza,
-        )
-
         # ====================================================
         # MODOS DE OPERACIÓN — FUTURO
         # ====================================================
@@ -9259,9 +9341,6 @@ class BIN(QMainWindow):
             "sesion_sin_contrasena_confirmada"
         ] = sesion_sin_contrasena.isChecked()
 
-        self.configuracion[
-            "limpieza_ventanas"
-        ] = limpieza_ventanas.currentText()
 
         if self.guardar_configuracion():
 
@@ -27196,7 +27275,8 @@ class BIN(QMainWindow):
         )
 
         self.aplicar_limpieza_ventanas_configurada(
-            "después"
+            tarea,
+            "después",
         )
 
         hay_tareas_en_cola = any(
@@ -27265,7 +27345,8 @@ class BIN(QMainWindow):
         self.ocultar_barra_ejecucion()
 
         self.aplicar_limpieza_ventanas_configurada(
-            "después"
+            tarea,
+            "después",
         )
 
         QTimer.singleShot(
@@ -27374,7 +27455,8 @@ class BIN(QMainWindow):
             return False
 
         self.aplicar_limpieza_ventanas_configurada(
-            "antes"
+            tarea,
+            "antes",
         )
 
         ahora = datetime.now()
