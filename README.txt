@@ -28,7 +28,7 @@ La prioridad de BIN Light es:
 - Corrección automática cuando el entorno cambia.
 - Funcionamiento en equipos modestos.
 - Capacidad para permanecer activo durante períodos prolongados.
-
+- El asistente de BIN funciona en una sola pantalla (La principal) Por la que idealmente, si se pienza grabar instrucciones, y/o ejecutar tareas automatizada, se recomienda desconectar las pantallas externas y dejarla sola con la principal.
 
 ============================================================
 REQUISITOS
@@ -271,6 +271,12 @@ Si una operación puede realizarse con una acción directa,
 prefiere esa opción.
 
 Menos pasos significan menos puntos posibles de fallo.
+
+10. Deja siempre las ventanas extendidas. No dejes pestañas extremadamentes pequeñas o reducidas ya sea durante la demostración, despues de la demostración, o si no estás usando el asistente. Ya que windows guarda en su memoria las ultimas caracteristicas de las ventanas, y eso aumentaria la cantidad de procesamientos por verificación, aumentando los tiempos de ejecución, y un posible error de ejecución de tarea
+
+11. Si se requiere organizar Mesa de trabajo web, Lo mejor es hacerlo de manera escrita, y no en modo demostración. este es mucho más exacto.
+
+12. Si es un entrenamiento que no requiere uso de software, y son tareas repetitivas, Se sugiere limpiar de acciones innecesarias el panel de acción; de tal manera, que la instrucción sea más directa.
 
 
 ============================================================

@@ -1,4 +1,7 @@
 #v1.6.13
+# Etapa 2 - Part 2: auditoría sincronizada por generaciones
+# Segundo bloque web semántico deshabilitado: la matrícula web usa
+# perfil/cuenta del navegador + URL confirmada únicamente desde omnibox.
 import sys
 import json
 import os
@@ -56,6 +59,8 @@ from PySide6.QtWidgets import (
     QInputDialog,
     QTextEdit,
     QDoubleSpinBox,
+    QFileDialog,
+    QStackedWidget,
 )
 
 # ============================================================
@@ -101,6 +106,24 @@ DIAS_NOMBRES = [
 # Una tarea cambiará visualmente a PRÓXIMA
 # cuando falten 15 minutos o menos.
 UMBRAL_PROXIMA_SEGUNDOS = 15 * 60
+
+# ============================================================
+# OBSERVACIÓN WEB SEMÁNTICA
+# ============================================================
+#
+# DESHABILITADA en BIN Light.
+#
+# El antiguo segundo bloque recorría botones/controles de la página
+# para intentar reconocer cuentas, perfiles o interacciones web que
+# no cambiaban la URL. Eso podía confundir contenido accesible de la
+# página con identidad real del navegador.
+#
+# La identidad web autoritativa queda en:
+#   proceso + Profile/Default + cuenta de Local State.
+#
+# La URL sólo se lee desde un control confirmado como barra de
+# direcciones / omnibox.
+OBSERVACION_WEB_SEMANTICA_ACTIVA = False
 
 # ============================================================
 # CAPTURA / WINDOWS
@@ -775,6 +798,79 @@ class ConflictDialog(QDialog):
         principal.addWidget(botones)
 
 # ============================================================
+# VENTANA SIMULADA PARA CAPTURAR GEOMETRÍA
+# ============================================================
+
+
+class WindowGeometryCaptureDialog(QDialog):
+    """
+    Ventana real de Windows utilizada únicamente para que el usuario
+    defina visualmente posición y tamaño. No modifica ninguna ventana
+    de la demostración hasta pulsar GUARDAR CAMBIOS en el editor.
+    """
+
+    def __init__(self, parent=None, geometria=None):
+        super().__init__(
+            None,
+            Qt.Window | Qt.WindowStaysOnTopHint,
+        )
+
+        self.setWindowTitle("Ventana simulada · BIN")
+        self.setMinimumSize(280, 180)
+        self.geometria_resultado = None
+
+        geometria = geometria or {}
+
+        try:
+            ancho = max(280, int(geometria.get("ancho", 760) or 760))
+            alto = max(180, int(geometria.get("alto", 520) or 520))
+            x = int(geometria.get("x", 120) or 120)
+            y = int(geometria.get("y", 120) or 120)
+            self.setGeometry(x, y, ancho, alto)
+        except Exception:
+            self.resize(760, 520)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(18, 18, 18, 18)
+        layout.setSpacing(12)
+
+        titulo = QLabel("VENTANA SIMULADA")
+        titulo.setAlignment(Qt.AlignCenter)
+        titulo.setObjectName("tituloDialogo")
+        layout.addWidget(titulo)
+
+        instrucciones = QLabel(
+            "Mueve y redimensiona esta ventana como debe quedar la ventana real.\n\n"
+            "Cuando esté lista, pulsa el botón para almacenar X, Y, ancho y alto."
+        )
+        instrucciones.setWordWrap(True)
+        instrucciones.setAlignment(Qt.AlignCenter)
+        instrucciones.setObjectName("textoSecundario")
+        layout.addWidget(instrucciones, 1)
+
+        self.boton_almacenar = QPushButton(
+            "ALMACENAR CARACTERÍSTICAS DE VENTANA"
+        )
+        self.boton_almacenar.setObjectName("botonPrincipal")
+        self.boton_almacenar.clicked.connect(self.almacenar_geometria)
+        layout.addWidget(self.boton_almacenar)
+
+    def almacenar_geometria(self):
+        marco = self.frameGeometry()
+
+        self.geometria_resultado = {
+            "x": int(marco.x()),
+            "y": int(marco.y()),
+            "ancho": int(marco.width()),
+            "alto": int(marco.height()),
+            "maximizada": bool(self.isMaximized()),
+            "minimizada": False,
+        }
+
+        self.accept()
+
+
+# ============================================================
 # BIBLIOTECA / CONSTRUCTOR DE COMANDOS DE TECLADO
 # ============================================================
 
@@ -792,9 +888,7 @@ class CommandLibraryDialog(QDialog):
         biblioteca=None,
         accion_editar=None,
     ):
-        super().__init__(
-            parent
-        )
+        super().__init__(parent)
 
         self.accion_editar = (
             json.loads(
@@ -803,59 +897,51 @@ class CommandLibraryDialog(QDialog):
                     ensure_ascii=False,
                 )
             )
-            if accion_editar
-            is not None
+            if accion_editar is not None
             else None
         )
 
-        self.modo_edicion_accion = (
-            self.accion_editar
-            is not None
-        )
-
+        self.modo_edicion_accion = self.accion_editar is not None
         self.usar_accion_original = False
 
         if self.modo_edicion_accion:
-            self.setWindowTitle(
-                "Editar acción"
-            )
+            self.setWindowTitle("Editar acción")
         else:
-            self.setWindowTitle(
-                "Añadir acción de teclado"
-            )
+            self.setWindowTitle("Añadir acción")
 
-        self.resize(
-            980,
-            620,
-        )
+        self.resize(1080, 700)
 
         self.biblioteca = json.loads(
             json.dumps(
-                biblioteca
-                or [],
+                biblioteca or [],
                 ensure_ascii=False,
             )
         )
 
         self.comando_seleccionado = None
-
         self.comando_editando_id = None
-
         self.accion_resultado = None
 
         self.parametros_widgets = []
         self.modo_mouse_seleccionado = False
+        self.modo_ventana_seleccionado = False
+        self.modo_constructor_actual = "clic"
 
         self.listener_captura_coordenadas = None
 
+        # Inventario sólo para el editor manual. No altera el motor de replay.
+        self.software_instalado = self.obtener_software_instalado_windows()
+
         self.crear_interfaz()
+
         self.coordenadas_capturadas.connect(
             self.recibir_coordenadas_capturadas
         )
 
         self.refrescar_lista_comandos()
-
         self.agregar_nuevo_parametro()
+        self.actualizar_tipo_editor_ventana()
+        self.cambiar_modo_constructor("clic")
 
         if self.modo_edicion_accion:
             self.preparar_modo_edicion_accion()
@@ -864,44 +950,54 @@ class CommandLibraryDialog(QDialog):
     # PREPARAR EDICIÓN DE UNA ACCIÓN
     # ========================================================
 
-    def preparar_modo_edicion_accion(
-        self,
-    ):
+    def preparar_modo_edicion_accion(self):
         accion = self.accion_editar
 
         if not accion:
             return
 
-        self.boton_agregar_accion.setText(
-            "GUARDAR CAMBIOS"
-        )
+        self.boton_agregar_accion.setText("GUARDAR CAMBIOS")
 
-        tipo = str(
-            accion.get(
-                "tipo",
-                "",
+        tipo = str(accion.get("tipo", "") or "")
+
+        # ====================================================
+        # ACCIONES DE VENTANA
+        # ====================================================
+        if tipo in {
+            "abrir_aplicacion",
+            "comando_ventana",
+        }:
+            configuracion = self.configuracion_ventana_desde_accion(accion)
+
+            self.cambiar_modo_constructor("ventana")
+            self.cargar_configuracion_ventana_editor(configuracion)
+
+            self.modo_ventana_seleccionado = True
+            self.modo_mouse_seleccionado = False
+            self.usar_accion_original = False
+            self.comando_seleccionado = None
+
+            self.label_seleccionado.setText(
+                "ACCIÓN ACTUAL\n"
+                + self.resumen_configuracion_ventana(configuracion)
+                + "\n\nPuedes modificar estas características. "
+                  "Al guardar, se actualiza esta acción en tareas.json."
             )
-            or ""
-        )
+
+            self.boton_agregar_accion.setEnabled(True)
+            return
 
         # ====================================================
-        # SI YA ES UN COMANDO
+        # SI YA ES UN COMANDO DE TECLADO
         # ====================================================
-
         if tipo == "comando_teclado":
-            comando_id = accion.get(
-                "comando_id"
-            )
+            comando_id = accion.get("comando_id")
 
             comando = next(
                 (
                     item
-                    for item
-                    in self.biblioteca
-                    if item.get(
-                        "id"
-                    )
-                    == comando_id
+                    for item in self.biblioteca
+                    if item.get("id") == comando_id
                 ),
                 None,
             )
@@ -909,29 +1005,20 @@ class CommandLibraryDialog(QDialog):
             if comando is None:
                 comando = {
                     "id": comando_id,
-                    "nombre": accion.get(
-                        "nombre_comando",
-                        "Comando actual",
-                    ),
+                    "nombre": accion.get("nombre_comando", "Comando actual"),
                     "parametros": json.loads(
                         json.dumps(
-                            accion.get(
-                                "parametros",
-                                [],
-                            ),
+                            accion.get("parametros", []),
                             ensure_ascii=False,
                         )
                     ),
                     "personalizado": True,
                 }
 
-            self.comando_seleccionado = (
-                comando
-            )
-
-            self.usar_accion_original = (
-                False
-            )
+            self.comando_seleccionado = comando
+            self.usar_accion_original = False
+            self.modo_ventana_seleccionado = False
+            self.cambiar_modo_constructor("clic")
 
             self.label_seleccionado.setText(
                 "ACCIÓN ACTUAL\n"
@@ -939,127 +1026,73 @@ class CommandLibraryDialog(QDialog):
                 f"{self.texto_comando(comando)}"
             )
 
-            self.boton_agregar_accion.setEnabled(
-                True
-            )
-
+            self.boton_agregar_accion.setEnabled(True)
             return
 
         # ====================================================
         # CLIC DE MOUSE
         # ====================================================
-
         if tipo in {
             "click",
             "doble_click",
             "click_derecho",
         }:
+            self.cambiar_modo_constructor("clic")
             self.modo_mouse_seleccionado = True
-
+            self.modo_ventana_seleccionado = False
             self.usar_accion_original = False
-
             self.comando_seleccionado = None
 
             if tipo == "click_derecho":
-                self.tipo_click_mouse.setCurrentText(
-                    "Derecho"
-                )
-
+                self.tipo_click_mouse.setCurrentText("Derecho")
             else:
-                self.tipo_click_mouse.setCurrentText(
-                    "Izquierdo"
-                )
+                self.tipo_click_mouse.setCurrentText("Izquierdo")
 
             if tipo == "doble_click":
                 cantidad = 2
             else:
                 try:
-                    cantidad = int(
-                        accion.get(
-                            "cantidad_clicks",
-                            1,
-                        )
-                        or 1
-                    )
+                    cantidad = int(accion.get("cantidad_clicks", 1) or 1)
                 except Exception:
                     cantidad = 1
 
-            self.cantidad_click_mouse.setValue(
-                max(
-                    1,
-                    min(
-                        2,
-                        cantidad,
-                    ),
-                )
-            )
+            self.cantidad_click_mouse.setValue(max(1, min(2, cantidad)))
 
             try:
-                self.coordenada_mouse_x.setValue(
-                    int(
-                        accion.get(
-                            "x",
-                            0,
-                        )
-                    )
-                )
-
+                self.coordenada_mouse_x.setValue(int(accion.get("x", 0)))
             except Exception:
-                self.coordenada_mouse_x.setValue(
-                    0
-                )
+                self.coordenada_mouse_x.setValue(0)
 
             try:
-                self.coordenada_mouse_y.setValue(
-                    int(
-                        accion.get(
-                            "y",
-                            0,
-                        )
-                    )
-                )
-
+                self.coordenada_mouse_y.setValue(int(accion.get("y", 0)))
             except Exception:
-                self.coordenada_mouse_y.setValue(
-                    0
-                )
+                self.coordenada_mouse_y.setValue(0)
 
             self.label_seleccionado.setText(
                 "ACCIÓN ACTUAL\n"
                 f"{accion.get('descripcion', 'Clic')}\n\n"
-                "Puedes modificar botón, cantidad, "
-                "coordenadas y tiempos."
+                "Puedes modificar botón, cantidad, coordenadas y tiempos."
             )
 
-            self.boton_agregar_accion.setEnabled(
-                True
-            )
-
+            self.boton_agregar_accion.setEnabled(True)
             return
 
         # ====================================================
         # CLIC / SCROLL / TECLA GRABADA / ETC.
         # ====================================================
-
-        self.usar_accion_original = (
-            True
-        )
-
-        self.comando_seleccionado = (
-            None
-        )
+        self.cambiar_modo_constructor("clic")
+        self.usar_accion_original = True
+        self.modo_ventana_seleccionado = False
+        self.comando_seleccionado = None
 
         self.label_seleccionado.setText(
             "ACCIÓN ACTUAL\n"
             f"{accion.get('descripcion', 'Acción')}\n\n"
             "Puedes mantenerla y modificar sus tiempos, "
-            "o seleccionar un comando de la biblioteca "
-            "para reemplazarla."
+            "o seleccionar un comando de la biblioteca para reemplazarla."
         )
 
-        self.boton_agregar_accion.setEnabled(
-            True
-        )
+        self.boton_agregar_accion.setEnabled(True)
 
     # ========================================================
     # OPCIONES DE TECLADO
@@ -1137,39 +1170,38 @@ class CommandLibraryDialog(QDialog):
     # TEXTO DE UN COMANDO
     # ========================================================
 
-    def texto_comando(
-        self,
-        comando,
-    ):
-        partes = []
-
-        for parametro in comando.get(
-            "parametros",
-            [],
-        ):
-            tecla = str(
-                parametro.get(
-                    "tecla",
-                    "",
-                )
+    def texto_comando(self, comando):
+        if str(comando.get("tipo_comando", "") or "").lower() == "ventana":
+            ventana = comando.get("ventana") or {}
+            tipo = str(ventana.get("tipo_ventana", "Ventana") or "Ventana").upper()
+            software = str(ventana.get("software_nombre", "") or "").strip()
+            destino = str(
+                ventana.get("url")
+                or ventana.get("ruta_recurso")
+                or ventana.get("ejecutable")
                 or ""
             ).strip()
 
+            partes = [f"VENTANA · {tipo}"]
+            if software:
+                partes.append(software)
+            if destino:
+                partes.append(destino)
+
+            return " · ".join(partes)
+
+        partes = []
+
+        for parametro in comando.get("parametros", []):
+            tecla = str(parametro.get("tecla", "") or "").strip()
+
             repeticiones = max(
                 1,
-                int(
-                    parametro.get(
-                        "repeticiones",
-                        1,
-                    )
-                    or 1
-                ),
+                int(parametro.get("repeticiones", 1) or 1),
             )
 
             if repeticiones > 1:
-                partes.append(
-                    f"{tecla}^{repeticiones}"
-                )
+                partes.append(f"{tecla}^{repeticiones}")
             else:
                 partes.append(tecla)
 
@@ -1179,441 +1211,1108 @@ class CommandLibraryDialog(QDialog):
     # INTERFAZ
     # ========================================================
 
-    def crear_interfaz(
-        self,
-    ):
+    def crear_interfaz(self):
         principal = QVBoxLayout(self)
-
-        principal.setContentsMargins(
-            14,
-            14,
-            14,
-            14,
-        )
-
+        principal.setContentsMargins(14, 14, 14, 14)
         principal.setSpacing(12)
 
-        titulo = QLabel(
-            "BIBLIOTECA DE COMANDOS DE TECLADO"
-        )
-
+        titulo = QLabel("BIBLIOTECA DE COMANDOS")
         titulo.setObjectName("tituloDialogo")
-
         principal.addWidget(titulo)
 
         descripcion = QLabel(
-            "Selecciona un comando guardado o crea uno nuevo. "
-            "Cada parámetro puede repetirse varias veces."
+            "Selecciona un comando guardado, crea un clic/comando de teclado "
+            "o crea una acción de ventana reutilizable."
         )
-
         descripcion.setWordWrap(True)
-
-        descripcion.setObjectName(
-            "textoSecundario"
-        )
-
+        descripcion.setObjectName("textoSecundario")
         principal.addWidget(descripcion)
 
         cuerpo = QHBoxLayout()
-
         cuerpo.setSpacing(12)
 
         # ====================================================
-        # IZQUIERDA — BIBLIOTECA
+        # IZQUIERDA — BIBLIOTECA / ACCIÓN ACTUAL
         # ====================================================
-
         panel_biblioteca = QFrame()
+        panel_biblioteca.setObjectName("panel")
+        biblioteca_layout = QVBoxLayout(panel_biblioteca)
 
-        panel_biblioteca.setObjectName(
-            "panel"
-        )
-
-        biblioteca_layout = QVBoxLayout(
-            panel_biblioteca
-        )
-
-        titulo_biblioteca = QLabel(
-            "COMANDOS GUARDADOS"
-        )
-
-        titulo_biblioteca.setObjectName(
-            "tituloPanel"
-        )
-
-        biblioteca_layout.addWidget(
-            titulo_biblioteca
-        )
+        titulo_biblioteca = QLabel("COMANDOS GUARDADOS")
+        titulo_biblioteca.setObjectName("tituloPanel")
+        biblioteca_layout.addWidget(titulo_biblioteca)
 
         self.scroll_comandos = QScrollArea()
-
-        self.scroll_comandos.setWidgetResizable(
-            True
-        )
-
-        self.scroll_comandos.setHorizontalScrollBarPolicy(
-            Qt.ScrollBarAlwaysOff
-        )
+        self.scroll_comandos.setWidgetResizable(True)
+        self.scroll_comandos.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
         self.contenedor_comandos = QWidget()
-
-        self.layout_comandos = QVBoxLayout(
-            self.contenedor_comandos
-        )
-
-        self.layout_comandos.setAlignment(
-            Qt.AlignTop
-        )
-
+        self.layout_comandos = QVBoxLayout(self.contenedor_comandos)
+        self.layout_comandos.setAlignment(Qt.AlignTop)
         self.layout_comandos.setSpacing(6)
+        self.scroll_comandos.setWidget(self.contenedor_comandos)
+        biblioteca_layout.addWidget(self.scroll_comandos, 1)
 
-        self.scroll_comandos.setWidget(
-            self.contenedor_comandos
-        )
+        self.label_seleccionado = QLabel("Ningún comando seleccionado")
+        self.label_seleccionado.setWordWrap(True)
+        self.label_seleccionado.setObjectName("textoSecundario")
+        biblioteca_layout.addWidget(self.label_seleccionado)
 
-        biblioteca_layout.addWidget(
-            self.scroll_comandos,
-            1,
-        )
+        self.boton_agregar_accion = QPushButton("AGREGAR ACCIÓN")
+        self.boton_agregar_accion.setObjectName("botonPrincipal")
+        self.boton_agregar_accion.setEnabled(False)
+        self.boton_agregar_accion.clicked.connect(self.agregar_accion)
+        biblioteca_layout.addWidget(self.boton_agregar_accion)
 
-        self.label_seleccionado = QLabel(
-            "Ningún comando seleccionado"
-        )
-
-        self.label_seleccionado.setWordWrap(
-            True
-        )
-
-        self.label_seleccionado.setObjectName(
-            "textoSecundario"
-        )
-
-        biblioteca_layout.addWidget(
-            self.label_seleccionado
-        )
-
-        self.boton_agregar_accion = QPushButton(
-            "AGREGAR ACCIÓN"
-        )
-
-        self.boton_agregar_accion.setObjectName(
-            "botonPrincipal"
-        )
-
-        self.boton_agregar_accion.setEnabled(
-            False
-        )
-
-        self.boton_agregar_accion.clicked.connect(
-            self.agregar_accion
-        )
-
-        biblioteca_layout.addWidget(
-            self.boton_agregar_accion
-        )
-
-        cuerpo.addWidget(
-            panel_biblioteca,
-            1,
-        )
+        cuerpo.addWidget(panel_biblioteca, 1)
 
         # ====================================================
         # DERECHA — CONSTRUCTOR
         # ====================================================
-
         panel_constructor = QFrame()
+        panel_constructor.setObjectName("panel")
+        constructor_layout = QVBoxLayout(panel_constructor)
 
-        panel_constructor.setObjectName(
-            "panel"
+        titulo_constructor = QLabel("CREAR / MODIFICAR ACCIÓN")
+        titulo_constructor.setObjectName("tituloPanel")
+        constructor_layout.addWidget(titulo_constructor)
+
+        selector_modo = QHBoxLayout()
+
+        self.boton_modo_clic = QPushButton("AGREGAR COMANDO CLIC")
+        self.boton_modo_ventana = QPushButton("AGREGAR COMANDO VENTANA")
+
+        self.boton_modo_clic.setCheckable(True)
+        self.boton_modo_ventana.setCheckable(True)
+
+        self.boton_modo_clic.clicked.connect(
+            lambda: self.cambiar_modo_constructor("clic")
+        )
+        self.boton_modo_ventana.clicked.connect(
+            lambda: self.cambiar_modo_constructor("ventana")
         )
 
-        constructor_layout = QVBoxLayout(
-            panel_constructor
-        )
+        selector_modo.addWidget(self.boton_modo_clic)
+        selector_modo.addWidget(self.boton_modo_ventana)
+        constructor_layout.addLayout(selector_modo)
 
-        titulo_constructor = QLabel(
-            "CREAR NUEVO COMANDO"
-        )
+        self.stack_constructor = QStackedWidget()
+        constructor_layout.addWidget(self.stack_constructor, 1)
 
-        titulo_constructor.setObjectName(
-            "tituloPanel"
-        )
+        # ====================================================
+        # PÁGINA 0 — CONSTRUCTOR EXISTENTE: TECLADO / CLIC
+        # ====================================================
+        pagina_clic = QWidget()
+        pagina_clic_layout = QVBoxLayout(pagina_clic)
+        pagina_clic_layout.setContentsMargins(0, 0, 0, 0)
 
-        constructor_layout.addWidget(
-            titulo_constructor
-        )
-
-        label_nombre = QLabel(
-            "Nombre del comando"
-        )
-
-        constructor_layout.addWidget(
-            label_nombre
-        )
+        label_nombre = QLabel("Nombre del comando")
+        pagina_clic_layout.addWidget(label_nombre)
 
         self.nombre_comando = QLineEdit()
-
-        self.nombre_comando.setPlaceholderText(
-            "Ej: Abrir Ejecutar"
-        )
-
-        constructor_layout.addWidget(
-            self.nombre_comando
-        )
+        self.nombre_comando.setPlaceholderText("Ej: Abrir Ejecutar")
+        pagina_clic_layout.addWidget(self.nombre_comando)
 
         explicacion = QLabel(
-            "Ejemplo:\n"
-            "Ctrl + Shift + R\n\n"
-            "Para Tab tres veces:\n"
-            "Tab³"
+            "Ejemplo:\nCtrl + Shift + R\n\n"
+            "Para Tab tres veces:\nTab³"
         )
-
         explicacion.setWordWrap(True)
-
-        explicacion.setObjectName(
-            "textoSecundario"
-        )
-
-        constructor_layout.addWidget(
-            explicacion
-        )
+        explicacion.setObjectName("textoSecundario")
+        pagina_clic_layout.addWidget(explicacion)
 
         self.parametros_contenedor = QWidget()
+        self.parametros_layout = QHBoxLayout(self.parametros_contenedor)
+        self.parametros_layout.setContentsMargins(0, 0, 0, 0)
+        self.parametros_layout.setAlignment(Qt.AlignLeft)
+        pagina_clic_layout.addWidget(self.parametros_contenedor)
 
-        self.parametros_layout = QHBoxLayout(
-            self.parametros_contenedor
-        )
+        self.boton_nuevo_parametro = QPushButton("+ AGREGAR NUEVO PARÁMETRO")
+        self.boton_nuevo_parametro.clicked.connect(self.agregar_nuevo_parametro)
+        pagina_clic_layout.addWidget(self.boton_nuevo_parametro)
 
-        self.parametros_layout.setContentsMargins(
-            0,
-            0,
-            0,
-            0,
-        )
-
-        self.parametros_layout.setAlignment(
-            Qt.AlignLeft
-        )
-
-        constructor_layout.addWidget(
-            self.parametros_contenedor
-        )
-
-        self.boton_nuevo_parametro = QPushButton(
-            "+ AGREGAR NUEVO PARÁMETRO"
-        )
-
-        self.boton_nuevo_parametro.clicked.connect(
-            self.agregar_nuevo_parametro
-        )
-
-        constructor_layout.addWidget(
-            self.boton_nuevo_parametro
-        )
-
-        # ====================================================
-        # CONSTRUCTOR DE CLIC DE MOUSE
-        # ====================================================
-
-        titulo_mouse = QLabel(
-            "AGREGAR CLIC"
-        )
-
-        titulo_mouse.setObjectName(
-            "tituloPanel"
-        )
-
-        constructor_layout.addWidget(
-            titulo_mouse
-        )
+        titulo_mouse = QLabel("AGREGAR CLIC")
+        titulo_mouse.setObjectName("tituloPanel")
+        pagina_clic_layout.addWidget(titulo_mouse)
 
         descripcion_mouse = QLabel(
-            "Escribe las coordenadas manualmente "
-            "o captura la posición haciendo clic "
-            "directamente en la pantalla."
+            "Escribe las coordenadas manualmente o captura la posición "
+            "haciendo clic directamente en la pantalla."
         )
-
-        descripcion_mouse.setWordWrap(
-            True
-        )
-
-        descripcion_mouse.setObjectName(
-            "textoSecundario"
-        )
-
-        constructor_layout.addWidget(
-            descripcion_mouse
-        )
+        descripcion_mouse.setWordWrap(True)
+        descripcion_mouse.setObjectName("textoSecundario")
+        pagina_clic_layout.addWidget(descripcion_mouse)
 
         formulario_mouse = QFormLayout()
 
-        # ----------------------------------------------------
-        # TIPO DE CLIC
-        # ----------------------------------------------------
-
         self.tipo_click_mouse = QComboBox()
-
-        self.tipo_click_mouse.addItems(
-            [
-                "Izquierdo",
-                "Derecho",
-            ]
-        )
-
-        formulario_mouse.addRow(
-            "Botón:",
-            self.tipo_click_mouse,
-        )
-
-        # ----------------------------------------------------
-        # CANTIDAD DE CLICS
-        # ----------------------------------------------------
+        self.tipo_click_mouse.addItems(["Izquierdo", "Derecho"])
+        formulario_mouse.addRow("Botón:", self.tipo_click_mouse)
 
         self.cantidad_click_mouse = QSpinBox()
-
-        self.cantidad_click_mouse.setRange(
-            1,
-            2,
-        )
-
-        self.cantidad_click_mouse.setValue(
-            1
-        )
-
-        self.cantidad_click_mouse.setToolTip(
-            "1 = clic normal\n"
-            "2 = doble clic"
-        )
-
-        formulario_mouse.addRow(
-            "Veces:",
-            self.cantidad_click_mouse,
-        )
-
-        # ----------------------------------------------------
-        # COORDENADA X
-        # ----------------------------------------------------
+        self.cantidad_click_mouse.setRange(1, 2)
+        self.cantidad_click_mouse.setValue(1)
+        self.cantidad_click_mouse.setToolTip("1 = clic normal\n2 = doble clic")
+        formulario_mouse.addRow("Veces:", self.cantidad_click_mouse)
 
         self.coordenada_mouse_x = QSpinBox()
-
-        self.coordenada_mouse_x.setRange(
-            -32768,
-            32767,
-        )
-
-        self.coordenada_mouse_x.setValue(
-            0
-        )
-
-        formulario_mouse.addRow(
-            "X:",
-            self.coordenada_mouse_x,
-        )
-
-        # ----------------------------------------------------
-        # COORDENADA Y
-        # ----------------------------------------------------
+        self.coordenada_mouse_x.setRange(-32768, 32767)
+        self.coordenada_mouse_x.setValue(0)
+        formulario_mouse.addRow("X:", self.coordenada_mouse_x)
 
         self.coordenada_mouse_y = QSpinBox()
+        self.coordenada_mouse_y.setRange(-32768, 32767)
+        self.coordenada_mouse_y.setValue(0)
+        formulario_mouse.addRow("Y:", self.coordenada_mouse_y)
 
-        self.coordenada_mouse_y.setRange(
-            -32768,
-            32767,
-        )
+        pagina_clic_layout.addLayout(formulario_mouse)
 
-        self.coordenada_mouse_y.setValue(
-            0
-        )
+        self.boton_simular_click = QPushButton("SIMULAR CLIC / CAPTURAR COORDENADAS")
+        self.boton_simular_click.clicked.connect(self.iniciar_captura_coordenadas)
+        pagina_clic_layout.addWidget(self.boton_simular_click)
 
-        formulario_mouse.addRow(
-            "Y:",
-            self.coordenada_mouse_y,
-        )
+        self.boton_usar_click = QPushButton("AGREGAR CLIC")
+        self.boton_usar_click.setObjectName("botonPrincipal")
+        self.boton_usar_click.clicked.connect(self.seleccionar_click_mouse)
+        pagina_clic_layout.addWidget(self.boton_usar_click)
 
-        constructor_layout.addLayout(
-            formulario_mouse
-        )
-
-        # ----------------------------------------------------
-        # CAPTURAR COORDENADAS
-        # ----------------------------------------------------
-
-        self.boton_simular_click = QPushButton(
-            "SIMULAR CLIC / CAPTURAR COORDENADAS"
-        )
-
-        self.boton_simular_click.clicked.connect(
-            self.iniciar_captura_coordenadas
-        )
-
-        constructor_layout.addWidget(
-            self.boton_simular_click
-        )
-
-        # ----------------------------------------------------
-        # SELECCIONAR CLIC COMO ACCIÓN
-        # ----------------------------------------------------
-
-        self.boton_usar_click = QPushButton(
-            "AGREGAR CLIC"
-        )
-
-        self.boton_usar_click.setObjectName(
-            "botonPrincipal"
-        )
-
-        self.boton_usar_click.clicked.connect(
-            self.seleccionar_click_mouse
-        )
-
-        constructor_layout.addWidget(
-            self.boton_usar_click
-        )
-
-        constructor_layout.addStretch()
+        pagina_clic_layout.addStretch()
 
         botones_constructor = QHBoxLayout()
 
-        self.boton_crear_comando = QPushButton(
-            "CREAR COMANDO"
+        self.boton_crear_comando = QPushButton("CREAR COMANDO")
+        self.boton_crear_comando.setObjectName("botonPrincipal")
+        self.boton_cancelar = QPushButton("CANCELAR")
+
+        self.boton_crear_comando.clicked.connect(self.crear_comando)
+        self.boton_cancelar.clicked.connect(self.reject)
+
+        botones_constructor.addWidget(self.boton_crear_comando)
+        botones_constructor.addWidget(self.boton_cancelar)
+        pagina_clic_layout.addLayout(botones_constructor)
+
+        self.stack_constructor.addWidget(pagina_clic)
+
+        # ====================================================
+        # PÁGINA 1 — COMANDO / CARACTERÍSTICAS DE VENTANA
+        # ====================================================
+        pagina_ventana = QWidget()
+        ventana_layout = QVBoxLayout(pagina_ventana)
+        ventana_layout.setContentsMargins(0, 0, 0, 0)
+        ventana_layout.setSpacing(8)
+
+        titulo_ventana = QLabel("CARACTERÍSTICAS DE VENTANA")
+        titulo_ventana.setObjectName("tituloPanel")
+        ventana_layout.addWidget(titulo_ventana)
+
+        nota_ventana = QLabel(
+            "Estos datos son manuales y autoritativos para esta acción. "
+            "BIN los guarda en el JSON y no los reescribe durante el replay."
+        )
+        nota_ventana.setWordWrap(True)
+        nota_ventana.setObjectName("textoSecundario")
+        ventana_layout.addWidget(nota_ventana)
+
+        formulario_ventana = QFormLayout()
+        formulario_ventana.setSpacing(8)
+
+        self.nombre_comando_ventana = QLineEdit()
+        self.nombre_comando_ventana.setPlaceholderText(
+            "Ej: Abrir ChatGPT Alfora"
+        )
+        formulario_ventana.addRow("Nombre del comando:", self.nombre_comando_ventana)
+
+        self.tipo_ventana_editor = QComboBox()
+        self.tipo_ventana_editor.addItems(
+            ["Web", "Office", "Software", "Recurso"]
+        )
+        self.tipo_ventana_editor.currentTextChanged.connect(
+            self.actualizar_tipo_editor_ventana
+        )
+        formulario_ventana.addRow("Tipo de ventana:", self.tipo_ventana_editor)
+
+        self.cuenta_asociada_editor = QLineEdit()
+        self.cuenta_asociada_editor.setPlaceholderText(
+            "Ej: alfora.art@gmail.com"
+        )
+        formulario_ventana.addRow("Cuenta asociada:", self.cuenta_asociada_editor)
+
+        self.cuenta_web_editor = QLineEdit()
+        self.cuenta_web_editor.setPlaceholderText(
+            "Cuenta del servicio web, si aplica"
+        )
+        formulario_ventana.addRow("Cuenta web:", self.cuenta_web_editor)
+
+        self.label_software_ventana = QLabel("Navegador / software:")
+        self.software_ventana_editor = QComboBox()
+        self.software_ventana_editor.currentIndexChanged.connect(
+            self.seleccionar_software_ventana
+        )
+        formulario_ventana.addRow(
+            self.label_software_ventana,
+            self.software_ventana_editor,
         )
 
-        self.boton_crear_comando.setObjectName(
-            "botonPrincipal"
+        self.ejecutable_ventana_editor = QLineEdit()
+        self.ejecutable_ventana_editor.setPlaceholderText(
+            "Ruta del ejecutable cuando corresponda"
+        )
+        formulario_ventana.addRow("Ejecutable:", self.ejecutable_ventana_editor)
+
+        self.label_direccion_ventana = QLabel("URL:")
+        contenedor_direccion = QWidget()
+        direccion_layout = QHBoxLayout(contenedor_direccion)
+        direccion_layout.setContentsMargins(0, 0, 0, 0)
+        direccion_layout.setSpacing(6)
+
+        self.direccion_ventana_editor = QLineEdit()
+        self.direccion_ventana_editor.setPlaceholderText("https://...")
+        self.boton_examinar_ventana = QPushButton("EXAMINAR...")
+        self.boton_examinar_ventana.clicked.connect(self.examinar_direccion_ventana)
+
+        direccion_layout.addWidget(self.direccion_ventana_editor, 1)
+        direccion_layout.addWidget(self.boton_examinar_ventana)
+        formulario_ventana.addRow(self.label_direccion_ventana, contenedor_direccion)
+
+        self.posicion_x_ventana = QSpinBox()
+        self.posicion_x_ventana.setRange(-32768, 32767)
+        self.posicion_y_ventana = QSpinBox()
+        self.posicion_y_ventana.setRange(-32768, 32767)
+
+        posicion_widget = QWidget()
+        posicion_layout = QHBoxLayout(posicion_widget)
+        posicion_layout.setContentsMargins(0, 0, 0, 0)
+        posicion_layout.addWidget(QLabel("X"))
+        posicion_layout.addWidget(self.posicion_x_ventana)
+        posicion_layout.addWidget(QLabel("Y"))
+        posicion_layout.addWidget(self.posicion_y_ventana)
+        formulario_ventana.addRow("Posición:", posicion_widget)
+
+        self.ancho_ventana = QSpinBox()
+        self.ancho_ventana.setRange(100, 16384)
+        self.ancho_ventana.setValue(1200)
+        self.alto_ventana = QSpinBox()
+        self.alto_ventana.setRange(80, 16384)
+        self.alto_ventana.setValue(800)
+
+        tamano_widget = QWidget()
+        tamano_layout = QHBoxLayout(tamano_widget)
+        tamano_layout.setContentsMargins(0, 0, 0, 0)
+        tamano_layout.addWidget(QLabel("Ancho"))
+        tamano_layout.addWidget(self.ancho_ventana)
+        tamano_layout.addWidget(QLabel("Alto"))
+        tamano_layout.addWidget(self.alto_ventana)
+        formulario_ventana.addRow("Tamaño:", tamano_widget)
+
+        self.estado_ventana_editor = QComboBox()
+        self.estado_ventana_editor.addItems(["Normal", "Maximizada", "Minimizada"])
+        formulario_ventana.addRow("Estado:", self.estado_ventana_editor)
+
+        ventana_layout.addLayout(formulario_ventana)
+
+        self.boton_geometria_ventana = QPushButton(
+            "ALMACENAR CARACTERÍSTICAS DE VENTANA"
+        )
+        self.boton_geometria_ventana.clicked.connect(self.capturar_geometria_ventana)
+        ventana_layout.addWidget(self.boton_geometria_ventana)
+
+        self.boton_usar_ventana = QPushButton("USAR COMO ACCIÓN")
+        self.boton_usar_ventana.setObjectName("botonPrincipal")
+        self.boton_usar_ventana.clicked.connect(self.seleccionar_ventana_como_accion)
+        ventana_layout.addWidget(self.boton_usar_ventana)
+
+        botones_ventana = QHBoxLayout()
+
+        self.boton_crear_comando_ventana = QPushButton("CREAR COMANDO VENTANA")
+        self.boton_crear_comando_ventana.setObjectName("botonPrincipal")
+        self.boton_crear_comando_ventana.clicked.connect(self.crear_comando_ventana)
+
+        self.boton_cancelar_ventana = QPushButton("CANCELAR")
+        self.boton_cancelar_ventana.clicked.connect(self.reject)
+
+        botones_ventana.addWidget(self.boton_crear_comando_ventana)
+        botones_ventana.addWidget(self.boton_cancelar_ventana)
+        ventana_layout.addLayout(botones_ventana)
+
+        self.stack_constructor.addWidget(pagina_ventana)
+
+        cuerpo.addWidget(panel_constructor, 1)
+        principal.addLayout(cuerpo, 1)
+
+    # ========================================================
+    # EDITOR MANUAL DE VENTANAS
+    # ========================================================
+
+    def _limpiar_ruta_registro(self, valor):
+        valor = str(valor or "").strip().strip('"')
+
+        if not valor:
+            return ""
+
+        # DisplayIcon suele terminar en ,0 o ,1.
+        candidato = re.sub(r",\s*-?\d+\s*$", "", valor).strip().strip('"')
+
+        if candidato.lower().endswith(".exe") and Path(candidato).exists():
+            return candidato
+
+        return ""
+
+    def obtener_software_instalado_windows(self):
+        """
+        Inventario sólo para el editor. Lee App Paths y Uninstall del
+        registro, y añade procesos actualmente ejecutándose. No cambia
+        el comportamiento existente de resolución de aplicaciones.
+        """
+        encontrados = {}
+
+        def agregar(nombre, ejecutable="", proceso=""):
+            nombre = str(nombre or "").strip()
+            ejecutable = str(ejecutable or "").strip()
+            proceso = str(proceso or "").strip()
+
+            if not nombre and ejecutable:
+                nombre = Path(ejecutable).stem
+
+            if not proceso and ejecutable:
+                proceso = Path(ejecutable).name
+
+            if not nombre:
+                return
+
+            clave = (nombre.lower(), ejecutable.lower(), proceso.lower())
+            encontrados[clave] = {
+                "nombre": nombre,
+                "ejecutable": ejecutable,
+                "proceso": proceso,
+            }
+
+        # Navegadores comunes para que el editor web siempre tenga opciones.
+        comunes = [
+            ("Google Chrome", "chrome.exe"),
+            ("Microsoft Edge", "msedge.exe"),
+            ("Mozilla Firefox", "firefox.exe"),
+            ("Brave", "brave.exe"),
+            ("Opera", "opera.exe"),
+        ]
+
+        padre = self.parent()
+
+        for nombre, proceso in comunes:
+            ruta = ""
+            if padre is not None and hasattr(padre, "resolver_ruta_aplicacion_windows"):
+                try:
+                    ruta = padre.resolver_ruta_aplicacion_windows(proceso, "") or ""
+                except Exception:
+                    ruta = ""
+            agregar(nombre, ruta, proceso)
+
+        if sys.platform == "win32" and winreg is not None:
+            # App Paths suele aportar la ruta ejecutable más útil.
+            for raiz in (winreg.HKEY_CURRENT_USER, winreg.HKEY_LOCAL_MACHINE):
+                base = r"Software\Microsoft\Windows\CurrentVersion\App Paths"
+                for acceso in (
+                    winreg.KEY_READ,
+                    winreg.KEY_READ | getattr(winreg, "KEY_WOW64_64KEY", 0),
+                    winreg.KEY_READ | getattr(winreg, "KEY_WOW64_32KEY", 0),
+                ):
+                    try:
+                        with winreg.OpenKey(raiz, base, 0, acceso) as clave_base:
+                            cantidad = winreg.QueryInfoKey(clave_base)[0]
+                            for indice in range(cantidad):
+                                try:
+                                    subnombre = winreg.EnumKey(clave_base, indice)
+                                    with winreg.OpenKey(clave_base, subnombre) as subclave:
+                                        ruta, _ = winreg.QueryValueEx(subclave, None)
+                                    ruta = str(ruta or "").strip().strip('"')
+                                    if ruta and Path(ruta).exists():
+                                        agregar(Path(ruta).stem, ruta, Path(ruta).name)
+                                except OSError:
+                                    continue
+                    except OSError:
+                        pass
+
+            # Uninstall aporta nombres amigables y, a veces, DisplayIcon.
+            bases_uninstall = [
+                r"Software\Microsoft\Windows\CurrentVersion\Uninstall",
+                r"Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
+            ]
+
+            for raiz in (winreg.HKEY_CURRENT_USER, winreg.HKEY_LOCAL_MACHINE):
+                for base in bases_uninstall:
+                    for acceso in (
+                        winreg.KEY_READ,
+                        winreg.KEY_READ | getattr(winreg, "KEY_WOW64_64KEY", 0),
+                        winreg.KEY_READ | getattr(winreg, "KEY_WOW64_32KEY", 0),
+                    ):
+                        try:
+                            with winreg.OpenKey(raiz, base, 0, acceso) as clave_base:
+                                cantidad = winreg.QueryInfoKey(clave_base)[0]
+                                for indice in range(cantidad):
+                                    try:
+                                        subnombre = winreg.EnumKey(clave_base, indice)
+                                        with winreg.OpenKey(clave_base, subnombre) as subclave:
+                                            try:
+                                                nombre, _ = winreg.QueryValueEx(
+                                                    subclave, "DisplayName"
+                                                )
+                                            except OSError:
+                                                continue
+
+                                            try:
+                                                icono, _ = winreg.QueryValueEx(
+                                                    subclave, "DisplayIcon"
+                                                )
+                                            except OSError:
+                                                icono = ""
+
+                                        ruta = self._limpiar_ruta_registro(icono)
+                                        agregar(
+                                            nombre,
+                                            ruta,
+                                            Path(ruta).name if ruta else "",
+                                        )
+                                    except OSError:
+                                        continue
+                        except OSError:
+                            pass
+
+        # Procesos en ejecución ayudan con software portable/no registrado.
+        try:
+            for proc in psutil.process_iter(["name", "exe"]):
+                try:
+                    nombre_proc = str(proc.info.get("name") or "").strip()
+                    ruta_proc = str(proc.info.get("exe") or "").strip()
+                    if nombre_proc and ruta_proc:
+                        agregar(Path(ruta_proc).stem, ruta_proc, nombre_proc)
+                except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                    continue
+        except Exception:
+            pass
+
+        resultado = list(encontrados.values())
+        resultado.sort(key=lambda item: item.get("nombre", "").lower())
+        return resultado
+
+    def cambiar_modo_constructor(self, modo):
+        modo = "ventana" if str(modo).lower() == "ventana" else "clic"
+        self.modo_constructor_actual = modo
+
+        if hasattr(self, "stack_constructor"):
+            self.stack_constructor.setCurrentIndex(1 if modo == "ventana" else 0)
+
+        if hasattr(self, "boton_modo_clic"):
+            self.boton_modo_clic.setChecked(modo == "clic")
+
+        if hasattr(self, "boton_modo_ventana"):
+            self.boton_modo_ventana.setChecked(modo == "ventana")
+
+        if modo == "ventana":
+            self.modo_mouse_seleccionado = False
+
+    def _software_es_navegador(self, item):
+        texto = (
+            str(item.get("nombre", "") or "")
+            + " "
+            + str(item.get("proceso", "") or "")
+        ).lower()
+        return any(
+            token in texto
+            for token in ("chrome", "edge", "firefox", "brave", "opera")
         )
 
-        self.boton_cancelar = QPushButton(
-            "CANCELAR"
+    def _software_es_office(self, item):
+        texto = (
+            str(item.get("nombre", "") or "")
+            + " "
+            + str(item.get("proceso", "") or "")
+        ).lower()
+        return any(
+            token in texto
+            for token in (
+                "word", "excel", "powerpoint", "power point", "access",
+                "publisher", "visio", "project", "onenote", "libreoffice",
+                "openoffice",
+            )
         )
 
-        self.boton_crear_comando.clicked.connect(
-            self.crear_comando
+    def cargar_lista_software_ventana(self, conservar=None):
+        if not hasattr(self, "software_ventana_editor"):
+            return
+
+        conservar = conservar or {}
+        tipo = str(self.tipo_ventana_editor.currentText() or "Web").lower()
+
+        if tipo == "web":
+            candidatos = [
+                item for item in self.software_instalado
+                if self._software_es_navegador(item)
+            ]
+        elif tipo == "office":
+            candidatos = [
+                item for item in self.software_instalado
+                if self._software_es_office(item)
+            ]
+            if not candidatos:
+                candidatos = list(self.software_instalado)
+        elif tipo == "software":
+            candidatos = list(self.software_instalado)
+        else:
+            candidatos = []
+
+        self.software_ventana_editor.blockSignals(True)
+        self.software_ventana_editor.clear()
+        self.software_ventana_editor.addItem("Seleccionar...", {})
+
+        for item in candidatos:
+            texto = item.get("nombre", "Software")
+            proceso = str(item.get("proceso", "") or "").strip()
+            if proceso:
+                texto += f"  ·  {proceso}"
+            self.software_ventana_editor.addItem(texto, item)
+
+        objetivo_exe = str(conservar.get("ejecutable", "") or "").lower()
+        objetivo_proc = str(conservar.get("proceso", "") or "").lower()
+        objetivo_nombre = str(conservar.get("software_nombre", "") or "").lower()
+
+        indice_objetivo = 0
+        for indice in range(1, self.software_ventana_editor.count()):
+            item = self.software_ventana_editor.itemData(indice) or {}
+            if objetivo_exe and str(item.get("ejecutable", "") or "").lower() == objetivo_exe:
+                indice_objetivo = indice
+                break
+            if objetivo_proc and str(item.get("proceso", "") or "").lower() == objetivo_proc:
+                indice_objetivo = indice
+                break
+            if objetivo_nombre and str(item.get("nombre", "") or "").lower() == objetivo_nombre:
+                indice_objetivo = indice
+                break
+
+        self.software_ventana_editor.setCurrentIndex(indice_objetivo)
+        self.software_ventana_editor.blockSignals(False)
+
+        if indice_objetivo:
+            self.seleccionar_software_ventana(indice_objetivo)
+
+    def actualizar_tipo_editor_ventana(self, *_):
+        if not hasattr(self, "tipo_ventana_editor"):
+            return
+
+        tipo = str(self.tipo_ventana_editor.currentText() or "Web").lower()
+        anterior = {
+            "ejecutable": self.ejecutable_ventana_editor.text().strip()
+            if hasattr(self, "ejecutable_ventana_editor") else "",
+        }
+
+        if tipo == "web":
+            self.label_software_ventana.setText("Navegador:")
+            self.label_direccion_ventana.setText("URL:")
+            self.direccion_ventana_editor.setPlaceholderText("https://...")
+            self.boton_examinar_ventana.setEnabled(False)
+            self.cuenta_asociada_editor.setEnabled(True)
+            self.cuenta_web_editor.setEnabled(True)
+            self.software_ventana_editor.setEnabled(True)
+            self.ejecutable_ventana_editor.setEnabled(True)
+
+        elif tipo == "office":
+            self.label_software_ventana.setText("Office / aplicación:")
+            self.label_direccion_ventana.setText("Archivo / plantilla:")
+            self.direccion_ventana_editor.setPlaceholderText(
+                "C:\\...\\documento.docx / plantilla.xltx / presentación.pptx"
+            )
+            self.boton_examinar_ventana.setEnabled(True)
+            self.cuenta_asociada_editor.setEnabled(False)
+            self.cuenta_web_editor.setEnabled(False)
+            self.software_ventana_editor.setEnabled(True)
+            self.ejecutable_ventana_editor.setEnabled(True)
+
+        elif tipo == "software":
+            self.label_software_ventana.setText("Software instalado:")
+            self.label_direccion_ventana.setText("Dirección / ejecutable:")
+            self.direccion_ventana_editor.setPlaceholderText(
+                "Se completa al elegir software o puedes indicar un .exe"
+            )
+            self.boton_examinar_ventana.setEnabled(True)
+            self.cuenta_asociada_editor.setEnabled(False)
+            self.cuenta_web_editor.setEnabled(False)
+            self.software_ventana_editor.setEnabled(True)
+            self.ejecutable_ventana_editor.setEnabled(True)
+
+        else:
+            self.label_software_ventana.setText("Abrir con:")
+            self.label_direccion_ventana.setText("Ruta del recurso:")
+            self.direccion_ventana_editor.setPlaceholderText(
+                "Video, imagen, audio, plantilla o proyecto..."
+            )
+            self.boton_examinar_ventana.setEnabled(True)
+            self.cuenta_asociada_editor.setEnabled(False)
+            self.cuenta_web_editor.setEnabled(False)
+            self.software_ventana_editor.setEnabled(False)
+            self.ejecutable_ventana_editor.setEnabled(False)
+
+        self.cargar_lista_software_ventana(anterior)
+
+    def seleccionar_software_ventana(self, indice):
+        if indice < 0:
+            return
+
+        item = self.software_ventana_editor.itemData(indice) or {}
+        if not item:
+            return
+
+        ejecutable = str(item.get("ejecutable", "") or "").strip()
+        proceso = str(item.get("proceso", "") or "").strip()
+
+        if ejecutable:
+            self.ejecutable_ventana_editor.setText(ejecutable)
+
+            if str(self.tipo_ventana_editor.currentText()).lower() == "software":
+                self.direccion_ventana_editor.setText(ejecutable)
+        elif proceso and not self.ejecutable_ventana_editor.text().strip():
+            self.ejecutable_ventana_editor.setPlaceholderText(proceso)
+
+    def examinar_direccion_ventana(self):
+        tipo = str(self.tipo_ventana_editor.currentText() or "").lower()
+
+        filtros = "Todos los archivos (*.*)"
+        if tipo == "office":
+            filtros = (
+                "Documentos y plantillas (*.doc *.docx *.dot *.dotx *.xls *.xlsx "
+                "*.xlt *.xltx *.ppt *.pptx *.pot *.potx *.vsd *.vsdx *.mpp);;"
+                "Todos los archivos (*.*)"
+            )
+        elif tipo == "recurso":
+            filtros = (
+                "Recursos y proyectos (*.png *.jpg *.jpeg *.webp *.svg *.gif *.mp4 *.mov "
+                "*.avi *.mkv *.mp3 *.wav *.flac *.doc *.docx *.dotx *.xls *.xlsx *.xltx "
+                "*.ppt *.pptx *.dwg *.dxf *.skp *.ai *.eps *.psd *.blend);;"
+                "Todos los archivos (*.*)"
+            )
+        elif tipo == "software":
+            filtros = "Aplicaciones (*.exe);;Todos los archivos (*.*)"
+
+        ruta, _ = QFileDialog.getOpenFileName(
+            self,
+            "Seleccionar dirección",
+            self.direccion_ventana_editor.text().strip() or "",
+            filtros,
         )
 
-        self.boton_cancelar.clicked.connect(
-            self.reject
+        if not ruta:
+            return
+
+        self.direccion_ventana_editor.setText(ruta)
+
+        if tipo == "software":
+            self.ejecutable_ventana_editor.setText(ruta)
+
+    def capturar_geometria_ventana(self):
+        geometria = {
+            "x": self.posicion_x_ventana.value(),
+            "y": self.posicion_y_ventana.value(),
+            "ancho": self.ancho_ventana.value(),
+            "alto": self.alto_ventana.value(),
+            "maximizada": self.estado_ventana_editor.currentText() == "Maximizada",
+            "minimizada": self.estado_ventana_editor.currentText() == "Minimizada",
+        }
+
+        dialogo = WindowGeometryCaptureDialog(
+            self,
+            geometria=geometria,
         )
 
-        botones_constructor.addWidget(
-            self.boton_crear_comando
+        if dialogo.exec() != QDialog.Accepted:
+            return
+
+        resultado = dialogo.geometria_resultado or {}
+
+        self.posicion_x_ventana.setValue(int(resultado.get("x", 0) or 0))
+        self.posicion_y_ventana.setValue(int(resultado.get("y", 0) or 0))
+        self.ancho_ventana.setValue(max(100, int(resultado.get("ancho", 1200) or 1200)))
+        self.alto_ventana.setValue(max(80, int(resultado.get("alto", 800) or 800)))
+        self.estado_ventana_editor.setCurrentText("Normal")
+        self.boton_geometria_ventana.setText("EDITAR CARACTERÍSTICAS DE VENTANA")
+
+    def cargar_configuracion_ventana_editor(self, configuracion):
+        configuracion = json.loads(
+            json.dumps(configuracion or {}, ensure_ascii=False)
         )
 
-        botones_constructor.addWidget(
-            self.boton_cancelar
+        mapa_tipo = {
+            "web": "Web",
+            "office": "Office",
+            "software": "Software",
+            "recurso": "Recurso",
+        }
+
+        tipo = str(configuracion.get("tipo_ventana", "web") or "web").lower()
+        self.tipo_ventana_editor.setCurrentText(mapa_tipo.get(tipo, "Web"))
+
+        self.nombre_comando_ventana.setText(
+            str(configuracion.get("nombre_comando", "") or "")
+        )
+        self.cuenta_asociada_editor.setText(
+            str(configuracion.get("cuenta_asociada", "") or "")
+        )
+        self.cuenta_web_editor.setText(
+            str(configuracion.get("cuenta_web", "") or "")
+        )
+        self.ejecutable_ventana_editor.setText(
+            str(configuracion.get("ejecutable", "") or "")
         )
 
-        constructor_layout.addLayout(
-            botones_constructor
+        destino = (
+            configuracion.get("url")
+            if tipo == "web"
+            else configuracion.get("ruta_recurso")
+            or configuracion.get("ejecutable")
+            or ""
+        )
+        self.direccion_ventana_editor.setText(str(destino or ""))
+
+        geometria = configuracion.get("geometria") or {}
+        self.posicion_x_ventana.setValue(int(geometria.get("x", 0) or 0))
+        self.posicion_y_ventana.setValue(int(geometria.get("y", 0) or 0))
+        self.ancho_ventana.setValue(max(100, int(geometria.get("ancho", 1200) or 1200)))
+        self.alto_ventana.setValue(max(80, int(geometria.get("alto", 800) or 800)))
+
+        if geometria.get("maximizada"):
+            estado = "Maximizada"
+        elif geometria.get("minimizada"):
+            estado = "Minimizada"
+        else:
+            estado = "Normal"
+        self.estado_ventana_editor.setCurrentText(estado)
+
+        self.cargar_lista_software_ventana(configuracion)
+        self.boton_geometria_ventana.setText("EDITAR CARACTERÍSTICAS DE VENTANA")
+
+    def obtener_configuracion_ventana_editor(self, validar=True):
+        tipo = str(self.tipo_ventana_editor.currentText() or "Web").strip().lower()
+        item_software = self.software_ventana_editor.currentData() or {}
+
+        software_nombre = str(item_software.get("nombre", "") or "").strip()
+        proceso = str(item_software.get("proceso", "") or "").strip()
+        ejecutable = str(self.ejecutable_ventana_editor.text() or "").strip()
+
+        if not ejecutable:
+            ejecutable = str(item_software.get("ejecutable", "") or "").strip()
+
+        if not proceso and ejecutable:
+            proceso = Path(ejecutable).name
+
+        destino = str(self.direccion_ventana_editor.text() or "").strip()
+        url = ""
+        ruta_recurso = ""
+
+        if tipo == "web":
+            url = destino
+            if url and "://" not in url and not url.lower().startswith(("chrome:", "edge:")):
+                url = "https://" + url
+
+            if not proceso:
+                proceso = "chrome.exe"
+
+            if validar and not url:
+                QMessageBox.warning(
+                    self,
+                    "URL requerida",
+                    "Indica la dirección web que BIN debe abrir.",
+                )
+                return None
+
+        elif tipo == "office":
+            ruta_recurso = destino
+            if validar and not ruta_recurso:
+                QMessageBox.warning(
+                    self,
+                    "Archivo requerido",
+                    "Indica el documento o plantilla de Office que BIN debe abrir.",
+                )
+                return None
+
+        elif tipo == "software":
+            if destino and not ejecutable:
+                ejecutable = destino
+            if ejecutable and not proceso:
+                proceso = Path(ejecutable).name
+
+            if validar and not (ejecutable or proceso):
+                QMessageBox.warning(
+                    self,
+                    "Software requerido",
+                    "Selecciona un software instalado o indica su ejecutable.",
+                )
+                return None
+
+        else:
+            ruta_recurso = destino
+            if validar and not ruta_recurso:
+                QMessageBox.warning(
+                    self,
+                    "Recurso requerido",
+                    "Indica la ruta del video, imagen, audio, plantilla o proyecto.",
+                )
+                return None
+
+        estado = self.estado_ventana_editor.currentText()
+        geometria = {
+            "x": int(self.posicion_x_ventana.value()),
+            "y": int(self.posicion_y_ventana.value()),
+            "ancho": int(self.ancho_ventana.value()),
+            "alto": int(self.alto_ventana.value()),
+            "maximizada": estado == "Maximizada",
+            "minimizada": estado == "Minimizada",
+        }
+
+        return {
+            "tipo_ventana": tipo,
+            "tipo_recurso": (
+                "web"
+                if tipo == "web"
+                else "aplicacion"
+                if tipo == "software"
+                else "recurso"
+            ),
+            "software_nombre": software_nombre,
+            "proceso": proceso,
+            "ejecutable": ejecutable,
+            "cuenta_asociada": (
+                self.cuenta_asociada_editor.text().strip()
+                if tipo == "web" else ""
+            ),
+            "cuenta_web": (
+                self.cuenta_web_editor.text().strip()
+                if tipo == "web" else ""
+            ),
+            "url": url,
+            "ruta_recurso": ruta_recurso,
+            "geometria": geometria,
+            "contexto_manual": True,
+            "bloquear_actualizacion_automatica": True,
+        }
+
+    def resumen_configuracion_ventana(self, configuracion):
+        configuracion = configuracion or {}
+        geo = configuracion.get("geometria") or {}
+        tipo = str(configuracion.get("tipo_ventana", "ventana") or "ventana").upper()
+
+        lineas = [f"Tipo: {tipo}"]
+
+        software = str(configuracion.get("software_nombre", "") or "").strip()
+        if software:
+            lineas.append(f"Software: {software}")
+
+        if configuracion.get("cuenta_asociada"):
+            lineas.append(f"Cuenta asociada: {configuracion.get('cuenta_asociada')}")
+
+        if configuracion.get("cuenta_web"):
+            lineas.append(f"Cuenta web: {configuracion.get('cuenta_web')}")
+
+        if configuracion.get("url"):
+            lineas.append(f"URL: {configuracion.get('url')}")
+
+        if configuracion.get("ruta_recurso"):
+            lineas.append(f"Dirección: {configuracion.get('ruta_recurso')}")
+
+        if configuracion.get("ejecutable") and not configuracion.get("ruta_recurso"):
+            lineas.append(f"Ejecutable: {configuracion.get('ejecutable')}")
+
+        lineas.append(
+            f"Posición: X={geo.get('x', '--')} Y={geo.get('y', '--')}"
+        )
+        lineas.append(
+            f"Tamaño: {geo.get('ancho', '--')}×{geo.get('alto', '--')}"
         )
 
-        cuerpo.addWidget(
-            panel_constructor,
-            1,
+        estado = (
+            "maximizada"
+            if geo.get("maximizada")
+            else "minimizada"
+            if geo.get("minimizada")
+            else "normal"
+        )
+        lineas.append(f"Estado: {estado}")
+
+        return "\n".join(lineas)
+
+    def seleccionar_ventana_como_accion(self):
+        configuracion = self.obtener_configuracion_ventana_editor(validar=True)
+        if configuracion is None:
+            return
+
+        self.modo_ventana_seleccionado = True
+        self.modo_mouse_seleccionado = False
+        self.usar_accion_original = False
+        self.comando_seleccionado = None
+
+        self.label_seleccionado.setText(
+            "VENTANA SELECCIONADA\n"
+            + self.resumen_configuracion_ventana(configuracion)
+        )
+        self.boton_agregar_accion.setEnabled(True)
+
+    def crear_comando_ventana(self):
+        nombre = self.nombre_comando_ventana.text().strip()
+
+        if not nombre:
+            QMessageBox.warning(
+                self,
+                "Nombre requerido",
+                "Escribe un nombre para el comando de ventana.",
+            )
+            return
+
+        configuracion = self.obtener_configuracion_ventana_editor(validar=True)
+        if configuracion is None:
+            return
+
+        padre = self.parent()
+
+        if self.comando_editando_id:
+            comando = next(
+                (
+                    item
+                    for item in self.biblioteca
+                    if item.get("id") == self.comando_editando_id
+                ),
+                None,
+            )
+
+            if comando is None:
+                self.comando_editando_id = None
+                return
+
+            comando.clear()
+            comando.update(
+                {
+                    "id": self.comando_editando_id,
+                    "nombre": nombre,
+                    "tipo_comando": "ventana",
+                    "ventana": json.loads(
+                        json.dumps(configuracion, ensure_ascii=False)
+                    ),
+                    "personalizado": True,
+                }
+            )
+
+            if padre is not None and hasattr(padre, "actualizar_comando_en_tareas"):
+                padre.actualizar_comando_en_tareas(comando)
+
+            self.comando_editando_id = None
+            self.boton_crear_comando_ventana.setText("CREAR COMANDO VENTANA")
+
+        else:
+            comando = {
+                "id": "custom-window-" + datetime.now().strftime("%Y%m%d%H%M%S%f"),
+                "nombre": nombre,
+                "tipo_comando": "ventana",
+                "ventana": json.loads(
+                    json.dumps(configuracion, ensure_ascii=False)
+                ),
+                "personalizado": True,
+            }
+            self.biblioteca.append(comando)
+
+        self.comando_seleccionado = comando
+        self.modo_ventana_seleccionado = True
+        self.usar_accion_original = False
+
+        if padre is not None and hasattr(padre, "guardar_biblioteca_comandos"):
+            padre.guardar_biblioteca_comandos(self.biblioteca)
+
+        self.refrescar_lista_comandos()
+        self.label_seleccionado.setText(
+            f"{comando.get('nombre', 'Comando')}\n{self.texto_comando(comando)}"
+        )
+        self.boton_agregar_accion.setEnabled(True)
+
+    def configuracion_ventana_desde_accion(self, accion):
+        accion = accion or {}
+        tipo = str(accion.get("tipo", "") or "")
+
+        if tipo == "comando_ventana":
+            config = json.loads(
+                json.dumps(accion.get("ventana") or {}, ensure_ascii=False)
+            )
+            config.setdefault("nombre_comando", accion.get("nombre_comando", ""))
+            return config
+
+        contexto = (
+            accion.get("contexto_despues")
+            or accion.get("contexto_objetivo")
+            or {}
+        )
+        datos = accion.get("datos") or {}
+        geo = contexto.get("geometria") or {}
+
+        proceso = str(
+            contexto.get("proceso")
+            or datos.get("proceso")
+            or ""
+        ).strip()
+        ejecutable = str(
+            contexto.get("ejecutable")
+            or datos.get("ejecutable")
+            or ""
+        ).strip()
+        tipo_recurso = str(contexto.get("tipo_recurso", "") or "").lower()
+
+        if tipo_recurso == "web" or proceso.lower() in {
+            "chrome.exe", "msedge.exe", "firefox.exe", "brave.exe", "opera.exe"
+        }:
+            tipo_ventana = "web"
+        elif any(
+            token in (proceso + " " + ejecutable).lower()
+            for token in (
+                "winword", "excel", "powerpnt", "msaccess", "visio", "onenote",
+                "soffice",
+            )
+        ):
+            tipo_ventana = "office"
+        elif contexto.get("ruta_recurso"):
+            tipo_ventana = "recurso"
+        else:
+            tipo_ventana = "software"
+
+        software_nombre = (
+            Path(ejecutable).stem
+            if ejecutable
+            else Path(proceso).stem
+            if proceso
+            else str(datos.get("consulta", "") or "")
         )
 
-        principal.addLayout(
-            cuerpo,
-            1,
-        )
+        return {
+            "tipo_ventana": tipo_ventana,
+            "tipo_recurso": (
+                "web" if tipo_ventana == "web"
+                else "aplicacion" if tipo_ventana == "software"
+                else "recurso"
+            ),
+            "software_nombre": software_nombre,
+            "proceso": proceso,
+            "ejecutable": ejecutable,
+            "cuenta_asociada": str(
+                contexto.get("cuenta_navegador", "") or ""
+            ),
+            "cuenta_web": str(
+                contexto.get("cuenta_web", "")
+                or contexto.get("cuenta_web_observada", "")
+                or ""
+            ),
+            "url": str(contexto.get("url", "") or ""),
+            "ruta_recurso": str(contexto.get("ruta_recurso", "") or ""),
+            "geometria": {
+                "x": int(geo.get("x", 0) or 0),
+                "y": int(geo.get("y", 0) or 0),
+                "ancho": max(100, int(geo.get("ancho", 1200) or 1200)),
+                "alto": max(80, int(geo.get("alto", 800) or 800)),
+                "maximizada": bool(geo.get("maximizada")),
+                "minimizada": bool(geo.get("minimizada")),
+            },
+            "contexto_manual": True,
+            "bloquear_actualizacion_automatica": True,
+        }
 
     # ========================================================
     # AÑADIR PARÁMETRO
@@ -1906,16 +2605,12 @@ class CommandLibraryDialog(QDialog):
                 )
             )
 
-    def editar_comando_guardado(
-        self,
-        comando_id,
-    ):
+    def editar_comando_guardado(self, comando_id):
         comando = next(
             (
                 item
                 for item in self.biblioteca
-                if item.get("id")
-                == comando_id
+                if item.get("id") == comando_id
             ),
             None,
         )
@@ -1924,90 +2619,59 @@ class CommandLibraryDialog(QDialog):
             return
 
         padre = self.parent()
-        
 
-        if (
-            padre is not None
-            and hasattr(
-                padre,
-                "tareas_activas_que_usan_comando",
-            )
-        ):
-            activas = (
-                padre.tareas_activas_que_usan_comando(
-                    comando_id
-                )
-            )
-
+        if padre is not None and hasattr(padre, "tareas_activas_que_usan_comando"):
+            activas = padre.tareas_activas_que_usan_comando(comando_id)
             if activas:
                 QMessageBox.warning(
                     self,
                     "Comando en uso",
-                    "No puedes modificar este comando "
-                    "mientras una tarea que lo utiliza "
-                    "está EJECUTANDO o EN COLA.\n\n"
-                    "Detén primero esas tareas.",
+                    "No puedes modificar este comando mientras una tarea que lo utiliza "
+                    "está EJECUTANDO o EN COLA.\n\nDetén primero esas tareas.",
                 )
-
                 return
 
         afectadas = 0
-
-        if (
-            padre is not None
-            and hasattr(
-                padre,
-                "contar_tareas_que_usan_comando",
-            )
-        ):
-            afectadas = (
-                padre.contar_tareas_que_usan_comando(
-                    comando_id
-                )
-            )
+        if padre is not None and hasattr(padre, "contar_tareas_que_usan_comando"):
+            afectadas = padre.contar_tareas_que_usan_comando(comando_id)
 
         respuesta = QMessageBox.warning(
             self,
             "Editar comando",
             f"Vas a modificar '{comando.get('nombre', 'Comando')}'.\n\n"
-            f"{afectadas} tarea(s) guardada(s) utilizan "
-            "este comando.\n\n"
-            "TODAS ellas serán actualizadas automáticamente "
-            "con la nueva versión del comando.\n\n"
-            "¿Continuar?",
-            QMessageBox.Yes
-            | QMessageBox.No,
+            f"{afectadas} tarea(s) guardada(s) utilizan este comando.\n\n"
+            "TODAS ellas serán actualizadas automáticamente con la nueva versión "
+            "del comando.\n\n¿Continuar?",
+            QMessageBox.Yes | QMessageBox.No,
         )
 
         if respuesta != QMessageBox.Yes:
             return
 
-        self.comando_editando_id = (
-            comando_id
-        )
+        self.comando_editando_id = comando_id
 
-        self.nombre_comando.setText(
-            comando.get(
-                "nombre",
-                "",
+        if str(comando.get("tipo_comando", "") or "").lower() == "ventana":
+            self.cambiar_modo_constructor("ventana")
+            configuracion = json.loads(
+                json.dumps(comando.get("ventana") or {}, ensure_ascii=False)
             )
-        )
+            configuracion["nombre_comando"] = comando.get("nombre", "")
+            self.cargar_configuracion_ventana_editor(configuracion)
+            self.nombre_comando_ventana.setText(comando.get("nombre", ""))
+            self.boton_crear_comando_ventana.setText("GUARDAR CAMBIOS")
+            return
 
+        self.cambiar_modo_constructor("clic")
+        self.nombre_comando.setText(comando.get("nombre", ""))
         self.cargar_parametros_en_constructor(
             json.loads(
                 json.dumps(
-                    comando.get(
-                        "parametros",
-                        [],
-                    ),
+                    comando.get("parametros", []),
                     ensure_ascii=False,
                 )
             )
         )
-
-        self.boton_crear_comando.setText(
-            "GUARDAR CAMBIOS"
-        )
+        self.boton_crear_comando.setText("GUARDAR CAMBIOS")
 
     def eliminar_comando_guardado(
         self,
@@ -2414,10 +3078,7 @@ class CommandLibraryDialog(QDialog):
     # SELECCIONAR COMANDO
     # ========================================================
 
-    def seleccionar_comando(
-        self,
-        comando_id,
-    ):
+    def seleccionar_comando(self, comando_id):
         comando = next(
             (
                 item
@@ -2431,19 +3092,32 @@ class CommandLibraryDialog(QDialog):
             return
 
         self.comando_seleccionado = comando
-
         self.usar_accion_original = False
-
         self.modo_mouse_seleccionado = False
 
-        self.label_seleccionado.setText(
-            f"{comando.get('nombre', 'Comando')}\n"
-            f"{self.texto_comando(comando)}"
-        )
+        if str(comando.get("tipo_comando", "") or "").lower() == "ventana":
+            self.cambiar_modo_constructor("ventana")
+            self.modo_ventana_seleccionado = True
 
-        self.boton_agregar_accion.setEnabled(
-            True
-        )
+            configuracion = json.loads(
+                json.dumps(comando.get("ventana") or {}, ensure_ascii=False)
+            )
+            configuracion["nombre_comando"] = comando.get("nombre", "")
+            self.cargar_configuracion_ventana_editor(configuracion)
+
+            self.label_seleccionado.setText(
+                f"{comando.get('nombre', 'Comando')}\n"
+                f"{self.texto_comando(comando)}"
+            )
+        else:
+            self.cambiar_modo_constructor("clic")
+            self.modo_ventana_seleccionado = False
+            self.label_seleccionado.setText(
+                f"{comando.get('nombre', 'Comando')}\n"
+                f"{self.texto_comando(comando)}"
+            )
+
+        self.boton_agregar_accion.setEnabled(True)
 
     # ========================================================
     # SELECCIONAR CLIC COMO ACCIÓN
@@ -2452,7 +3126,11 @@ class CommandLibraryDialog(QDialog):
     def seleccionar_click_mouse(
         self,
     ):
+        self.cambiar_modo_constructor("clic")
+
         self.modo_mouse_seleccionado = True
+
+        self.modo_ventana_seleccionado = False
 
         self.usar_accion_original = False
 
@@ -2626,14 +3304,11 @@ class CommandLibraryDialog(QDialog):
     # AGREGAR A LA TAREA
     # ========================================================
 
-    def agregar_accion(
-        self,
-    ):
+    def agregar_accion(self):
         comando = self.comando_seleccionado
 
-        usar_mouse = bool(
-            self.modo_mouse_seleccionado
-        )
+        usar_mouse = bool(self.modo_mouse_seleccionado)
+        usar_ventana = bool(self.modo_ventana_seleccionado)
 
         mantener_original = (
             self.modo_edicion_accion
@@ -2645,54 +3320,61 @@ class CommandLibraryDialog(QDialog):
             comando is None
             and not mantener_original
             and not usar_mouse
+            and not usar_ventana
         ):
             return
 
-        dialogo = QDialog(
-            self
+        # Si se seleccionó un comando de ventana guardado, su configuración
+        # es la que se reutiliza. Si se está editando Acción actual, se usa
+        # exactamente lo que aparece en el editor manual.
+        configuracion_ventana = None
+        comando_ventana_guardado = bool(
+            comando
+            and str(comando.get("tipo_comando", "") or "").lower() == "ventana"
         )
+
+        if usar_ventana:
+            if comando_ventana_guardado and not self.modo_edicion_accion:
+                configuracion_ventana = json.loads(
+                    json.dumps(comando.get("ventana") or {}, ensure_ascii=False)
+                )
+            else:
+                configuracion_ventana = self.obtener_configuracion_ventana_editor(
+                    validar=True
+                )
+
+            if configuracion_ventana is None:
+                return
+
+        dialogo = QDialog(self)
 
         if self.modo_edicion_accion:
-            dialogo.setWindowTitle(
-                "Modificar acción"
-            )
+            dialogo.setWindowTitle("Modificar acción")
         else:
-            dialogo.setWindowTitle(
-                "Tiempo de la acción"
-            )
+            dialogo.setWindowTitle("Tiempo de la acción")
 
-        dialogo.setMinimumWidth(
-            400
-        )
-
-        layout = QVBoxLayout(
-            dialogo
-        )
+        dialogo.setMinimumWidth(430)
+        layout = QVBoxLayout(dialogo)
 
         # ====================================================
         # RESUMEN
         # ====================================================
-
-        if usar_mouse:
-            boton_mouse = (
-                self.tipo_click_mouse
-                .currentText()
+        if usar_ventana:
+            nombre = (
+                comando.get("nombre", "Comando de ventana")
+                if comando_ventana_guardado
+                else "Acción de ventana"
+            )
+            texto_resumen = (
+                f"{nombre}\n\n"
+                + self.resumen_configuracion_ventana(configuracion_ventana)
             )
 
-            cantidad_mouse = (
-                self.cantidad_click_mouse
-                .value()
-            )
-
-            x_mouse = (
-                self.coordenada_mouse_x
-                .value()
-            )
-
-            y_mouse = (
-                self.coordenada_mouse_y
-                .value()
-            )
+        elif usar_mouse:
+            boton_mouse = self.tipo_click_mouse.currentText()
+            cantidad_mouse = self.cantidad_click_mouse.value()
+            x_mouse = self.coordenada_mouse_x.value()
+            y_mouse = self.coordenada_mouse_y.value()
 
             texto_resumen = (
                 f"Clic {boton_mouse}\n\n"
@@ -2701,11 +3383,9 @@ class CommandLibraryDialog(QDialog):
             )
 
         elif mantener_original:
-            texto_resumen = (
-                self.accion_editar.get(
-                    "descripcion",
-                    "Acción actual",
-                )
+            texto_resumen = self.accion_editar.get(
+                "descripcion",
+                "Acción actual",
             )
 
         else:
@@ -2714,234 +3394,171 @@ class CommandLibraryDialog(QDialog):
                 f"{self.texto_comando(comando)}"
             )
 
-        resumen = QLabel(
-            texto_resumen
-        )
-
-        resumen.setWordWrap(
-            True
-        )
-
-        layout.addWidget(
-            resumen
-        )
+        resumen = QLabel(texto_resumen)
+        resumen.setWordWrap(True)
+        layout.addWidget(resumen)
 
         # ====================================================
         # TIEMPOS
         # ====================================================
-
         formulario = QFormLayout()
 
         espera_antes = QDoubleSpinBox()
-
-        espera_antes.setRange(
-            0.0,
-            3600.0,
-        )
-
-        espera_antes.setDecimals(
-            2
-        )
-
-        espera_antes.setSingleStep(
-            0.25
-        )
-
-        espera_antes.setSuffix(
-            " s"
-        )
+        espera_antes.setRange(0.0, 3600.0)
+        espera_antes.setDecimals(2)
+        espera_antes.setSingleStep(0.25)
+        espera_antes.setSuffix(" s")
 
         espera_despues = QDoubleSpinBox()
+        espera_despues.setRange(0.0, 3600.0)
+        espera_despues.setDecimals(2)
+        espera_despues.setSingleStep(0.25)
+        espera_despues.setSuffix(" s")
 
-        espera_despues.setRange(
-            0.0,
-            3600.0,
-        )
-
-        espera_despues.setDecimals(
-            2
-        )
-
-        espera_despues.setSingleStep(
-            0.25
-        )
-
-        espera_despues.setSuffix(
-            " s"
-        )
-
-        # ----------------------------------------------------
-        # CARGAR TIEMPOS ACTUALES AL EDITAR
-        # ----------------------------------------------------
-
-        if (
-            self.modo_edicion_accion
-            and self.accion_editar
-        ):
+        if self.modo_edicion_accion and self.accion_editar:
             try:
                 espera_antes.setValue(
-                    float(
-                        self.accion_editar.get(
-                            "espera_antes_ms",
-                            0,
-                        )
-                        or 0
-                    )
-                    / 1000.0
+                    float(self.accion_editar.get("espera_antes_ms", 0) or 0) / 1000.0
                 )
-
             except Exception:
-                espera_antes.setValue(
-                    0.0
-                )
+                espera_antes.setValue(0.0)
 
             try:
                 espera_despues.setValue(
-                    float(
-                        self.accion_editar.get(
-                            "espera_despues_ms",
-                            0,
-                        )
-                        or 0
-                    )
-                    / 1000.0
+                    float(self.accion_editar.get("espera_despues_ms", 0) or 0) / 1000.0
                 )
-
             except Exception:
-                espera_despues.setValue(
-                    0.0
-                )
+                espera_despues.setValue(0.0)
 
-        formulario.addRow(
-            "Esperar antes:",
-            espera_antes,
-        )
-
-        formulario.addRow(
-            "Esperar después:",
-            espera_despues,
-        )
-
-        layout.addLayout(
-            formulario
-        )
+        formulario.addRow("Esperar antes:", espera_antes)
+        formulario.addRow("Esperar después:", espera_despues)
+        layout.addLayout(formulario)
 
         botones = QDialogButtonBox(
-            QDialogButtonBox.Save
-            | QDialogButtonBox.Cancel
+            QDialogButtonBox.Save | QDialogButtonBox.Cancel
         )
 
-        boton_guardar = botones.button(
-            QDialogButtonBox.Save
-        )
-
+        boton_guardar = botones.button(QDialogButtonBox.Save)
         if boton_guardar is not None:
+            boton_guardar.setText(
+                "GUARDAR CAMBIOS" if self.modo_edicion_accion else "AGREGAR ACCIÓN"
+            )
 
-            if self.modo_edicion_accion:
-                boton_guardar.setText(
-                    "GUARDAR CAMBIOS"
-                )
-            else:
-                boton_guardar.setText(
-                    "AGREGAR ACCIÓN"
-                )
+        botones.accepted.connect(dialogo.accept)
+        botones.rejected.connect(dialogo.reject)
+        layout.addWidget(botones)
 
-        botones.accepted.connect(
-            dialogo.accept
-        )
-
-        botones.rejected.connect(
-            dialogo.reject
-        )
-
-        layout.addWidget(
-            botones
-        )
-
-        if (
-            dialogo.exec()
-            != QDialog.Accepted
-        ):
+        if dialogo.exec() != QDialog.Accepted:
             return
 
-        antes_ms = int(
-            espera_antes.value()
-            * 1000
-        )
+        antes_ms = int(espera_antes.value() * 1000)
+        despues_ms = int(espera_despues.value() * 1000)
 
-        despues_ms = int(
-            espera_despues.value()
-            * 1000
-        )
+        # ====================================================
+        # COMANDO / ACCIÓN DE VENTANA
+        # ====================================================
+        if usar_ventana:
+            tipo_ventana = str(
+                configuracion_ventana.get("tipo_ventana", "ventana") or "ventana"
+            ).upper()
+
+            destino = str(
+                configuracion_ventana.get("url")
+                or configuracion_ventana.get("ruta_recurso")
+                or configuracion_ventana.get("software_nombre")
+                or configuracion_ventana.get("ejecutable")
+                or "Ventana"
+            )
+
+            nombre_comando = (
+                comando.get("nombre", "Comando de ventana")
+                if comando_ventana_guardado
+                else (
+                    self.accion_editar.get("nombre_comando", "Ventana manual")
+                    if self.modo_edicion_accion and self.accion_editar
+                    else "Ventana manual"
+                )
+            )
+
+            descripcion = f"Ventana · {tipo_ventana} · {destino}"
+
+            if antes_ms > 0:
+                descripcion += f" · antes {antes_ms / 1000:g}s"
+            if despues_ms > 0:
+                descripcion += f" · después {despues_ms / 1000:g}s"
+
+            padre = self.parent()
+            contexto_despues = None
+            if padre is not None and hasattr(padre, "contexto_desde_configuracion_ventana"):
+                try:
+                    contexto_despues = padre.contexto_desde_configuracion_ventana(
+                        configuracion_ventana
+                    )
+                except Exception:
+                    contexto_despues = None
+
+            demostracion_original = None
+            if self.modo_edicion_accion and self.accion_editar:
+                demostracion_original = self.accion_editar.get(
+                    "demostracion_original"
+                ) or json.loads(
+                    json.dumps(self.accion_editar, ensure_ascii=False)
+                )
+
+            self.accion_resultado = {
+                "tipo": "comando_ventana",
+                "origen": "edicion_usuario" if self.modo_edicion_accion else "manual_ventana",
+                "descripcion": descripcion,
+                "comando_id": (
+                    comando.get("id") if comando_ventana_guardado else None
+                ),
+                "nombre_comando": nombre_comando,
+                "ventana": json.loads(
+                    json.dumps(configuracion_ventana, ensure_ascii=False)
+                ),
+                "espera_antes_ms": antes_ms,
+                "espera_despues_ms": despues_ms,
+                "contexto_objetivo": None,
+                "contexto_despues": contexto_despues,
+                "contexto_manual": True,
+                "bloquear_actualizacion_automatica": True,
+            }
+
+            if demostracion_original is not None:
+                self.accion_resultado["demostracion_original"] = demostracion_original
+                self.accion_resultado["fallback"] = demostracion_original
+
+            self.accept()
+            return
 
         # ====================================================
         # CLIC DE MOUSE
         # ====================================================
-
         if usar_mouse:
-            boton_mouse = (
-                self.tipo_click_mouse
-                .currentText()
-                .strip()
-                .lower()
-            )
-
-            cantidad = max(
-                1,
-                min(
-                    2,
-                    self.cantidad_click_mouse.value(),
-                ),
-            )
-
+            boton_mouse = self.tipo_click_mouse.currentText().strip().lower()
+            cantidad = max(1, min(2, self.cantidad_click_mouse.value()))
             x = self.coordenada_mouse_x.value()
-
             y = self.coordenada_mouse_y.value()
 
-            es_derecho = (
-                boton_mouse == "derecho"
-            )
+            es_derecho = boton_mouse == "derecho"
 
             if es_derecho:
                 tipo_accion = "click_derecho"
-
-                nombre_accion = (
-                    "Clic derecho"
-                )
-
+                nombre_accion = "Clic derecho"
             elif cantidad == 2:
                 tipo_accion = "doble_click"
-
-                nombre_accion = (
-                    "Doble clic izquierdo"
-                )
-
+                nombre_accion = "Doble clic izquierdo"
             else:
                 tipo_accion = "click"
+                nombre_accion = "Clic izquierdo"
 
-                nombre_accion = (
-                    "Clic izquierdo"
-                )
-
-            descripcion = (
-                f"{nombre_accion} "
-                f"en X={x}, Y={y}"
-            )
-
+            descripcion = f"{nombre_accion} en X={x}, Y={y}"
             if cantidad == 2:
                 descripcion += " · 2 clics"
-
             if antes_ms > 0:
-                descripcion += (
-                    f" · antes "
-                    f"{antes_ms / 1000:g}s"
-                )
-
+                descripcion += f" · antes {antes_ms / 1000:g}s"
             if despues_ms > 0:
-                descripcion += (
-                    f" · después "
-                    f"{despues_ms / 1000:g}s"
-                )
+                descripcion += f" · después {despues_ms / 1000:g}s"
 
             self.accion_resultado = {
                 "tipo": tipo_accion,
@@ -2960,87 +3577,48 @@ class CommandLibraryDialog(QDialog):
                 QMessageBox.information(
                     self,
                     "Clic derecho",
-                    "Recuerda simular la próxima acción "
-                    "con clic izquierdo en la posición "
-                    "que necesites para activar el comando "
-                    "de la lista desplegada del clic derecho.",
+                    "Recuerda simular la próxima acción con clic izquierdo en la "
+                    "posición que necesites para activar el comando de la lista desplegada "
+                    "del clic derecho.",
                 )
 
             self.accept()
-
             return
 
         # ====================================================
         # MANTENER ACCIÓN ORIGINAL
         # ====================================================
-
         if mantener_original:
             resultado = json.loads(
-                json.dumps(
-                    self.accion_editar,
-                    ensure_ascii=False,
-                )
+                json.dumps(self.accion_editar, ensure_ascii=False)
             )
-
-            resultado[
-                "espera_antes_ms"
-            ] = antes_ms
-
-            resultado[
-                "espera_despues_ms"
-            ] = despues_ms
-
+            resultado["espera_antes_ms"] = antes_ms
+            resultado["espera_despues_ms"] = despues_ms
             self.accion_resultado = resultado
-
             self.accept()
-
             return
 
         # ====================================================
         # COMANDO DE TECLADO
         # ====================================================
-
-        texto = self.texto_comando(
-            comando
-        )
-
+        texto = self.texto_comando(comando)
         descripcion = (
-            f"Comando · "
-            f"{comando.get('nombre', 'Comando')} · "
-            f"{texto}"
+            f"Comando · {comando.get('nombre', 'Comando')} · {texto}"
         )
 
         if antes_ms > 0:
-            descripcion += (
-                f" · antes "
-                f"{antes_ms / 1000:g}s"
-            )
-
+            descripcion += f" · antes {antes_ms / 1000:g}s"
         if despues_ms > 0:
-            descripcion += (
-                f" · después "
-                f"{despues_ms / 1000:g}s"
-            )
+            descripcion += f" · después {despues_ms / 1000:g}s"
 
         self.accion_resultado = {
             "tipo": "comando_teclado",
             "origen": "manual_comando",
             "descripcion": descripcion,
-            "comando_id": comando.get(
-                "id"
-            ),
-            "nombre_comando": comando.get(
-                "nombre",
-                "Comando",
-            ),
+            "comando_id": comando.get("id"),
+            "nombre_comando": comando.get("nombre", "Comando"),
             "parametros": json.loads(
-                json.dumps(
-                    comando.get(
-                        "parametros",
-                        [],
-                    ),
-                    ensure_ascii=False,
-                )
+                json.dumps(comando.get("parametros", []), ensure_ascii=False)
             ),
             "espera_antes_ms": antes_ms,
             "espera_despues_ms": despues_ms,
@@ -3587,8 +4165,20 @@ class TaskCard(QFrame):
             True
         )
 
+        self.editor_contexto.setMinimumHeight(
+            46
+        )
+
         self.editor_contexto.setMaximumHeight(
-            100
+            60
+        )
+
+        self.editor_contexto.setVerticalScrollBarPolicy(
+            Qt.ScrollBarAsNeeded
+        )
+
+        self.editor_contexto.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarAlwaysOff
         )
 
         contexto_layout.addWidget(
@@ -4006,11 +4596,29 @@ class BIN(QMainWindow):
 
         self.directorio_bin = Path(__file__).resolve().parent
 
-        self.directorio_datos = self.directorio_bin / "data"
+        self.directorio_datos = (
+            self.directorio_bin
+            / "data"
+        )
 
-        self.archivo_tareas = self.directorio_datos / "tareas.json"
+        self.archivo_tareas = (
+            self.directorio_datos
+            / "tareas.json"
+        )
 
-        self.directorio_datos.mkdir(parents=True, exist_ok=True)
+        self.archivo_configuracion = (
+            self.directorio_datos
+            / "configuracion.json"
+        )
+
+        self.directorio_datos.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+
+        self.configuracion = (
+            self.cargar_configuracion()
+        )
 
         # ====================================================
         # TAREAS DE DEMOSTRACIÓN
@@ -4156,6 +4764,62 @@ class BIN(QMainWindow):
         self.ultimo_motivo_supervisor = ""
         self.supervisor_hubo_wait = False
 
+        # ====================================================
+        # AUDITORÍA CONTEXTUAL FINAL / RESCATE DE ERROR
+        # ====================================================
+        #
+        # No guarda una segunda "memoria final".
+        # Reconstruye el último estado demostrado de cada
+        # ventana directamente desde contexto_objetivo y
+        # contexto_despues de las acciones guardadas.
+        # ====================================================
+
+        self.timer_auditoria_contextual = QTimer(self)
+        self.timer_auditoria_contextual.setSingleShot(True)
+        self.timer_auditoria_contextual.timeout.connect(
+            self.procesar_auditoria_contextual
+        )
+
+        self.auditoria_contextual_activa = False
+        self.auditoria_contextual_modo = None
+        self.auditoria_contextual_tarea_id = None
+        self.auditoria_contextual_contextos = []
+        self.auditoria_contextual_indice = 0
+        self.auditoria_contextual_intentos = 0
+        self.auditoria_contextual_inicio = None
+        self.auditoria_contextual_mensaje_error = ""
+        self.auditoria_contextual_fase_error = None
+        self.auditoria_contextual_intervalo_ms = 500
+        self.auditoria_contextual_hwnds_confirmados = []
+        self.auditoria_contextual_aperturas_finales = set()
+
+        # Cuando la auditoría final deja las ventanas demostradas
+        # delante, evitamos que BIN se coloque encima inmediatamente
+        # después de declarar FINALIZADA.
+        self._omitir_traer_bin_al_frente_una_vez = False
+
+        # Un mismo paso sólo puede ser rescatado una vez después
+        # de un error real. Si vuelve a fallar con las ventanas ya
+        # correctas, el problema no es contextual y debe quedar
+        # registrado como ERROR en vez de entrar en un bucle.
+        self.auditoria_error_rescates_por_paso = {}
+        self.auditoria_error_max_rescates_por_paso = 1
+
+        # ====================================================
+        # SINCRONIZACIÓN DE OBSERVACIONES DE VENTANAS
+        # ====================================================
+        # Cada barrido real de EnumWindows incrementa una generación.
+        # La auditoría exige dos READY pertenecientes a generaciones
+        # distintas antes de confirmar una ventana.
+        self._generacion_ventanas_bin = 0
+        self._momento_generacion_ventanas_bin = 0.0
+
+        self.auditoria_contextual_confirmaciones_frescas = 0
+        self.auditoria_contextual_ultima_generacion_confirmada = -1
+        self.auditoria_contextual_hwnd_primera_confirmacion = 0
+        self.auditoria_contextual_generacion_ultima_evaluacion = -1
+        self.auditoria_contextual_intervalo_confirmacion_ms = 350
+
         # Punto de extensión opcional. No requiere credenciales ni
         # dependencia adicional; puede conectarse más adelante.
         self.proveedor_ia_visual = None
@@ -4200,9 +4864,9 @@ class BIN(QMainWindow):
 
         self.aplicar_estilos()
 
-        # La ventana debe existir antes de que Windows
-        # pueda excluirla de las capturas.
-        self.excluir_bin_de_captura()
+        # La ventana debe existir antes de aplicar
+        # su configuración de visibilidad.
+        self.aplicar_visibilidad_interfaz()
 
         self.iniciar_captura_pantalla()
 
@@ -4365,6 +5029,952 @@ class BIN(QMainWindow):
                 self,
                 "Error guardando tareas",
                 "BIN no pudo guardar las tareas.\n\n" f"{error}",
+            )
+
+    # ========================================================
+    # CONFIGURACIÓN GENERAL DE BIN
+    # ========================================================
+
+    def configuracion_por_defecto(
+        self,
+    ):
+        return {
+            "trato": "Señor",
+            "trato_otro": "",
+            "nombre_usuario": "",
+            "idioma": "ES",
+            "interfaz": "Invisible",
+            "telefono": "",
+            "correo": "",
+            "whatsapp": "",
+            "msm": "",
+            "notificar_falla_en": "Ninguna",
+            "limpieza_ventanas": "Ninguna",
+
+            # ================================================
+            # MODOS DE OPERACIÓN — FUTURO
+            # ================================================
+            #
+            # "modo": "Light",
+            #
+            # Valores previstos:
+            # "Light"
+            # "IA"
+            # "BIN + IA"
+        }
+
+    def cargar_configuracion(
+        self,
+    ):
+        configuracion = (
+            self.configuracion_por_defecto()
+        )
+
+        try:
+            if self.archivo_configuracion.exists():
+
+                with open(
+                    self.archivo_configuracion,
+                    "r",
+                    encoding="utf-8",
+                ) as archivo:
+
+                    datos = json.load(
+                        archivo
+                    )
+
+                if isinstance(
+                    datos,
+                    dict,
+                ):
+                    for clave in configuracion:
+
+                        if clave in datos:
+                            configuracion[clave] = (
+                                datos[clave]
+                            )
+
+        except Exception as error:
+
+            print(
+                "Error cargando configuración:",
+                error,
+            )
+
+        return configuracion
+
+    def guardar_configuracion(
+        self,
+    ):
+        try:
+
+            archivo_temporal = (
+                self.archivo_configuracion.with_suffix(
+                    ".tmp"
+                )
+            )
+
+            with open(
+                archivo_temporal,
+                "w",
+                encoding="utf-8",
+            ) as archivo:
+
+                json.dump(
+                    self.configuracion,
+                    archivo,
+                    ensure_ascii=False,
+                    indent=4,
+                )
+
+            archivo_temporal.replace(
+                self.archivo_configuracion
+            )
+
+            return True
+
+        except Exception as error:
+
+            QMessageBox.critical(
+                self,
+                "Error guardando configuración",
+                (
+                    "BIN no pudo guardar "
+                    "la configuración.\n\n"
+                    f"{error}"
+                ),
+            )
+
+            return False
+
+    def aplicar_visibilidad_interfaz(
+        self,
+    ):
+        modo = str(
+            self.configuracion.get(
+                "interfaz",
+                "Invisible",
+            )
+            or "Invisible"
+        ).strip()
+
+        if sys.platform != "win32":
+            return False
+
+        if modo == "Invisible":
+
+            return self.excluir_bin_de_captura()
+
+        try:
+
+            hwnd = int(
+                self.winId()
+            )
+
+            resultado = (
+                ctypes.windll.user32.SetWindowDisplayAffinity(
+                    hwnd,
+                    WDA_NONE,
+                )
+            )
+
+            if resultado:
+
+                self.bin_excluido_de_captura = False
+
+                return True
+
+        except Exception as error:
+
+            print(
+                "Error cambiando visibilidad de BIN:",
+                error,
+            )
+
+        return False
+
+    def limpiar_mesa_trabajo_ventanas(
+        self,
+        motivo="manual",
+    ):
+        """
+        Solicita el cierre normal de las ventanas visibles
+        de otras aplicaciones.
+
+        BIN, la barra de tareas y el escritorio de Windows
+        quedan excluidos. Se usa WM_CLOSE para permitir que
+        cada aplicación procese su cierre normalmente.
+        """
+
+        if sys.platform != "win32":
+            return 0
+
+        try:
+            user32 = ctypes.windll.user32
+
+            hwnds = (
+                self.enumerar_hwnds_ventanas_visibles_bin()
+            )
+
+            clases_protegidas = {
+                "Shell_TrayWnd",
+                "Shell_SecondaryTrayWnd",
+                "Progman",
+                "WorkerW",
+            }
+
+            cerradas = 0
+
+            for hwnd in list(
+                hwnds
+                or []
+            ):
+                try:
+                    hwnd = int(
+                        hwnd
+                    )
+
+                    if not hwnd:
+                        continue
+
+                    if not user32.IsWindow(
+                        hwnd
+                    ):
+                        continue
+
+                    if not user32.IsWindowVisible(
+                        hwnd
+                    ):
+                        continue
+
+                    clase_buffer = ctypes.create_unicode_buffer(
+                        256
+                    )
+
+                    user32.GetClassNameW(
+                        hwnd,
+                        clase_buffer,
+                        len(
+                            clase_buffer
+                        ),
+                    )
+
+                    clase = str(
+                        clase_buffer.value
+                        or ""
+                    ).strip()
+
+                    if clase in clases_protegidas:
+                        continue
+
+                    longitud = int(
+                        user32.GetWindowTextLengthW(
+                            hwnd
+                        )
+                        or 0
+                    )
+
+                    if longitud <= 0:
+                        continue
+
+                    titulo_buffer = ctypes.create_unicode_buffer(
+                        longitud
+                        + 1
+                    )
+
+                    user32.GetWindowTextW(
+                        hwnd,
+                        titulo_buffer,
+                        longitud
+                        + 1,
+                    )
+
+                    titulo = str(
+                        titulo_buffer.value
+                        or ""
+                    ).strip()
+
+                    if not titulo:
+                        continue
+
+                    # WM_CLOSE = 0x0010.
+                    # No mata el proceso: solicita un cierre normal.
+                    if user32.PostMessageW(
+                        hwnd,
+                        0x0010,
+                        0,
+                        0,
+                    ):
+                        cerradas += 1
+
+                except Exception:
+                    continue
+
+            if cerradas:
+                self.registrar_evento_bin(
+                    "LIMPIEZA",
+                    (
+                        "Solicité limpiar la mesa de trabajo "
+                        f"({motivo})."
+                    ),
+                    (
+                        f"Ventanas con solicitud de cierre: "
+                        f"{cerradas}"
+                    ),
+                )
+
+                # Dar un margen corto a Windows para procesar
+                # los cierres antes de continuar la rutina.
+                QApplication.processEvents()
+
+                time.sleep(
+                    0.45
+                )
+
+            return cerradas
+
+        except Exception as error:
+            self.registrar_evento_bin(
+                "ERROR",
+                "No pude limpiar la mesa de trabajo.",
+                str(
+                    error
+                ),
+            )
+
+            return 0
+
+    def aplicar_limpieza_ventanas_configurada(
+        self,
+        momento,
+    ):
+        opcion = str(
+            self.configuracion.get(
+                "limpieza_ventanas",
+                "Ninguna",
+            )
+            or "Ninguna"
+        ).strip().lower()
+
+        momento = str(
+            momento
+            or ""
+        ).strip().lower()
+
+        ejecutar = False
+
+        if momento == "antes":
+            ejecutar = opcion in {
+                "antes",
+                "antes y después",
+            }
+
+        elif momento == "después":
+            ejecutar = opcion in {
+                "después",
+                "antes y después",
+            }
+
+        if not ejecutar:
+            return 0
+
+        return self.limpiar_mesa_trabajo_ventanas(
+            motivo=momento
+        )
+
+    def abrir_configuracion(
+        self,
+    ):
+        dialogo = QDialog(
+            self
+        )
+
+        dialogo.setWindowTitle(
+            "Configuración de BIN"
+        )
+
+        dialogo.resize(
+            560,
+            650,
+        )
+
+        principal = QVBoxLayout(
+            dialogo
+        )
+
+        principal.setContentsMargins(
+            16,
+            16,
+            16,
+            16,
+        )
+
+        principal.setSpacing(
+            12
+        )
+
+        # ----------------------------------------------------
+        # TÍTULO
+        # ----------------------------------------------------
+
+        titulo = QLabel(
+            "CONFIGURACIÓN"
+        )
+
+        titulo.setObjectName(
+            "tituloDialogo"
+        )
+
+        principal.addWidget(
+            titulo
+        )
+
+        descripcion = QLabel(
+            "Datos personales y comportamiento "
+            "general de BIN."
+        )
+
+        descripcion.setWordWrap(
+            True
+        )
+
+        descripcion.setObjectName(
+            "textoSecundario"
+        )
+
+        principal.addWidget(
+            descripcion
+        )
+
+        # ----------------------------------------------------
+        # FORMULARIO
+        # ----------------------------------------------------
+
+        formulario = QFormLayout()
+
+        formulario.setSpacing(
+            10
+        )
+
+        # ----------------------------------------------------
+        # TRATO
+        # ----------------------------------------------------
+
+        trato = QComboBox()
+
+        trato.addItems(
+            [
+                "Señor",
+                "Señora",
+                "Doctor",
+                "Doctora",
+                "Otro",
+            ]
+        )
+
+        trato.setCurrentText(
+            str(
+                self.configuracion.get(
+                    "trato",
+                    "Señor",
+                )
+            )
+        )
+
+        formulario.addRow(
+            "Cómo me dirijo a usted:",
+            trato,
+        )
+
+        trato_otro = QLineEdit()
+
+        trato_otro.setPlaceholderText(
+            "Indique cómo desea que BIN se dirija a usted"
+        )
+
+        trato_otro.setText(
+            str(
+                self.configuracion.get(
+                    "trato_otro",
+                    "",
+                )
+            )
+        )
+
+        formulario.addRow(
+            "Otro:",
+            trato_otro,
+        )
+
+        def actualizar_trato_otro(
+            valor,
+        ):
+            trato_otro.setEnabled(
+                valor == "Otro"
+            )
+
+        trato.currentTextChanged.connect(
+            actualizar_trato_otro
+        )
+
+        actualizar_trato_otro(
+            trato.currentText()
+        )
+
+        # ----------------------------------------------------
+        # NOMBRE
+        # ----------------------------------------------------
+
+        nombre_usuario = QLineEdit()
+
+        nombre_usuario.setPlaceholderText(
+            "Nombre de usuario"
+        )
+
+        nombre_usuario.setText(
+            str(
+                self.configuracion.get(
+                    "nombre_usuario",
+                    "",
+                )
+            )
+        )
+
+        formulario.addRow(
+            "Nombre de usuario:",
+            nombre_usuario,
+        )
+
+        # ----------------------------------------------------
+        # IDIOMA
+        # ----------------------------------------------------
+
+        idioma = QComboBox()
+
+        idioma.addItems(
+            [
+                "ES",
+                "EN",
+            ]
+        )
+
+        idioma.setCurrentText(
+            str(
+                self.configuracion.get(
+                    "idioma",
+                    "ES",
+                )
+            )
+        )
+
+        # El selector queda preparado,
+        # pero todavía no cambia la interfaz.
+        idioma.setEnabled(
+            False
+        )
+
+        formulario.addRow(
+            "Idioma ES / EN:",
+            idioma,
+        )
+
+        idioma_nota = QLabel(
+            "Cambio de idioma reservado "
+            "para una versión posterior."
+        )
+
+        idioma_nota.setWordWrap(
+            True
+        )
+
+        idioma_nota.setObjectName(
+            "textoSecundario"
+        )
+
+        formulario.addRow(
+            "",
+            idioma_nota,
+        )
+
+        # ----------------------------------------------------
+        # VISIBILIDAD DE INTERFAZ
+        # ----------------------------------------------------
+
+        interfaz = QComboBox()
+
+        interfaz.addItems(
+            [
+                "Invisible",
+                "Visible",
+            ]
+        )
+
+        interfaz.setCurrentText(
+            str(
+                self.configuracion.get(
+                    "interfaz",
+                    "Invisible",
+                )
+            )
+        )
+
+        formulario.addRow(
+            "Interfaz:",
+            interfaz,
+        )
+
+        descripcion_interfaz = QLabel()
+
+        descripcion_interfaz.setWordWrap(
+            True
+        )
+
+        descripcion_interfaz.setObjectName(
+            "textoSecundario"
+        )
+
+        def actualizar_descripcion_interfaz(
+            valor,
+        ):
+
+            if valor == "Visible":
+
+                descripcion_interfaz.setText(
+                    "VISIBLE: BIN aparecerá dentro de "
+                    "la captura del escritorio."
+                )
+
+            else:
+
+                descripcion_interfaz.setText(
+                    "INVISIBLE (RECOMENDADO): BIN se "
+                    "excluye de la captura. Puede seguir "
+                    "ejecutando acciones sobre programas "
+                    "situados detrás de su interfaz."
+                )
+
+        interfaz.currentTextChanged.connect(
+            actualizar_descripcion_interfaz
+        )
+
+        actualizar_descripcion_interfaz(
+            interfaz.currentText()
+        )
+
+        formulario.addRow(
+            "",
+            descripcion_interfaz,
+        )
+
+        # ----------------------------------------------------
+        # DATOS DE CONTACTO
+        # ----------------------------------------------------
+
+        telefono = QLineEdit()
+
+        telefono.setPlaceholderText(
+            "Número telefónico"
+        )
+
+        telefono.setText(
+            str(
+                self.configuracion.get(
+                    "telefono",
+                    "",
+                )
+            )
+        )
+
+        formulario.addRow(
+            "Número telefónico:",
+            telefono,
+        )
+
+        correo = QLineEdit()
+
+        correo.setPlaceholderText(
+            "Correo electrónico"
+        )
+
+        correo.setText(
+            str(
+                self.configuracion.get(
+                    "correo",
+                    "",
+                )
+            )
+        )
+
+        formulario.addRow(
+            "Correo:",
+            correo,
+        )
+
+        whatsapp = QLineEdit()
+
+        whatsapp.setPlaceholderText(
+            "WhatsApp"
+        )
+
+        whatsapp.setText(
+            str(
+                self.configuracion.get(
+                    "whatsapp",
+                    "",
+                )
+            )
+        )
+
+        formulario.addRow(
+            "WhatsApp:",
+            whatsapp,
+        )
+
+        msm = QLineEdit()
+
+        msm.setPlaceholderText(
+            "MSM"
+        )
+
+        msm.setText(
+            str(
+                self.configuracion.get(
+                    "msm",
+                    "",
+                )
+            )
+        )
+
+        formulario.addRow(
+            "MSM:",
+            msm,
+        )
+
+        # ----------------------------------------------------
+        # NOTIFICACIÓN EN CASO DE FALLA
+        # ----------------------------------------------------
+
+        notificar_falla_en = QComboBox()
+
+        notificar_falla_en.addItems(
+            [
+                "Ninguna",
+                "MSM",
+                "WhatsApp",
+                "Correo",
+            ]
+        )
+
+        notificar_falla_en.setCurrentText(
+            str(
+                self.configuracion.get(
+                    "notificar_falla_en",
+                    "Ninguna",
+                )
+            )
+        )
+
+        formulario.addRow(
+            "En caso de falla notificar en:",
+            notificar_falla_en,
+        )
+
+        nota_notificacion = QLabel(
+            "Guarda el canal preferido para futuras "
+            "notificaciones automáticas. El envío todavía "
+            "no está conectado en BIN Light."
+        )
+
+        nota_notificacion.setWordWrap(
+            True
+        )
+
+        nota_notificacion.setObjectName(
+            "textoSecundario"
+        )
+
+        formulario.addRow(
+            "",
+            nota_notificacion,
+        )
+
+        # ----------------------------------------------------
+        # LIMPIEZA DE VENTANAS
+        # ----------------------------------------------------
+
+        limpieza_ventanas = QComboBox()
+
+        limpieza_ventanas.addItems(
+            [
+                "Antes",
+                "Después",
+                "Antes y después",
+                "Ninguna",
+            ]
+        )
+
+        limpieza_ventanas.setCurrentText(
+            str(
+                self.configuracion.get(
+                    "limpieza_ventanas",
+                    "Ninguna",
+                )
+            )
+        )
+
+        formulario.addRow(
+            "Limpieza de ventanas:",
+            limpieza_ventanas,
+        )
+
+        nota_limpieza = QLabel(
+            "Limpia la mesa de trabajo solicitando el cierre "
+            "normal de las ventanas abiertas antes y/o después "
+            "de una tarea. BIN, el escritorio y la barra de "
+            "tareas quedan protegidos. Si un programa tiene "
+            "cambios sin guardar, puede mostrar su aviso normal "
+            "de confirmación."
+        )
+
+        nota_limpieza.setWordWrap(
+            True
+        )
+
+        nota_limpieza.setObjectName(
+            "textoSecundario"
+        )
+
+        formulario.addRow(
+            "",
+            nota_limpieza,
+        )
+
+        # ====================================================
+        # MODOS DE OPERACIÓN — FUTURO
+        # ====================================================
+        #
+        # modo_bin = QComboBox()
+        #
+        # modo_bin.addItems(
+        #     [
+        #         "Light",
+        #         "IA",
+        #         "BIN + IA",
+        #     ]
+        # )
+        #
+        # formulario.addRow(
+        #     "Modo:",
+        #     modo_bin,
+        # )
+
+        principal.addLayout(
+            formulario
+        )
+
+        # ----------------------------------------------------
+        # BOTONES
+        # ----------------------------------------------------
+
+        botones = QDialogButtonBox(
+            QDialogButtonBox.Save
+            | QDialogButtonBox.Cancel
+        )
+
+        boton_guardar = botones.button(
+            QDialogButtonBox.Save
+        )
+
+        if boton_guardar is not None:
+
+            boton_guardar.setText(
+                "GUARDAR"
+            )
+
+        boton_cancelar = botones.button(
+            QDialogButtonBox.Cancel
+        )
+
+        if boton_cancelar is not None:
+
+            boton_cancelar.setText(
+                "CANCELAR"
+            )
+
+        botones.accepted.connect(
+            dialogo.accept
+        )
+
+        botones.rejected.connect(
+            dialogo.reject
+        )
+
+        principal.addWidget(
+            botones
+        )
+
+        if (
+            dialogo.exec()
+            != QDialog.Accepted
+        ):
+            return
+
+        # ----------------------------------------------------
+        # GUARDAR DATOS
+        # ----------------------------------------------------
+
+        self.configuracion[
+            "trato"
+        ] = trato.currentText()
+
+        self.configuracion[
+            "trato_otro"
+        ] = trato_otro.text().strip()
+
+        self.configuracion[
+            "nombre_usuario"
+        ] = nombre_usuario.text().strip()
+
+        self.configuracion[
+            "idioma"
+        ] = idioma.currentText()
+
+        self.configuracion[
+            "interfaz"
+        ] = interfaz.currentText()
+
+        self.configuracion[
+            "telefono"
+        ] = telefono.text().strip()
+
+        self.configuracion[
+            "correo"
+        ] = correo.text().strip()
+
+        self.configuracion[
+            "whatsapp"
+        ] = whatsapp.text().strip()
+
+        self.configuracion[
+            "msm"
+        ] = msm.text().strip()
+
+        self.configuracion[
+            "notificar_falla_en"
+        ] = notificar_falla_en.currentText()
+
+        self.configuracion[
+            "limpieza_ventanas"
+        ] = limpieza_ventanas.currentText()
+
+        if self.guardar_configuracion():
+
+            self.aplicar_visibilidad_interfaz()
+
+            QMessageBox.information(
+                self,
+                "Configuración",
+                "Configuración guardada correctamente.",
             )
 
     # ========================================================
@@ -4545,7 +6155,9 @@ class BIN(QMainWindow):
 
         self.boton_pantalla_completa.clicked.connect(self.alternar_pantalla_completa)
 
-        layout_cabecera.addWidget(self.boton_pantalla_completa)
+        layout_cabecera.addWidget(
+            self.boton_pantalla_completa
+        )
 
         layout_cabecera.addStretch()
 
@@ -4763,20 +6375,38 @@ class BIN(QMainWindow):
 
         self.ram_label = QLabel("RAM   0 %")
 
-        self.gpu_label = QLabel("GPU   PENDIENTE")
-
-        self.temp_label = QLabel("TEMP   PENDIENTE")
-
         for etiqueta in [
             self.cpu_label,
             self.ram_label,
-            self.gpu_label,
-            self.temp_label,
         ]:
 
             etiqueta.setObjectName("monitor")
 
             rendimiento_layout.addWidget(etiqueta)
+
+        rendimiento_layout.addStretch()
+
+        # ----------------------------------------------------
+        # CONFIGURACIÓN
+        #
+        # Ocupa el lugar que antes usaban TEMP/GPU pendientes.
+        # ----------------------------------------------------
+
+        self.boton_configuracion = QPushButton(
+            "⚙ CONFIGURACIÓN"
+        )
+
+        self.boton_configuracion.setToolTip(
+            "Configuración general de BIN"
+        )
+
+        self.boton_configuracion.clicked.connect(
+            self.abrir_configuracion
+        )
+
+        rendimiento_layout.addWidget(
+            self.boton_configuracion
+        )
 
         centro.addWidget(rendimiento, 1)
 
@@ -4786,24 +6416,52 @@ class BIN(QMainWindow):
 
         chat = Panel()
 
-        # El chat conserva siempre el mismo tamaño.
+        self.chat_compacto = chat
+
+        # El chat compacto conserva siempre el mismo tamaño.
+        # Al expandirse se crea una capa encima del visor,
+        # por lo que el visor no pierde espacio.
         chat.setFixedHeight(
-            145
+            150
         )
 
         chat_layout = QVBoxLayout(
             chat
         )
 
+        self.chat_layout_compacto = chat_layout
+
         chat_layout.setContentsMargins(
             10,
-            8,
+            6,
             10,
             8,
         )
 
         chat_layout.setSpacing(
-            6
+            5
+        )
+
+        self.boton_expandir_chat = QPushButton(
+            "▲"
+        )
+
+        self.boton_expandir_chat.setFixedSize(
+            34,
+            22,
+        )
+
+        self.boton_expandir_chat.setToolTip(
+            "Expandir chat sobre el Visor IA"
+        )
+
+        self.boton_expandir_chat.clicked.connect(
+            self.alternar_chat_plegable
+        )
+
+        chat_layout.addWidget(
+            self.boton_expandir_chat,
+            alignment=Qt.AlignHCenter,
         )
 
         titulo_chat = QLabel(
@@ -4969,7 +6627,16 @@ class BIN(QMainWindow):
         centro_widget = QWidget()
         centro_widget.setLayout(centro)
 
+        self.centro_widget = centro_widget
+
+        self.crear_chat_overlay()
+
         cuerpo.addWidget(centro_widget, 8)
+
+        QTimer.singleShot(
+            0,
+            self.ajustar_chat_overlay,
+        )
 
         # ====================================================
         # PANEL DERECHO
@@ -6048,6 +7715,361 @@ class BIN(QMainWindow):
 
         self.pausar_ejecucion(tarea)
 
+    def crear_chat_overlay(
+        self,
+    ):
+        if not hasattr(
+            self,
+            "centro_widget",
+        ):
+            return
+
+        if getattr(
+            self,
+            "chat_overlay",
+            None,
+        ) is not None:
+            return
+
+        self.chat_expandido = False
+
+        self.chat_overlay = QFrame(
+            self.centro_widget
+        )
+
+        self.chat_overlay.setObjectName(
+            "chatOverlayBin"
+        )
+
+        self.chat_overlay.setStyleSheet(
+            f"""
+            QFrame#chatOverlayBin {{
+                background-color: rgba(7, 8, 12, 218);
+                border: 1px solid {BORGONA_CLARO};
+                border-radius: 10px;
+            }}
+
+            QLabel {{
+                color: {TEXTO};
+                background: transparent;
+                border: none;
+            }}
+
+            QScrollArea {{
+                background: transparent;
+                border: none;
+            }}
+
+            QScrollArea > QWidget > QWidget {{
+                background: transparent;
+                border: none;
+            }}
+            """
+        )
+
+        layout = QVBoxLayout(
+            self.chat_overlay
+        )
+
+        layout.setContentsMargins(
+            14,
+            10,
+            14,
+            12,
+        )
+
+        layout.setSpacing(
+            8
+        )
+
+        self.boton_cerrar_chat_expandido = QPushButton(
+            "▼"
+        )
+
+        self.boton_cerrar_chat_expandido.setFixedSize(
+            36,
+            24,
+        )
+
+        self.boton_cerrar_chat_expandido.setToolTip(
+            "Plegar chat"
+        )
+
+        self.boton_cerrar_chat_expandido.clicked.connect(
+            self.alternar_chat_plegable
+        )
+
+        layout.addWidget(
+            self.boton_cerrar_chat_expandido,
+            alignment=Qt.AlignHCenter,
+        )
+
+        titulo = QLabel(
+            "CHAT CON BIN"
+        )
+
+        titulo.setObjectName(
+            "tituloPanel"
+        )
+
+        layout.addWidget(
+            titulo
+        )
+
+        self.scroll_chat_expandido = QScrollArea()
+
+        self.scroll_chat_expandido.setWidgetResizable(
+            True
+        )
+
+        self.scroll_chat_expandido.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarAlwaysOff
+        )
+
+        self.scroll_chat_expandido.setVerticalScrollBarPolicy(
+            Qt.ScrollBarAsNeeded
+        )
+
+        self.scroll_chat_expandido.setFrameShape(
+            QFrame.NoFrame
+        )
+
+        contenedor = QWidget()
+
+        contenedor.setStyleSheet(
+            "background: transparent; border: none;"
+        )
+
+        contenido_layout = QVBoxLayout(
+            contenedor
+        )
+
+        contenido_layout.setContentsMargins(
+            4,
+            4,
+            8,
+            4,
+        )
+
+        self.mensaje_chat_expandido = QLabel(
+            ""
+        )
+
+        self.mensaje_chat_expandido.setWordWrap(
+            True
+        )
+
+        self.mensaje_chat_expandido.setAlignment(
+            Qt.AlignTop
+            | Qt.AlignLeft
+        )
+
+        self.mensaje_chat_expandido.setStyleSheet(
+            f"""
+            color: {TEXTO};
+            background: transparent;
+            border: none;
+            """
+        )
+
+        contenido_layout.addWidget(
+            self.mensaje_chat_expandido
+        )
+
+        contenido_layout.addStretch()
+
+        self.scroll_chat_expandido.setWidget(
+            contenedor
+        )
+
+        layout.addWidget(
+            self.scroll_chat_expandido,
+            1,
+        )
+
+        entrada_layout = QHBoxLayout()
+
+        self.entrada_chat_expandida = QLineEdit()
+
+        self.entrada_chat_expandida.setPlaceholderText(
+            "Escribe una indicación para BIN..."
+        )
+
+        self.boton_enviar_chat_expandido = QPushButton(
+            "ENVIAR"
+        )
+
+        self.boton_enviar_chat_expandido.clicked.connect(
+            self.procesar_chat_expandido
+        )
+
+        self.entrada_chat_expandida.returnPressed.connect(
+            self.procesar_chat_expandido
+        )
+
+        entrada_layout.addWidget(
+            self.entrada_chat_expandida,
+            1,
+        )
+
+        entrada_layout.addWidget(
+            self.boton_enviar_chat_expandido
+        )
+
+        layout.addLayout(
+            entrada_layout
+        )
+
+        self.chat_overlay.hide()
+
+    def ajustar_chat_overlay(
+        self,
+    ):
+        if not hasattr(
+            self,
+            "chat_overlay",
+        ):
+            return
+
+        if not hasattr(
+            self,
+            "centro_widget",
+        ):
+            return
+
+        ancho = max(
+            1,
+            self.centro_widget.width()
+            - 8,
+        )
+
+        alto = max(
+            1,
+            self.centro_widget.height()
+            - 8,
+        )
+
+        self.chat_overlay.setGeometry(
+            4,
+            4,
+            ancho,
+            alto,
+        )
+
+        if self.chat_expandido:
+            self.chat_overlay.raise_()
+
+    def alternar_chat_plegable(
+        self,
+    ):
+        if not hasattr(
+            self,
+            "chat_overlay",
+        ):
+            return
+
+        self.chat_expandido = not bool(
+            self.chat_expandido
+        )
+
+        if self.chat_expandido:
+            historial = "\n\n".join(
+                self.historial_chat_bin
+            )
+
+            if not historial:
+                historial = (
+                    self.mensaje_chat.text()
+                    if hasattr(
+                        self,
+                        "mensaje_chat",
+                    )
+                    else "BIN: Hola. Estoy operativo."
+                )
+
+            self.mensaje_chat_expandido.setText(
+                historial
+            )
+
+            self.ajustar_chat_overlay()
+
+            self.chat_overlay.show()
+
+            self.chat_overlay.raise_()
+
+            self.entrada_chat_expandida.setFocus()
+
+            QTimer.singleShot(
+                0,
+                self._bajar_scroll_chat_expandido,
+            )
+
+            self.boton_expandir_chat.setText(
+                "▼"
+            )
+
+        else:
+            self.chat_overlay.hide()
+
+            self.boton_expandir_chat.setText(
+                "▲"
+            )
+
+            if hasattr(
+                self,
+                "entrada_chat",
+            ):
+                self.entrada_chat.setFocus()
+
+    def procesar_chat_expandido(
+        self,
+    ):
+        if not hasattr(
+            self,
+            "entrada_chat_expandida",
+        ):
+            return
+
+        texto = (
+            self.entrada_chat_expandida
+            .text()
+            .strip()
+        )
+
+        if not texto:
+            return
+
+        self.entrada_chat_expandida.clear()
+
+        if hasattr(
+            self,
+            "entrada_chat",
+        ):
+            self.entrada_chat.setText(
+                texto
+            )
+
+            self.procesar_chat()
+
+    def _bajar_scroll_chat_expandido(
+        self,
+    ):
+        if not hasattr(
+            self,
+            "scroll_chat_expandido",
+        ):
+            return
+
+        barra = (
+            self.scroll_chat_expandido
+            .verticalScrollBar()
+        )
+
+        if barra is not None:
+            barra.setValue(
+                barra.maximum()
+            )
+
     def _bajar_scroll_chat(
         self,
     ):
@@ -6148,19 +8170,34 @@ class BIN(QMainWindow):
                 ]
             )
 
+        texto_historial = "\n\n".join(
+            self.historial_chat_bin
+        )
+
         if hasattr(
             self,
             "mensaje_chat",
         ):
             self.mensaje_chat.setText(
-                "\n\n".join(
-                    self.historial_chat_bin
-                )
+                texto_historial
             )
 
             QTimer.singleShot(
                 0,
                 self._bajar_scroll_chat,
+            )
+
+        if hasattr(
+            self,
+            "mensaje_chat_expandido",
+        ):
+            self.mensaje_chat_expandido.setText(
+                texto_historial
+            )
+
+            QTimer.singleShot(
+                0,
+                self._bajar_scroll_chat_expandido,
             )
 
     def actualizar_chat_bin(
@@ -6756,23 +8793,14 @@ class BIN(QMainWindow):
 
         return descripcion
 
-    def contar_tareas_que_usan_comando(
-        self,
-        comando_id,
-    ):
+    def contar_tareas_que_usan_comando(self, comando_id):
         cantidad = 0
 
         for tarea in self.tareas:
             usa_comando = any(
-                accion.get("tipo")
-                == "comando_teclado"
-                and accion.get("comando_id")
-                == comando_id
-                for accion
-                in tarea.get(
-                    "acciones",
-                    [],
-                )
+                accion.get("comando_id") == comando_id
+                and accion.get("tipo") in {"comando_teclado", "comando_ventana"}
+                for accion in tarea.get("acciones", [])
             )
 
             if usa_comando:
@@ -6780,246 +8808,176 @@ class BIN(QMainWindow):
 
         return cantidad
 
-    def tareas_activas_que_usan_comando(
-        self,
-        comando_id,
-    ):
+    def tareas_activas_que_usan_comando(self, comando_id):
         resultado = []
 
         for tarea in self.tareas:
-            if tarea.get(
-                "estado"
-            ) not in [
-                "EJECUTANDO",
-                "EN COLA",
-            ]:
+            if tarea.get("estado") not in ["EJECUTANDO", "EN COLA"]:
                 continue
 
             if any(
-                accion.get("tipo")
-                == "comando_teclado"
-                and accion.get("comando_id")
-                == comando_id
-                for accion
-                in tarea.get(
-                    "acciones",
-                    [],
-                )
+                accion.get("comando_id") == comando_id
+                and accion.get("tipo") in {"comando_teclado", "comando_ventana"}
+                for accion in tarea.get("acciones", [])
             ):
-                resultado.append(
-                    tarea
-                )
+                resultado.append(tarea)
 
         return resultado
 
-    def actualizar_comando_en_tareas(
-        self,
-        comando,
-    ):
-        comando_id = comando.get(
-            "id"
-        )
+    def actualizar_comando_en_tareas(self, comando):
+        comando_id = comando.get("id")
+        tipo_comando = str(comando.get("tipo_comando", "") or "").lower()
+        nombre = comando.get("nombre", "Comando")
+        hubo_cambios = False
 
+        # ====================================================
+        # COMANDO DE VENTANA
+        # ====================================================
+        if tipo_comando == "ventana":
+            ventana = json.loads(
+                json.dumps(comando.get("ventana") or {}, ensure_ascii=False)
+            )
+            contexto = self.contexto_desde_configuracion_ventana(ventana)
+
+            for tarea in self.tareas:
+                cambio_tarea = False
+
+                for accion in tarea.get("acciones", []):
+                    if (
+                        accion.get("tipo") != "comando_ventana"
+                        or accion.get("comando_id") != comando_id
+                    ):
+                        continue
+
+                    accion["nombre_comando"] = nombre
+                    accion["ventana"] = json.loads(
+                        json.dumps(ventana, ensure_ascii=False)
+                    )
+                    accion["contexto_despues"] = json.loads(
+                        json.dumps(contexto, ensure_ascii=False)
+                    )
+                    accion["contexto_manual"] = True
+                    accion["bloquear_actualizacion_automatica"] = True
+
+                    destino = str(
+                        ventana.get("url")
+                        or ventana.get("ruta_recurso")
+                        or ventana.get("software_nombre")
+                        or ventana.get("ejecutable")
+                        or "Ventana"
+                    )
+                    tipo_v = str(ventana.get("tipo_ventana", "ventana") or "ventana").upper()
+                    accion["descripcion"] = f"Ventana · {tipo_v} · {destino}"
+                    cambio_tarea = True
+
+                if cambio_tarea:
+                    tarea["acciones_semanticas"] = self.interpretar_acciones_semanticas(
+                        tarea.get("acciones", [])
+                    )
+                    self.recalcular_duracion_desde_acciones(tarea)
+                    tarea["detalle_estado"] = (
+                        f"{len(tarea.get('acciones', []))} acción(es) configurada(s)"
+                    )
+                    hubo_cambios = True
+
+            if hubo_cambios:
+                self.guardar_tareas_en_disco()
+                self.refrescar_lista_tareas()
+
+            return
+
+        # ====================================================
+        # COMANDO DE TECLADO — LÓGICA EXISTENTE
+        # ====================================================
         parametros = json.loads(
             json.dumps(
-                comando.get(
-                    "parametros",
-                    [],
-                ),
+                comando.get("parametros", []),
                 ensure_ascii=False,
             )
         )
 
-        nombre = comando.get(
-            "nombre",
-            "Comando",
-        )
-
-        hubo_cambios = False
-
         for tarea in self.tareas:
             cambio_tarea = False
 
-            for accion in tarea.get(
-                "acciones",
-                [],
-            ):
+            for accion in tarea.get("acciones", []):
                 if (
-                    accion.get("tipo")
-                    != "comando_teclado"
-                    or accion.get(
-                        "comando_id"
-                    )
-                    != comando_id
+                    accion.get("tipo") != "comando_teclado"
+                    or accion.get("comando_id") != comando_id
                 ):
                     continue
 
-                accion[
-                    "nombre_comando"
-                ] = nombre
-
-                accion[
-                    "parametros"
-                ] = json.loads(
-                    json.dumps(
-                        parametros,
-                        ensure_ascii=False,
-                    )
+                accion["nombre_comando"] = nombre
+                accion["parametros"] = json.loads(
+                    json.dumps(parametros, ensure_ascii=False)
                 )
 
-                antes = int(
-                    accion.get(
-                        "espera_antes_ms",
-                        0,
-                    )
-                    or 0
-                )
+                antes = int(accion.get("espera_antes_ms", 0) or 0)
+                despues = int(accion.get("espera_despues_ms", 0) or 0)
 
-                despues = int(
-                    accion.get(
-                        "espera_despues_ms",
-                        0,
-                    )
-                    or 0
+                accion["descripcion"] = self.descripcion_accion_comando(
+                    nombre,
+                    parametros,
+                    antes,
+                    despues,
                 )
-
-                accion[
-                    "descripcion"
-                ] = (
-                    self.descripcion_accion_comando(
-                        nombre,
-                        parametros,
-                        antes,
-                        despues,
-                    )
-                )
-
                 cambio_tarea = True
 
             if cambio_tarea:
-                tarea[
-                    "acciones_semanticas"
-                ] = (
-                    self.interpretar_acciones_semanticas(
-                        tarea.get(
-                            "acciones",
-                            [],
-                        )
-                    )
+                tarea["acciones_semanticas"] = self.interpretar_acciones_semanticas(
+                    tarea.get("acciones", [])
                 )
-
-                self.recalcular_duracion_desde_acciones(
-                    tarea
+                self.recalcular_duracion_desde_acciones(tarea)
+                tarea["detalle_estado"] = (
+                    f"{len(tarea.get('acciones', []))} acción(es) configurada(s)"
                 )
-
-                tarea[
-                    "detalle_estado"
-                ] = (
-                    f"{len(tarea.get('acciones', []))} "
-                    "acción(es) configurada(s)"
-                )
-
                 hubo_cambios = True
 
         if hubo_cambios:
             self.guardar_tareas_en_disco()
-
             self.refrescar_lista_tareas()
 
-    def eliminar_comando_de_tareas(
-        self,
-        comando_id,
-    ):
+    def eliminar_comando_de_tareas(self, comando_id):
         hubo_cambios = False
 
         for tarea in self.tareas:
-            acciones_anteriores = (
-                tarea.get(
-                    "acciones",
-                    [],
-                )
-            )
+            acciones_anteriores = tarea.get("acciones", [])
 
             acciones_nuevas = [
                 accion
                 for accion in acciones_anteriores
                 if not (
-                    accion.get("tipo")
-                    == "comando_teclado"
-                    and accion.get(
-                        "comando_id"
-                    )
-                    == comando_id
+                    accion.get("tipo") in {"comando_teclado", "comando_ventana"}
+                    and accion.get("comando_id") == comando_id
                 )
             ]
 
-            if (
-                len(acciones_nuevas)
-                == len(
-                    acciones_anteriores
-                )
-            ):
+            if len(acciones_nuevas) == len(acciones_anteriores):
                 continue
 
-            tarea["acciones"] = (
-                acciones_nuevas
-            )
-
-            tarea[
-                "acciones_semanticas"
-            ] = (
-                self.interpretar_acciones_semanticas(
-                    acciones_nuevas
-                )
+            tarea["acciones"] = acciones_nuevas
+            tarea["acciones_semanticas"] = (
+                self.interpretar_acciones_semanticas(acciones_nuevas)
                 if acciones_nuevas
                 else []
             )
 
             if acciones_nuevas:
-                self.recalcular_duracion_desde_acciones(
-                    tarea
+                self.recalcular_duracion_desde_acciones(tarea)
+                tarea["detalle_estado"] = (
+                    f"{len(acciones_nuevas)} acción(es) configurada(s)"
                 )
-
-                tarea[
-                    "detalle_estado"
-                ] = (
-                    f"{len(acciones_nuevas)} "
-                    "acción(es) configurada(s)"
-                )
-
             else:
-                tarea[
-                    "duracion"
-                ] = "00:00:00"
+                tarea["duracion"] = "00:00:00"
+                tarea["duracion_origen"] = "sin_calcular"
+                tarea["detalle_estado"] = "SIN ACCIONES · Comando eliminado"
 
-                tarea[
-                    "duracion_origen"
-                ] = "sin_calcular"
-
-                tarea[
-                    "detalle_estado"
-                ] = (
-                    "SIN ACCIONES · "
-                    "Comando eliminado"
-                )
-
-                if (
-                    tarea.get(
-                        "estado"
-                    )
-                    != "DETENIDA"
-                ):
-                    tarea[
-                        "estado"
-                    ] = (
-                        "REQUIERE CONFIGURACIÓN"
-                    )
+                if tarea.get("estado") != "DETENIDA":
+                    tarea["estado"] = "REQUIERE CONFIGURACIÓN"
 
             hubo_cambios = True
 
         if hubo_cambios:
             self.guardar_tareas_en_disco()
-
             self.refrescar_lista_tareas()
 
     def agregar_accion_manual(
@@ -8860,83 +10818,303 @@ class BIN(QMainWindow):
 
         return texto.rstrip("/")
 
-    def observar_navegador_uia(self, hwnd, titulo=""):
+    def observar_navegador_uia(
+        self,
+        hwnd,
+        titulo="",
+    ):
         """
-        Lee URL y cuenta visibles mediante Windows UI Automation.
-        Usa componentes incluidos en Windows; no requiere paquetes extra.
-        """
-        if sys.platform != "win32" or not hwnd:
-            return {"url": "", "cuenta": "", "uia": False}
+        Lector MÍNIMO y seguro de navegador mediante UI Automation.
 
-        clave = (int(hwnd), str(titulo or ""))
-        cache = self._cache_operativo_obtener("browser_uia", clave, ttl=0.75)
-        if isinstance(cache, dict):
-            return dict(cache)
+        IMPORTANTE — SEGUNDO BLOQUE SEMÁNTICO DESHABILITADO:
+
+        Esta función YA NO recorre botones de la página ni intenta
+        deducir:
+
+            - cuenta del servicio web;
+            - workspace visible;
+            - perfil por texto de botones;
+            - acciones/script web sin cambio de URL.
+
+        Únicamente intenta leer la URL desde un control que pueda
+        demostrarse como barra de direcciones / omnibox NATIVO del
+        navegador.
+
+        Si no existe un candidato inequívoco, URL queda vacía.
+        Es preferible "no observable" a guardar una URL falsa.
+        """
+
+        respuesta_vacia = {
+            "url": "",
+            "cuenta_navegador_uia": "",
+            "perfil_navegador_uia": "",
+            "cuenta_web_observada": "",
+            "cuenta": "",
+            "uia": False,
+            "url_origen": "",
+        }
+
+        if (
+            sys.platform != "win32"
+            or not hwnd
+        ):
+            return dict(
+                respuesta_vacia
+            )
+
+        clave = (
+            int(hwnd),
+            str(
+                titulo
+                or ""
+            ),
+        )
+
+        cache = self._cache_operativo_obtener(
+            "browser_uia",
+            clave,
+            ttl=0.75,
+        )
+
+        if isinstance(
+            cache,
+            dict,
+        ):
+            return dict(
+                cache
+            )
+
+        # ====================================================
+        # UI AUTOMATION — SÓLO CAMPOS EDIT
+        # ====================================================
+        #
+        # No enumeramos botones. No observamos contenido semántico
+        # de la página. Sólo necesitamos localizar un Edit que:
+        #
+        #   1. esté en la franja superior del navegador;
+        #   2. tenga nombre/AutomationId propio de omnibox;
+        #   3. contenga una URL/localizador válido.
+        # ====================================================
 
         script = (
             "$ErrorActionPreference='SilentlyContinue';"
             "Add-Type -AssemblyName UIAutomationClient;"
-            f"$root=[System.Windows.Automation.AutomationElement]::FromHandle([IntPtr]{int(hwnd)});"
+
+            f"$root=[System.Windows.Automation.AutomationElement]"
+            f"::FromHandle([IntPtr]{int(hwnd)});"
+
             "if($null -eq $root){exit};"
-            "$r=[ordered]@{edits=@();cuentas=@()};"
-            "$ce=New-Object System.Windows.Automation.PropertyCondition("
-            "[System.Windows.Automation.AutomationElement]::ControlTypeProperty,"
-            "[System.Windows.Automation.ControlType]::Edit);"
-            "$es=$root.FindAll([System.Windows.Automation.TreeScope]::Descendants,$ce);"
-            "foreach($e in $es){$v='';try{$p=$e.GetCurrentPattern("
-            "[System.Windows.Automation.ValuePattern]::Pattern);$v=[string]$p.Current.Value}catch{};"
-            "if($v){$r.edits += [pscustomobject]@{name=[string]$e.Current.Name;"
-            "id=[string]$e.Current.AutomationId;value=$v}}};"
-            "$cb=New-Object System.Windows.Automation.PropertyCondition("
-            "[System.Windows.Automation.AutomationElement]::ControlTypeProperty,"
-            "[System.Windows.Automation.ControlType]::Button);"
-            "$bs=$root.FindAll([System.Windows.Automation.TreeScope]::Descendants,$cb);"
-            "foreach($b in $bs){$n=[string]$b.Current.Name;"
-            "if($n -and ($n -match '@' -or $n -match "
-            "'(?i)Google Account|Cuenta de Google|Microsoft account|Cuenta de Microsoft|Profile|Perfil'))"
-            "{$r.cuentas += $n}};"
+
+            "$rootTop=0;"
+            "try{"
+            "$rootTop=[double]$root.Current.BoundingRectangle.Top"
+            "}catch{};"
+
+            "$r=[ordered]@{"
+            "edits=@();"
+            "rootTop=$rootTop"
+            "};"
+
+            "$ce=New-Object "
+            "System.Windows.Automation.PropertyCondition("
+            "[System.Windows.Automation.AutomationElement]"
+            "::ControlTypeProperty,"
+            "[System.Windows.Automation.ControlType]::Edit"
+            ");"
+
+            "$es=$root.FindAll("
+            "[System.Windows.Automation.TreeScope]::Descendants,"
+            "$ce"
+            ");"
+
+            "foreach($e in $es){"
+            "$v='';"
+            "$top=0;"
+            "$left=0;"
+
+            "try{"
+            "$p=$e.GetCurrentPattern("
+            "[System.Windows.Automation.ValuePattern]::Pattern"
+            ");"
+            "$v=[string]$p.Current.Value"
+            "}catch{};"
+
+            "try{"
+            "$rect=$e.Current.BoundingRectangle;"
+            "$top=[double]$rect.Top;"
+            "$left=[double]$rect.Left"
+            "}catch{};"
+
+            "if($v){"
+            "$r.edits += [pscustomobject]@{"
+            "name=[string]$e.Current.Name;"
+            "id=[string]$e.Current.AutomationId;"
+            "value=$v;"
+            "top=$top;"
+            "left=$left"
+            "}"
+            "}"
+            "};"
+
             "$r|ConvertTo-Json -Compress -Depth 5"
         )
 
-        salida = self._powershell_bin(script, timeout=3.0)
-        respuesta = {"url": "", "cuenta": "", "uia": False}
+        salida = self._powershell_bin(
+            script,
+            timeout=3.0,
+        )
+
+        respuesta = dict(
+            respuesta_vacia
+        )
 
         if salida:
             try:
-                datos = json.loads(salida)
-                edits = datos.get("edits", [])
-                if isinstance(edits, dict):
-                    edits = [edits]
+                datos = json.loads(
+                    salida
+                )
+
+                edits = datos.get(
+                    "edits",
+                    [],
+                )
+
+                if isinstance(
+                    edits,
+                    dict,
+                ):
+                    edits = [
+                        edits
+                    ]
+
+                try:
+                    root_top = float(
+                        datos.get(
+                            "rootTop",
+                            0,
+                        )
+                        or 0
+                    )
+
+                except Exception:
+                    root_top = 0.0
 
                 candidatos_url = []
 
+                # Frases suficientemente específicas para una barra
+                # de direcciones. Deliberadamente NO incluimos el
+                # genérico "search bar", porque puede pertenecer a
+                # cualquier buscador/campo dentro de la página.
+                indicadores_omnibox = (
+                    "address and search bar",
+                    "address bar",
+                    "barra de direcciones",
+                    "barra de dirección",
+                    "omnibox",
+                    "urlbar",
+                    "url bar",
+                    "location bar",
+                    "search or enter address",
+                    "buscar o escribir dirección",
+                    "buscar o introducir dirección",
+                )
+
                 for item in edits or []:
-                    valor = str(item.get("value", "") or "").strip()
-                    if not self.parece_localizador_web(valor):
+                    valor = str(
+                        item.get(
+                            "value",
+                            "",
+                        )
+                        or ""
+                    ).strip()
+
+                    if not self.parece_localizador_web(
+                        valor
+                    ):
                         continue
 
-                    nombre = str(item.get("name", "") or "").lower()
-                    automation_id = str(item.get("id", "") or "").lower()
-                    firma = nombre + " " + automation_id
+                    nombre = str(
+                        item.get(
+                            "name",
+                            "",
+                        )
+                        or ""
+                    ).strip().lower()
 
-                    indicadores = (
-                        "address",
-                        "direcci",
-                        "omnibox",
-                        "location",
-                        "url",
-                        "search bar",
-                        "barra de búsqueda",
+                    automation_id = str(
+                        item.get(
+                            "id",
+                            "",
+                        )
+                        or ""
+                    ).strip().lower()
+
+                    firma = (
+                        nombre
+                        + " "
+                        + automation_id
                     )
 
-                    puntuacion = (
-                        100
-                        if any(indicador in firma for indicador in indicadores)
-                        else 10
+                    # ----------------------------------------
+                    # DEBE PARECER OMNIBOX, NO CAMPO DE PÁGINA
+                    # ----------------------------------------
+
+                    if not any(
+                        indicador in firma
+                        for indicador
+                        in indicadores_omnibox
+                    ):
+                        continue
+
+                    try:
+                        top = float(
+                            item.get(
+                                "top",
+                                0,
+                            )
+                            or 0
+                        )
+
+                    except Exception:
+                        top = 0.0
+
+                    relativo_top = (
+                        top - root_top
+                        if top
+                        else 9999
                     )
+
+                    # Barra nativa del navegador: franja superior.
+                    # Dejamos margen suficiente para marcos, pestañas
+                    # y barras personalizadas, sin bajar al DOM/página.
+                    if not (
+                        -15
+                        <= relativo_top
+                        <= 190
+                    ):
+                        continue
+
+                    puntuacion = 100
+
+                    if "omnibox" in firma:
+                        puntuacion += 40
+
+                    if "address" in firma:
+                        puntuacion += 30
+
+                    if (
+                        "barra de direcciones" in firma
+                        or "barra de dirección" in firma
+                    ):
+                        puntuacion += 30
 
                     candidatos_url.append(
-                        (puntuacion, self.normalizar_url_bin(valor))
+                        (
+                            puntuacion,
+                            self.normalizar_url_bin(
+                                valor
+                            ),
+                        )
                     )
 
                 if candidatos_url:
@@ -8944,35 +11122,33 @@ class BIN(QMainWindow):
                         key=lambda item: item[0],
                         reverse=True,
                     )
-                    respuesta["url"] = candidatos_url[0][1]
 
-                cuentas = datos.get("cuentas", [])
-                if isinstance(cuentas, str):
-                    cuentas = [cuentas]
+                    respuesta[
+                        "url"
+                    ] = candidatos_url[
+                        0
+                    ][1]
 
-                for nombre in cuentas or []:
-                    texto = str(nombre or "").strip()
-                    if not texto:
-                        continue
+                    respuesta[
+                        "url_origen"
+                    ] = "omnibox_uia"
 
-                    coincidencia = re.search(
-                        r"[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}",
-                        texto,
-                    )
-                    respuesta["cuenta"] = (
-                        coincidencia.group(0)
-                        if coincidencia
-                        else respuesta["cuenta"] or texto
-                    )
-                    if coincidencia:
-                        break
+                    respuesta[
+                        "uia"
+                    ] = True
 
-                respuesta["uia"] = True
             except Exception:
                 pass
 
-        self._cache_operativo_guardar("browser_uia", clave, respuesta)
-        return dict(respuesta)
+        self._cache_operativo_guardar(
+            "browser_uia",
+            clave,
+            respuesta,
+        )
+
+        return dict(
+            respuesta
+        )
 
     def rutas_local_state_navegador(self, proceso):
         proceso = str(proceso or "").strip().lower()
@@ -9001,51 +11177,156 @@ class BIN(QMainWindow):
 
         return []
 
-    def obtener_info_perfiles_navegador(self, proceso):
-        clave = str(proceso or "").strip().lower()
+    def obtener_info_perfiles_navegador(
+        self,
+        proceso,
+    ):
+        """
+        Lee Local State del navegador.
+
+        Cada entrada conserva:
+
+            directorio:
+                Default / Profile 1 / Profile 35...
+
+            nombre:
+                nombre visible del perfil.
+
+            cuenta:
+                correo asociado al perfil, cuando existe.
+
+            gaia_name:
+                nombre de la identidad Google.
+
+        IMPORTANTE:
+
+        'cuenta' solo contiene un correo.
+        Un nombre como "Villa Glabor" nunca se guarda aquí
+        como cuenta del navegador.
+        """
+
+        clave = str(
+            proceso
+            or ""
+        ).strip().lower()
+
         cache = self._cache_operativo_obtener(
             "browser_profiles",
             clave,
             ttl=20.0,
         )
-        if isinstance(cache, dict):
-            return dict(cache)
+
+        if isinstance(
+            cache,
+            dict,
+        ):
+            return dict(
+                cache
+            )
 
         perfiles = {}
 
-        for ruta in self.rutas_local_state_navegador(proceso):
+        for ruta in self.rutas_local_state_navegador(
+            proceso
+        ):
             try:
                 if not ruta.is_file():
                     continue
 
-                with open(ruta, "r", encoding="utf-8") as archivo:
-                    datos = json.load(archivo)
+                with open(
+                    ruta,
+                    "r",
+                    encoding="utf-8",
+                ) as archivo:
+                    datos = json.load(
+                        archivo
+                    )
 
                 info_cache = (
-                    datos.get("profile", {}).get("info_cache", {}) or {}
+                    datos
+                    .get(
+                        "profile",
+                        {},
+                    )
+                    .get(
+                        "info_cache",
+                        {},
+                    )
+                    or {}
                 )
 
-                for directorio, info in info_cache.items():
-                    if not isinstance(info, dict):
+                for (
+                    directorio,
+                    info,
+                ) in info_cache.items():
+
+                    if not isinstance(
+                        info,
+                        dict,
+                    ):
                         continue
 
-                    perfiles[str(directorio)] = {
-                        "nombre": str(info.get("name", "") or ""),
-                        "cuenta": str(
-                            info.get("user_name", "")
-                            or info.get("gaia_name", "")
+                    user_name = str(
+                        info.get(
+                            "user_name",
+                            "",
+                        )
+                        or ""
+                    ).strip()
+
+                    coincidencia = re.search(
+                        r"[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}",
+                        user_name,
+                    )
+
+                    correo = (
+                        coincidencia
+                        .group(0)
+                        .lower()
+                        if coincidencia
+                        else ""
+                    )
+
+                    perfiles[
+                        str(
+                            directorio
+                        )
+                    ] = {
+                        "nombre": str(
+                            info.get(
+                                "name",
+                                "",
+                            )
                             or ""
-                        ),
+                        ).strip(),
+
+                        "cuenta": correo,
+
+                        "gaia_name": str(
+                            info.get(
+                                "gaia_name",
+                                "",
+                            )
+                            or ""
+                        ).strip(),
                     }
 
                 if perfiles:
                     break
+
             except Exception:
                 continue
 
-        self._cache_operativo_guardar("browser_profiles", clave, perfiles)
-        return dict(perfiles)
+        self._cache_operativo_guardar(
+            "browser_profiles",
+            clave,
+            perfiles,
+        )
 
+        return dict(
+            perfiles
+        )
+    
     def resolver_perfil_desde_proceso(self, pid):
         perfil = ""
         user_data_dir = ""
@@ -9090,31 +11371,758 @@ class BIN(QMainWindow):
             "user_data_dir": user_data_dir,
         }
 
-    def resolver_identidad_navegador(self, pid, proceso, cuenta_uia=""):
-        proceso = str(proceso or "").strip().lower()
-        datos_proceso = self.resolver_perfil_desde_proceso(pid)
-        perfil = str(datos_proceso.get("perfil", "") or "").strip()
-        cuenta = str(cuenta_uia or "").strip()
-        perfiles = self.obtener_info_perfiles_navegador(proceso)
+    def observar_identidad_navegador_nativa_uia(
+        self,
+        hwnd,
+        proceso,
+    ):
+        """
+        Lee exclusivamente la zona NATIVA superior del navegador
+        para identificar el botón de perfil de ESTA ventana.
 
-        if perfil and perfil in perfiles and not cuenta:
-            info = perfiles.get(perfil, {})
-            cuenta = str(info.get("cuenta", "") or info.get("nombre", "") or "").strip()
+        No inspecciona el contenido de la página web.
 
-        if not perfil and cuenta and "@" in cuenta:
-            cuenta_l = cuenta.lower()
-            for directorio, info in perfiles.items():
-                usuario = str(info.get("cuenta", "") or "").strip().lower()
-                if usuario and usuario == cuenta_l:
-                    perfil = str(directorio)
+        El texto observado nunca se acepta directamente como cuenta:
+        solamente se compara contra Local State.
+        """
+
+        respuesta_vacia = {
+            "perfil": "",
+            "cuenta": "",
+            "origen": "",
+        }
+
+        if (
+            sys.platform != "win32"
+            or not hwnd
+        ):
+            return dict(
+                respuesta_vacia
+            )
+
+        proceso = str(
+            proceso
+            or ""
+        ).strip().lower()
+
+        perfiles = (
+            self.obtener_info_perfiles_navegador(
+                proceso
+            )
+        )
+
+        if not perfiles:
+            return dict(
+                respuesta_vacia
+            )
+
+        clave = (
+            int(
+                hwnd
+            ),
+            proceso,
+        )
+
+        cache = (
+            self._cache_operativo_obtener(
+                "browser_identity_native",
+                clave,
+                ttl=0.80,
+            )
+        )
+
+        if isinstance(
+            cache,
+            dict,
+        ):
+            return dict(
+                cache
+            )
+
+        # ====================================================
+        # UIA:
+        # SÓLO BOTONES NATIVOS DE LA FRANJA SUPERIOR
+        # ====================================================
+
+        script = (
+            "$ErrorActionPreference='SilentlyContinue';"
+
+            "Add-Type -AssemblyName UIAutomationClient;"
+
+            f"$root=[System.Windows.Automation.AutomationElement]"
+            f"::FromHandle([IntPtr]{int(hwnd)});"
+
+            "if($null -eq $root){exit};"
+
+            "$rr=$root.Current.BoundingRectangle;"
+
+            "$r=[ordered]@{"
+            "rootLeft=[double]$rr.Left;"
+            "rootTop=[double]$rr.Top;"
+            "rootWidth=[double]$rr.Width;"
+            "buttons=@()"
+            "};"
+
+            "$cond=New-Object "
+            "System.Windows.Automation.PropertyCondition("
+            "[System.Windows.Automation.AutomationElement]"
+            "::ControlTypeProperty,"
+            "[System.Windows.Automation.ControlType]::Button"
+            ");"
+
+            "$items=$root.FindAll("
+            "[System.Windows.Automation.TreeScope]::Descendants,"
+            "$cond"
+            ");"
+
+            "foreach($e in $items){"
+
+            "try{"
+
+            "$br=$e.Current.BoundingRectangle;"
+
+            "$r.buttons += [pscustomobject]@{"
+
+            "name=[string]$e.Current.Name;"
+
+            "id=[string]$e.Current.AutomationId;"
+
+            "left=[double]$br.Left;"
+
+            "top=[double]$br.Top;"
+
+            "width=[double]$br.Width;"
+
+            "height=[double]$br.Height;"
+
+            "off=[bool]$e.Current.IsOffscreen"
+
+            "}"
+
+            "}catch{}"
+
+            "};"
+
+            "$r|ConvertTo-Json -Compress -Depth 5"
+        )
+
+        salida = (
+            self._powershell_bin(
+                script,
+                timeout=3.0,
+            )
+        )
+
+        respuesta = dict(
+            respuesta_vacia
+        )
+
+        if not salida:
+            self._cache_operativo_guardar(
+                "browser_identity_native",
+                clave,
+                respuesta,
+            )
+
+            return respuesta
+
+        try:
+            datos = json.loads(
+                salida
+            )
+
+        except Exception:
+            self._cache_operativo_guardar(
+                "browser_identity_native",
+                clave,
+                respuesta,
+            )
+
+            return respuesta
+
+        botones = datos.get(
+            "buttons",
+            [],
+        )
+
+        if isinstance(
+            botones,
+            dict,
+        ):
+            botones = [
+                botones
+            ]
+
+        try:
+            root_left = float(
+                datos.get(
+                    "rootLeft",
+                    0,
+                )
+                or 0
+            )
+
+            root_top = float(
+                datos.get(
+                    "rootTop",
+                    0,
+                )
+                or 0
+            )
+
+            root_width = float(
+                datos.get(
+                    "rootWidth",
+                    0,
+                )
+                or 0
+            )
+
+        except Exception:
+            root_left = 0.0
+            root_top = 0.0
+            root_width = 0.0
+
+        def normalizar(
+            valor,
+        ):
+            return " ".join(
+                str(
+                    valor
+                    or ""
+                )
+                .strip()
+                .lower()
+                .split()
+            )
+
+        mejor = None
+
+        for boton in botones or []:
+
+            if bool(
+                boton.get(
+                    "off",
+                    False,
+                )
+            ):
+                continue
+
+            try:
+                top = float(
+                    boton.get(
+                        "top",
+                        0,
+                    )
+                    or 0
+                )
+
+                left = float(
+                    boton.get(
+                        "left",
+                        0,
+                    )
+                    or 0
+                )
+
+            except Exception:
+                continue
+
+            relativo_top = (
+                top
+                - root_top
+            )
+
+            # -----------------------------------------------
+            # SÓLO BARRA NATIVA SUPERIOR
+            # -----------------------------------------------
+
+            if (
+                relativo_top < -10
+                or relativo_top > 155
+            ):
+                continue
+
+            # -----------------------------------------------
+            # PERFIL DE CHROME NORMALMENTE ESTÁ A LA DERECHA
+            #
+            # Esto reduce muchísimo la posibilidad de tocar
+            # botones pertenecientes al contenido web.
+            # -----------------------------------------------
+
+            if (
+                root_width > 0
+                and left
+                < (
+                    root_left
+                    + (
+                        root_width
+                        * 0.45
+                    )
+                )
+            ):
+                continue
+
+            nombre_boton = normalizar(
+                boton.get(
+                    "name",
+                    "",
+                )
+            )
+
+            automation_id = normalizar(
+                boton.get(
+                    "id",
+                    "",
+                )
+            )
+
+            firma = (
+                nombre_boton
+                + " "
+                + automation_id
+            ).strip()
+
+            if not firma:
+                continue
+
+            # ================================================
+            # COMPARAR CONTRA LOCAL STATE
+            # ================================================
+
+            for (
+                directorio,
+                info,
+            ) in perfiles.items():
+
+                nombre_perfil = normalizar(
+                    info.get(
+                        "nombre",
+                        "",
+                    )
+                )
+
+                cuenta_perfil = normalizar(
+                    info.get(
+                        "cuenta",
+                        "",
+                    )
+                )
+
+                directorio_n = normalizar(
+                    directorio
+                )
+
+                puntos = 0
+
+                # Correo exacto observado en botón.
+                if (
+                    cuenta_perfil
+                    and cuenta_perfil in firma
+                ):
+                    puntos += 1400
+
+                # Nombre visible del perfil.
+                if nombre_perfil:
+
+                    if (
+                        nombre_boton
+                        == nombre_perfil
+                    ):
+                        puntos += 1200
+
+                    elif (
+                        nombre_perfil
+                        in nombre_boton
+                    ):
+                        puntos += 1000
+
+                # Profile 1 / Profile 35 / Default.
+                if (
+                    directorio_n
+                    and directorio_n in firma
+                ):
+                    puntos += 900
+
+                # Sólo como refuerzo, nunca suficiente por sí solo.
+                if any(
+                    token in firma
+                    for token in (
+                        "profile",
+                        "perfil",
+                        "avatar",
+                        "person",
+                        "cuenta",
+                        "account",
+                    )
+                ):
+                    puntos += 120
+
+                if puntos <= 0:
+                    continue
+
+                candidato = {
+                    "puntos": puntos,
+                    "perfil": str(
+                        directorio
+                        or ""
+                    ).strip(),
+                    "cuenta": str(
+                        info.get(
+                            "cuenta",
+                            "",
+                        )
+                        or ""
+                    ).strip(),
+                }
+
+                if (
+                    mejor is None
+                    or candidato[
+                        "puntos"
+                    ]
+                    > mejor[
+                        "puntos"
+                    ]
+                ):
+                    mejor = candidato
+
+        # ====================================================
+        # EXIGIR COINCIDENCIA FUERTE
+        # ====================================================
+
+        if (
+            mejor
+            and mejor.get(
+                "puntos",
+                0,
+            )
+            >= 900
+        ):
+            respuesta = {
+                "perfil": mejor.get(
+                    "perfil",
+                    "",
+                ),
+                "cuenta": mejor.get(
+                    "cuenta",
+                    "",
+                ),
+                "origen": (
+                    "uia_nativa_perfil"
+                ),
+            }
+
+        self._cache_operativo_guardar(
+            "browser_identity_native",
+            clave,
+            respuesta,
+        )
+
+        return dict(
+            respuesta
+        )
+    def resolver_identidad_navegador(
+        self,
+        pid,
+        proceso,
+        cuenta_uia="",
+        perfil_uia="",
+    ):
+        """
+        Resuelve exclusivamente la identidad DEL NAVEGADOR.
+
+        Resultado:
+
+            perfil:
+                Default / Profile 1 / Profile 35...
+
+            cuenta:
+                correo Google asociado al perfil.
+
+        Prioridad:
+
+            1. Correo observado en la interfaz nativa
+               del navegador.
+
+            2. Profile N observado en la interfaz nativa
+               del navegador.
+
+            3. --profile-directory detectado en procesos.
+
+        Después siempre se verifica la relación contra
+        Local State.
+        """
+
+        proceso = str(
+            proceso
+            or ""
+        ).strip().lower()
+
+        perfiles = (
+            self.obtener_info_perfiles_navegador(
+                proceso
+            )
+        )
+
+        datos_proceso = (
+            self.resolver_perfil_desde_proceso(
+                pid
+            )
+        )
+
+        perfil_proceso = str(
+            datos_proceso.get(
+                "perfil",
+                "",
+            )
+            or ""
+        ).strip()
+
+        pista_cuenta = str(
+            cuenta_uia
+            or ""
+        ).strip()
+
+        pista_perfil = str(
+            perfil_uia
+            or ""
+        ).strip()
+
+        # ====================================================
+        # NORMALIZAR CORREO UIA
+        # ====================================================
+
+        coincidencia_correo = re.search(
+            r"[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}",
+            pista_cuenta,
+        )
+
+        correo_uia = (
+            coincidencia_correo
+            .group(0)
+            .lower()
+            if coincidencia_correo
+            else ""
+        )
+
+        perfil = ""
+
+        cuenta = ""
+
+        origen = ""
+
+        # ====================================================
+        # 1. CORREO UIA → PERFIL LOCAL
+        # ====================================================
+        #
+        # Es la pista más específica de una ventana concreta.
+        # ====================================================
+
+        if correo_uia:
+            for (
+                directorio,
+                info,
+            ) in perfiles.items():
+
+                cuenta_local = str(
+                    info.get(
+                        "cuenta",
+                        "",
+                    )
+                    or ""
+                ).strip().lower()
+
+                if (
+                    cuenta_local
+                    and cuenta_local
+                    == correo_uia
+                ):
+                    perfil = str(
+                        directorio
+                    ).strip()
+
+                    cuenta = str(
+                        info.get(
+                            "cuenta",
+                            "",
+                        )
+                        or ""
+                    ).strip()
+
+                    origen = "uia_correo"
+
                     break
+
+        # ====================================================
+        # 2. PROFILE N UIA → PERFIL LOCAL
+        # ====================================================
+
+        if (
+            not perfil
+            and pista_perfil
+        ):
+            pista_perfil_normalizada = (
+                " ".join(
+                    pista_perfil
+                    .strip()
+                    .lower()
+                    .split()
+                )
+            )
+
+            # -----------------------------------------------
+            # Comparar directamente con directorio
+            # -----------------------------------------------
+
+            for (
+                directorio,
+                info,
+            ) in perfiles.items():
+
+                directorio_normalizado = (
+                    " ".join(
+                        str(
+                            directorio
+                        )
+                        .strip()
+                        .lower()
+                        .split()
+                    )
+                )
+
+                nombre_normalizado = (
+                    " ".join(
+                        str(
+                            info.get(
+                                "nombre",
+                                "",
+                            )
+                            or ""
+                        )
+                        .strip()
+                        .lower()
+                        .split()
+                    )
+                )
+
+                if (
+                    pista_perfil_normalizada
+                    == directorio_normalizado
+                    or (
+                        nombre_normalizado
+                        and pista_perfil_normalizada
+                        == nombre_normalizado
+                    )
+                ):
+                    perfil = str(
+                        directorio
+                    ).strip()
+
+                    origen = "uia_perfil"
+
+                    break
+
+            # -----------------------------------------------
+            # "Perfil 35" → "Profile 35"
+            # -----------------------------------------------
+
+            if not perfil:
+                coincidencia_perfil = re.search(
+                    r"(?i)^(?:profile|perfil)\s+(\d+)\b",
+                    pista_perfil,
+                )
+
+                if coincidencia_perfil:
+                    perfil_convertido = (
+                        "Profile "
+                        + coincidencia_perfil.group(1)
+                    )
+
+                    for directorio in perfiles:
+                        if (
+                            str(
+                                directorio
+                            ).strip().lower()
+                            == perfil_convertido.lower()
+                        ):
+                            perfil = str(
+                                directorio
+                            ).strip()
+
+                            origen = "uia_perfil"
+
+                            break
+
+        # ====================================================
+        # 3. PERFIL DESDE EL PROCESO
+        # ====================================================
+
+        if (
+            not perfil
+            and perfil_proceso
+        ):
+            perfil = (
+                perfil_proceso
+            )
+
+            origen = "proceso"
+
+        # ====================================================
+        # PERFIL → CORREO DE LOCAL STATE
+        # ====================================================
+
+        if (
+            perfil
+            and perfil in perfiles
+        ):
+            cuenta_local = str(
+                perfiles[
+                    perfil
+                ].get(
+                    "cuenta",
+                    "",
+                )
+                or ""
+            ).strip()
+
+            if (
+                cuenta_local
+                and "@" in cuenta_local
+            ):
+                cuenta = (
+                    cuenta_local
+                )
+
+        # ====================================================
+        # SI UIA DIO CORREO PERO LOCAL STATE NO LO DEVOLVIÓ
+        #
+        # Solo se conserva si el correo fue relacionado con
+        # un perfil local.
+        # ====================================================
+
+        if (
+            not cuenta
+            and correo_uia
+            and perfil
+        ):
+            cuenta = (
+                correo_uia
+            )
 
         return {
             "perfil": perfil,
             "cuenta": cuenta,
-            "user_data_dir": str(datos_proceso.get("user_data_dir", "") or ""),
+            "user_data_dir": str(
+                datos_proceso.get(
+                    "user_data_dir",
+                    "",
+                )
+                or ""
+            ),
+            "origen": origen,
         }
-
+      
     def resolver_recurso_software(self, pid, titulo, ejecutable=""):
         """
         Acepta un archivo como recurso solo cuando su nombre coincide
@@ -9191,32 +12199,131 @@ class BIN(QMainWindow):
             "ruta_recurso": "",
             "perfil_navegador": "",
             "cuenta_navegador": "",
+
+            # Conservamos la clave por compatibilidad con tareas
+            # antiguas, pero el segundo observador semántico está
+            # deshabilitado y nunca la vuelve a poblar.
+            "cuenta_web_observada": "",
+
+            "cuenta_navegador_origen": "",
         }
 
-        if self.es_navegador_proceso(proceso_l):
-            navegador = self.observar_navegador_uia(hwnd, titulo)
-            identidad = self.resolver_identidad_navegador(
-                pid,
-                proceso_l,
-                cuenta_uia=navegador.get("cuenta", ""),
+        if self.es_navegador_proceso(
+            proceso_l
+        ):
+            # =================================================
+            # PRIMER BLOQUE — IDENTIDAD AUTORITATIVA
+            # =================================================
+            #
+            # No usamos textos observados dentro de la página.
+            # La identidad se resuelve exclusivamente desde:
+            #
+            #   proceso -> --profile-directory -> Local State
+            #
+            # Esto conserva la asociación Profile/Default -> Gmail.
+            # =================================================
+
+            pista_identidad_nativa = (
+                self.observar_identidad_navegador_nativa_uia(
+                    hwnd,
+                    proceso_l,
+                )
             )
-            url = str(navegador.get("url", "") or "").strip()
+
+            identidad = (
+                self.resolver_identidad_navegador(
+                    pid,
+                    proceso_l,
+                    cuenta_uia=(
+                        pista_identidad_nativa.get(
+                            "cuenta",
+                            "",
+                        )
+                    ),
+                    perfil_uia=(
+                        pista_identidad_nativa.get(
+                            "perfil",
+                            "",
+                        )
+                    ),
+                )
+            )
+
+            cuenta_resuelta = str(
+                identidad.get(
+                    "cuenta",
+                    "",
+                )
+                or ""
+            ).strip()
+
+            perfil_resuelto = str(
+                identidad.get(
+                    "perfil",
+                    "",
+                )
+                or ""
+            ).strip()
+
+            origen_identidad = str(
+                identidad.get(
+                    "origen",
+                    "",
+                )
+                or ""
+            ).strip()
+
+            # =================================================
+            # URL — SÓLO OMNIBOX CONFIRMADO
+            # =================================================
+            #
+            # observar_navegador_uia() ya no inspecciona botones
+            # ni contenido semántico de la página. Solamente devuelve
+            # URL cuando encuentra un Edit inequívoco de la barra de
+            # direcciones nativa.
+            # =================================================
+
+            navegador = (
+                self.observar_navegador_uia(
+                    hwnd,
+                    titulo,
+                )
+            )
+
+            url = str(
+                navegador.get(
+                    "url",
+                    "",
+                )
+                or ""
+            ).strip()
 
             extra.update(
                 {
                     "tipo_recurso": "web",
                     "url": url,
                     "localizador": url,
-                    "perfil_navegador": str(
-                        identidad.get("perfil", "") or ""
-                    ).strip(),
-                    "cuenta_navegador": str(
-                        identidad.get("cuenta", "") or ""
-                    ).strip(),
+                    "perfil_navegador": perfil_resuelto,
+                    "cuenta_navegador": cuenta_resuelta,
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": origen_identidad,
                     "user_data_dir_navegador": str(
-                        identidad.get("user_data_dir", "") or ""
+                        identidad.get(
+                            "user_data_dir",
+                            "",
+                        )
+                        or ""
                     ).strip(),
-                    "url_observable": bool(navegador.get("uia", False)),
+                    "url_observable": bool(
+                        url
+                    ),
+                    "url_origen": str(
+                        navegador.get(
+                            "url_origen",
+                            "",
+                        )
+                        or ""
+                    ).strip(),
                 }
             )
 
@@ -9287,8 +12394,13 @@ class BIN(QMainWindow):
             )
             lineas.append(
                 "Cuenta asociada: "
-                f"{contexto.get('cuenta_navegador') or 'no identificada'}"
+                f"{contexto.get('cuenta_asociada_manual') or contexto.get('cuenta_navegador') or 'no identificada'}"
             )
+            if contexto.get("cuenta_web_manual"):
+                lineas.append(
+                    "Cuenta web: "
+                    f"{contexto.get('cuenta_web_manual')}"
+                )
         else:
             if contexto.get("url"):
                 lineas.append(f"URL: {contexto.get('url')}")
@@ -9395,16 +12507,18 @@ class BIN(QMainWindow):
     def identidad_contextos_operativos(self, esperado, actual):
         """
         True: coincide.
-        False: es otra identidad.
-        None: no observable.
+        False: es otra identidad/estado obligatorio.
+        None: todavía no es observable con certeza.
 
-        En contexto web, una cuenta asociada confirmada tiene
-        prioridad sobre el nombre técnico del perfil.
+        Para WEB la regla es estricta:
 
-        La URL sigue siendo obligatoria cuando fue registrada
-        durante la demostración.
+            cuenta esperada + URL esperada
+
+        deben coincidir conjuntamente cuando ambas fueron
+        registradas. Si hay cuenta esperada y la lectura actual no
+        expone cuenta, un perfil coincidente NO convierte el estado
+        en READY; BIN espera/corrige y vuelve a verificar.
         """
-
         if not esperado or not actual:
             return False
 
@@ -9439,26 +12553,27 @@ class BIN(QMainWindow):
             or ""
         ).strip().lower()
 
-        cuenta_e = self.normalizar_cuenta_web_rescate(
-            esperado.get(
-                "cuenta_navegador",
-                "",
-            )
-        )
+        cuenta_e = ""
+        comparacion_cuenta = None
 
-        cuenta_a = self.normalizar_cuenta_web_rescate(
-            actual.get(
-                "cuenta_navegador",
-                "",
+        if tipo_e == "web":
+            cuenta_e = self.cuenta_web_estricta_esperada(
+                esperado
             )
-        )
 
-        cuenta_confirma = bool(
-            tipo_e == "web"
-            and cuenta_e
-            and cuenta_a
-            and cuenta_e == cuenta_a
-        )
+            if cuenta_e:
+                comparacion_cuenta = (
+                    self.comparar_cuenta_web_estricta(
+                        esperado,
+                        actual,
+                    )
+                )
+
+                if comparacion_cuenta is False:
+                    return False
+
+                if comparacion_cuenta is None:
+                    return None
 
         loc_e = self.normalizar_localizador_bin(
             esperado
@@ -9499,12 +12614,12 @@ class BIN(QMainWindow):
         # PERFIL
         # ====================================================
         #
-        # Si la Gmail real coincide exactamente, Default /
-        # Profile N deja de ser una razón para rechazar
-        # la ventana.
+        # Si una cuenta estricta ya quedó confirmada, la cuenta
+        # manda y el nombre técnico Default/Profile N no puede
+        # invalidarla ni sustituirla.
         # ====================================================
 
-        if perfil_e and not cuenta_confirma:
+        if perfil_e and not cuenta_e:
             if (
                 perfil_a
                 and perfil_e != perfil_a
@@ -9512,29 +12627,6 @@ class BIN(QMainWindow):
                 return False
 
             if not perfil_a:
-                if cuenta_e and cuenta_a:
-                    if cuenta_e != cuenta_a:
-                        return False
-
-                else:
-                    return None
-
-        # ====================================================
-        # CUENTA
-        # ====================================================
-
-        if cuenta_e:
-            if (
-                cuenta_a
-                and cuenta_e != cuenta_a
-            ):
-                return False
-
-            if not cuenta_a and not (
-                perfil_e
-                and perfil_a
-                and perfil_e == perfil_a
-            ):
                 return None
 
         return (
@@ -9623,12 +12715,17 @@ class BIN(QMainWindow):
             if tipo_a and tipo_a != "web":
                 return False
 
-            cuenta_e = self.normalizar_cuenta_web_rescate(
-                esperado.get("cuenta_navegador", "")
+            cuenta_e = self.cuenta_web_estricta_esperada(
+                esperado
             )
 
-            cuenta_a = self.normalizar_cuenta_web_rescate(
-                contexto.get("cuenta_navegador", "")
+            comparacion_cuenta = (
+                self.comparar_cuenta_web_estricta(
+                    esperado,
+                    contexto,
+                )
+                if cuenta_e
+                else None
             )
 
             perfil_e = texto(
@@ -9645,17 +12742,22 @@ class BIN(QMainWindow):
                 )
             )
 
-            # La cuenta observada tiene máxima autoridad.
-            if cuenta_e and cuenta_a:
-                return cuenta_e == cuenta_a
+            # La cuenta esperada tiene autoridad absoluta.
+            # Un perfil coincidente NO sustituye una cuenta que
+            # todavía no pudo observarse.
+            if cuenta_e:
+                if comparacion_cuenta is True:
+                    return True
 
-            # Si la cuenta desaparece temporalmente de UIA,
-            # el perfil conserva la identidad.
+                if comparacion_cuenta is False:
+                    return False
+
+                return None
+
             if perfil_e and perfil_a:
                 return perfil_e == perfil_a
 
-            # Faltan datos.
-            if cuenta_e or perfil_e:
+            if perfil_e:
                 return None
 
             return bool(
@@ -9677,24 +12779,16 @@ class BIN(QMainWindow):
                 else 10
             )
 
-            cuenta_e = self.normalizar_cuenta_web_rescate(
-                esperado.get(
-                    "cuenta_navegador",
-                    "",
-                )
-            )
-
-            cuenta_a = self.normalizar_cuenta_web_rescate(
-                contexto.get(
-                    "cuenta_navegador",
-                    "",
-                )
+            cuenta_e = self.cuenta_web_estricta_esperada(
+                esperado
             )
 
             if (
                 cuenta_e
-                and cuenta_a
-                and cuenta_e == cuenta_a
+                and self.comparar_cuenta_web_estricta(
+                    esperado,
+                    contexto,
+                ) is True
             ):
                 puntos += 1000
 
@@ -9885,18 +12979,50 @@ class BIN(QMainWindow):
             )
         )
 
-        candidatos = [
-            contexto
+        evaluados = [
+            (
+                contexto,
+                base_coincide(
+                    contexto
+                ),
+            )
             for contexto
             in candidatos
-            if base_coincide(
-                contexto
-            )
-            is not False
         ]
 
-        if not candidatos:
-            return None
+        confirmados = [
+            contexto
+            for contexto, estado_base
+            in evaluados
+            if estado_base is True
+        ]
+
+        indeterminados = [
+            contexto
+            for contexto, estado_base
+            in evaluados
+            if estado_base is None
+        ]
+
+        # Si la cuenta todavía no puede observarse, no cerramos
+        # supuestos duplicados ni elegimos otra ventana por perfil.
+        # Conservamos la mejor candidata y esperamos otra lectura.
+        if not confirmados:
+            if not indeterminados:
+                return None
+
+            indeterminados.sort(
+                key=puntuacion,
+                reverse=True,
+            )
+
+            return {
+                "contexto": indeterminados[0],
+                "confirmada": False,
+                "esperando_confirmacion": True,
+            }
+
+        candidatos = confirmados
 
         # ====================================================
         # DETECTAR MATRÍCULAS DUPLICADAS
@@ -10907,11 +14033,8 @@ class BIN(QMainWindow):
         etiqueta="",
     ):
         cuenta_esperada = (
-            self.normalizar_cuenta_web_rescate(
-                esperado.get(
-                    "cuenta_navegador",
-                    "",
-                )
+            self.cuenta_web_estricta_esperada(
+                esperado
             )
         )
 
@@ -11028,20 +14151,14 @@ class BIN(QMainWindow):
                 contexto_rapido
             )
 
-            cuenta_actual = (
-                self.normalizar_cuenta_web_rescate(
-                    contexto_rapido.get(
-                        "cuenta_navegador",
-                        "",
-                    )
+            comparacion_cuenta = (
+                self.comparar_cuenta_web_estricta(
+                    esperado,
+                    contexto_rapido,
                 )
             )
 
-            if (
-                cuenta_actual
-                and cuenta_actual
-                == cuenta_esperada
-            ):
+            if comparacion_cuenta is True:
                 contexto_completo = (
                     self.obtener_contexto_hwnd(
                         hwnd,
@@ -11110,20 +14227,14 @@ class BIN(QMainWindow):
                     indice
                 ] = contexto_completo
 
-                cuenta_actual = (
-                    self.normalizar_cuenta_web_rescate(
-                        contexto_completo.get(
-                            "cuenta_navegador",
-                            "",
-                        )
+                comparacion_cuenta = (
+                    self.comparar_cuenta_web_estricta(
+                        esperado,
+                        contexto_completo,
                     )
                 )
 
-                if (
-                    cuenta_actual
-                    and cuenta_actual
-                    == cuenta_esperada
-                ):
+                if comparacion_cuenta is True:
                     seleccionada = (
                         contexto_completo
                     )
@@ -11894,6 +15005,275 @@ class BIN(QMainWindow):
         cache[clave] = ahora
         return False
 
+    def intentar_correccion_geometria_primaria(
+        self,
+        esperado,
+        busqueda,
+    ):
+        """
+        ACCIÓN CORRECTIVA 1.
+
+        Si la ventana candidata ya existe pero todavía falta
+        confirmar algún dato de identidad, intenta restaurar
+        primero posición/tamaño.
+
+        NO abre ventanas.
+        NO cambia URL.
+        NO cambia cuenta.
+        """
+
+        resultado = {
+            "intentada": False,
+            "aplicada": False,
+            "contexto": None,
+        }
+
+        if (
+            sys.platform != "win32"
+            or not esperado
+            or not busqueda
+        ):
+            return resultado
+
+        # Si ya fue confirmada completamente, la corrección
+        # existente al final de asegurar_estado_contexto_ejecucion
+        # seguirá encargándose de la geometría.
+        if busqueda.get(
+            "ok"
+        ):
+            return resultado
+
+        # Sólo tocamos una candidata plausible cuya identidad
+        # todavía está incompleta.
+        #
+        # Si existe un conflicto conocido, podría tratarse
+        # de otra ventana y no debemos moverla.
+        if not busqueda.get(
+            "indeterminado"
+        ):
+            return resultado
+
+        actual = (
+            busqueda.get(
+                "contexto"
+            )
+            or {}
+        )
+
+        hwnd = (
+            busqueda.get(
+                "hwnd"
+            )
+            or actual.get(
+                "hwnd"
+            )
+        )
+
+        if not actual or not hwnd:
+            return resultado
+
+        geo_esperada = (
+            esperado.get(
+                "geometria"
+            )
+            or {}
+        )
+
+        geo_actual = (
+            actual.get(
+                "geometria"
+            )
+            or {}
+        )
+
+        if (
+            not geo_esperada
+            or not geo_actual
+        ):
+            return resultado
+
+        if self.geometria_contextos_coincide(
+            esperado,
+            actual,
+        ):
+            return resultado
+
+        # ====================================================
+        # CONFIRMAR QUE AL MENOS ES LA MISMA BASE
+        # ====================================================
+
+        proceso_e = str(
+            esperado.get(
+                "proceso",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        proceso_a = str(
+            actual.get(
+                "proceso",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        if (
+            proceso_e
+            and proceso_a
+            and proceso_e != proceso_a
+        ):
+            return resultado
+
+        clase_e = str(
+            esperado.get(
+                "clase",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        clase_a = str(
+            actual.get(
+                "clase",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        if (
+            clase_e
+            and clase_a
+            and clase_e != clase_a
+        ):
+            return resultado
+
+        tipo = str(
+            esperado.get(
+                "tipo_recurso",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        # ====================================================
+        # PROTECCIÓN ESPECIAL PARA WEB
+        # ====================================================
+
+        if tipo == "web":
+
+            comparacion_cuenta = (
+                self.comparar_cuenta_web_estricta(
+                    esperado,
+                    actual,
+                )
+            )
+
+            # Si sabemos positivamente que es otra cuenta,
+            # no mover esa ventana.
+            if comparacion_cuenta is False:
+                return resultado
+
+            loc_e = (
+                self.normalizar_localizador_bin(
+                    esperado
+                )
+            )
+
+            loc_a = (
+                self.normalizar_localizador_bin(
+                    actual
+                )
+            )
+
+            # Si ambas URL se conocen y son diferentes,
+            # dejamos a las correcciones web actuales
+            # resolver URL/identidad.
+            if (
+                loc_e
+                and loc_a
+                and loc_e != loc_a
+            ):
+                return resultado
+
+            perfil_e = str(
+                esperado.get(
+                    "perfil_navegador",
+                    "",
+                )
+                or ""
+            ).strip().lower()
+
+            perfil_a = str(
+                actual.get(
+                    "perfil_navegador",
+                    "",
+                )
+                or ""
+            ).strip().lower()
+
+            if (
+                perfil_e
+                and perfil_a
+                and perfil_e != perfil_a
+            ):
+                return resultado
+
+        # ====================================================
+        # ACCIÓN CORRECTIVA 1
+        # ====================================================
+
+        resultado[
+            "intentada"
+        ] = True
+
+        self.registrar_evento_bin(
+            "CORRIGE",
+            (
+                "Acción correctiva 1/2: "
+                "la ventana candidata ya existe; "
+                "restauro primero su posición y tamaño."
+            ),
+            (
+                "ESPERADO\n"
+                + self.formatear_contexto_operativo(
+                    esperado
+                )
+                + "\n\nACTUAL\n"
+                + self.formatear_contexto_operativo(
+                    actual
+                )
+            ),
+        )
+
+        if not self.aplicar_geometria_contexto(
+            hwnd,
+            esperado,
+        ):
+            return resultado
+
+        time.sleep(
+            0.08
+        )
+
+        actualizado = (
+            self.obtener_contexto_hwnd(
+                hwnd,
+                enriquecer=True,
+            )
+            or actual
+        )
+
+        resultado[
+            "aplicada"
+        ] = True
+
+        resultado[
+            "contexto"
+        ] = actualizado
+
+        return resultado
+
     def asegurar_estado_contexto_ejecucion(
         self,
         esperado,
@@ -11921,6 +15301,36 @@ class BIN(QMainWindow):
         busqueda = self.buscar_ventana_estado_operativo(
             esperado
         )
+
+        # ====================================================
+        # ACCIÓN CORRECTIVA 1
+        # GEOMETRÍA ANTES DE ABRIR OTRA VENTANA
+        # ====================================================
+
+        correccion_geometria_primaria = (
+            self.intentar_correccion_geometria_primaria(
+                esperado,
+                busqueda,
+            )
+        )
+
+        if correccion_geometria_primaria.get(
+            "aplicada"
+        ):
+            return {
+                "ok": False,
+                "decision": "WAIT",
+                "motivo": (
+                    "Acción correctiva 1 aplicada. "
+                    "Vuelvo a comprobar la misma ventana "
+                    "antes de considerar la apertura directa."
+                ),
+                "contexto_actual": (
+                    correccion_geometria_primaria.get(
+                        "contexto"
+                    )
+                ),
+            }
 
         intentos = int(
             getattr(
@@ -12054,6 +15464,15 @@ class BIN(QMainWindow):
                     )
                 )
 
+                comparacion_cuenta_matricula = (
+                    self.comparar_cuenta_web_estricta(
+                        esperado,
+                        contexto_confirmado or {},
+                    )
+                    if cuenta_esperada
+                    else None
+                )
+
                 perfil_esperado_matricula = str(
                     esperado.get(
                         "perfil_navegador",
@@ -12089,23 +15508,19 @@ class BIN(QMainWindow):
                 # VALIDAR MATRÍCULA
                 # =================================================
                 #
-                # 1. Si veo la cuenta:
-                #       la cuenta manda.
+                # 1. Si existe cuenta esperada:
+                #       la cuenta manda de forma estricta.
+                #       El perfil NO puede sustituirla.
                 #
-                # 2. Si la cuenta no aparece:
+                # 2. Sólo cuando la demostración no registró cuenta,
                 #       el perfil puede confirmar identidad.
                 #
-                # 3. Si UIA no entrega ninguno momentáneamente:
-                #       conservar HWND y esperar otra actualización.
+                # 3. Una lectura incompleta conserva el HWND y espera.
                 # =================================================
 
-                if (
-                    cuenta_esperada
-                    and cuenta_confirmada_actual
-                ):
+                if cuenta_esperada:
                     identidad_matricula = (
-                        cuenta_confirmada_actual
-                        == cuenta_esperada
+                        comparacion_cuenta_matricula
                     )
 
                 elif (
@@ -15492,6 +18907,12 @@ class BIN(QMainWindow):
                 "detalle": tipo,
             }
         
+        if tipo == "comando_ventana":
+            return self.ejecutar_comando_ventana(
+                accion,
+                tarea,
+            )
+
         if tipo == "comando_teclado":
             return self.ejecutar_comando_teclado(
                 accion.get(
@@ -15504,6 +18925,155 @@ class BIN(QMainWindow):
             "ok": False,
             "metodo": "no_soportado",
             "detalle": (f"Tipo original no soportado: {tipo}"),
+        }
+
+    # ========================================================
+    # COMANDO MANUAL DE VENTANA
+    # ========================================================
+
+    def contexto_desde_configuracion_ventana(self, configuracion):
+        """
+        Convierte únicamente la configuración manual del editor al formato
+        operativo que el motor existente ya sabe abrir y supervisar.
+        No modifica ni reinterpreta contextos grabados automáticamente.
+        """
+        configuracion = configuracion or {}
+        tipo = str(configuracion.get("tipo_ventana", "software") or "software").lower()
+        geo = configuracion.get("geometria") or {}
+
+        proceso = str(configuracion.get("proceso", "") or "").strip()
+        ejecutable = str(configuracion.get("ejecutable", "") or "").strip()
+        url = str(configuracion.get("url", "") or "").strip()
+        ruta = str(configuracion.get("ruta_recurso", "") or "").strip()
+
+        if tipo == "web":
+            tipo_recurso = "web"
+            if not proceso:
+                proceso = "chrome.exe"
+        elif tipo == "software":
+            tipo_recurso = "aplicacion"
+        else:
+            tipo_recurso = "recurso"
+
+        cuenta_asociada = str(
+            configuracion.get("cuenta_asociada", "") or ""
+        ).strip()
+        cuenta_web = str(
+            configuracion.get("cuenta_web", "") or ""
+        ).strip()
+
+        localizador = url if tipo_recurso == "web" else ruta
+
+        return {
+            "pid": 0,
+            "proceso": proceso,
+            "titulo": "",
+            "clase": "",
+            "hwnd": 0,
+            "ejecutable": ejecutable,
+            "tipo_recurso": tipo_recurso,
+            "url": url if tipo_recurso == "web" else "",
+            "ruta_recurso": ruta if tipo_recurso == "recurso" else "",
+            "localizador": localizador,
+            "perfil_navegador": "",
+            # Los campos manuales quedan almacenados sin alterar la matrícula
+            # automática estable. La cuenta asociada se usa sólo al enviar la
+            # apertura del navegador; no reescribe la observación automática.
+            "cuenta_navegador": "",
+            "cuenta_asociada_manual": cuenta_asociada if tipo_recurso == "web" else "",
+            "cuenta_web_manual": cuenta_web if tipo_recurso == "web" else "",
+            "tipo_ventana_manual": tipo,
+            "software_nombre_manual": str(
+                configuracion.get("software_nombre", "") or ""
+            ),
+            "contexto_manual": True,
+            "bloquear_actualizacion_automatica": True,
+            "geometria": {
+                "x": int(geo.get("x", 0) or 0),
+                "y": int(geo.get("y", 0) or 0),
+                "ancho": max(1, int(geo.get("ancho", 1200) or 1200)),
+                "alto": max(1, int(geo.get("alto", 800) or 800)),
+                "maximizada": bool(geo.get("maximizada")),
+                "minimizada": bool(geo.get("minimizada")),
+            },
+        }
+
+    def ejecutar_comando_ventana(self, accion, tarea=None):
+        configuracion = accion.get("ventana") or {}
+        contexto = self.contexto_desde_configuracion_ventana(configuracion)
+
+        self.registrar_evento_bin(
+            "EJECUTA",
+            "Comando manual de ventana.",
+            self.formatear_contexto_operativo(contexto),
+        )
+
+        contexto_apertura = json.loads(
+            json.dumps(contexto, ensure_ascii=False)
+        )
+
+        # Sólo para la orden de apertura, la cuenta manual alimenta el
+        # resolvedor Profile/Local State que ya existe. El contexto guardado
+        # para supervisión permanece intacto.
+        if (
+            str(contexto_apertura.get("tipo_recurso", "") or "").lower() == "web"
+            and configuracion.get("cuenta_asociada")
+        ):
+            contexto_apertura["cuenta_navegador"] = str(
+                configuracion.get("cuenta_asociada") or ""
+            ).strip()
+
+        tipo_manual = str(
+            configuracion.get("tipo_ventana", "") or ""
+        ).strip().lower()
+
+        # Office permite respetar la aplicación elegida por el usuario.
+        # Recursos genéricos continúan usando la asociación nativa de Windows.
+        if tipo_manual == "office":
+            ruta = str(configuracion.get("ruta_recurso", "") or "").strip()
+            ejecutable = str(configuracion.get("ejecutable", "") or "").strip()
+
+            if ruta and ejecutable and Path(ejecutable).exists():
+                try:
+                    subprocess.Popen(
+                        [ejecutable, ruta],
+                        close_fds=True,
+                    )
+                    resultado = {
+                        "ok": True,
+                        "detalle": (
+                            f"Office solicitado: {ejecutable}\n"
+                            f"Archivo: {ruta}"
+                        ),
+                    }
+                except Exception as error:
+                    resultado = {"ok": False, "detalle": str(error)}
+            else:
+                resultado = self.abrir_contexto_directamente(contexto_apertura)
+        else:
+            resultado = self.abrir_contexto_directamente(contexto_apertura)
+
+        if not resultado.get("ok"):
+            return {
+                "ok": False,
+                "estado": "VENTANA_NO_ABIERTA",
+                "recuperable": False,
+                "metodo": "comando_ventana",
+                "detalle": resultado.get(
+                    "detalle",
+                    "No pude abrir la ventana configurada.",
+                ),
+            }
+
+        # La geometría y el estado final se confirman por el supervisor
+        # existente usando contexto_despues. La orden de apertura no se
+        # interpreta como confirmación de que la ventana ya terminó de abrir.
+        return {
+            "ok": True,
+            "estado": "ENVIADO",
+            "recuperable": False,
+            "metodo": "comando_ventana",
+            "detalle": resultado.get("detalle", "Ventana solicitada."),
         }
 
     def normalizar_proceso_aplicacion(
@@ -15830,6 +19400,12 @@ class BIN(QMainWindow):
         datos = accion.get("datos") or {}
 
         contexto = accion.get("contexto_objetivo")
+
+        if tipo == "comando_ventana":
+            return self.ejecutar_comando_ventana(
+                accion,
+                tarea,
+            )
 
         if tipo == "comando_teclado":
             return self.ejecutar_comando_teclado(
@@ -17904,6 +21480,1554 @@ class BIN(QMainWindow):
 
         self.timer_ejecucion_accion.start(self.delay_ejecucion_restante_ms)
 
+    def cuenta_web_estricta_esperada(
+        self,
+        contexto,
+    ):
+        """
+        Devuelve únicamente la cuenta AUTORITATIVA del navegador.
+
+        El antiguo fallback cuenta_web_observada queda deshabilitado.
+        Un texto accesible de la página nunca puede sustituir la
+        asociación Profile/Default -> cuenta obtenida desde Local State.
+        """
+
+        if not isinstance(
+            contexto,
+            dict,
+        ):
+            return ""
+
+        return (
+            self.normalizar_cuenta_web_rescate(
+                contexto.get(
+                    "cuenta_navegador",
+                    "",
+                )
+            )
+        )
+
+    def comparar_cuenta_web_estricta(
+        self,
+        esperado,
+        actual,
+    ):
+        """
+        Compara exclusivamente la cuenta asociada al perfil real
+        del navegador.
+
+        True:
+            cuenta_navegador coincide.
+
+        False:
+            ambas son observables y son diferentes.
+
+        None:
+            la demostración esperaba cuenta, pero todavía no puede
+            resolverse la cuenta actual; o no había cuenta esperada.
+
+        cuenta_web_observada queda deliberadamente fuera de esta
+        decisión para evitar contaminación por botones/textos de la web.
+        """
+
+        if (
+            not isinstance(
+                esperado,
+                dict,
+            )
+            or not isinstance(
+                actual,
+                dict,
+            )
+        ):
+            return None
+
+        navegador_esperado = (
+            self.normalizar_cuenta_web_rescate(
+                esperado.get(
+                    "cuenta_navegador",
+                    "",
+                )
+            )
+        )
+
+        if not navegador_esperado:
+            return None
+
+        navegador_actual = (
+            self.normalizar_cuenta_web_rescate(
+                actual.get(
+                    "cuenta_navegador",
+                    "",
+                )
+            )
+        )
+
+        if not navegador_actual:
+            return None
+
+        if (
+            navegador_actual
+            != navegador_esperado
+        ):
+            return False
+
+        return True
+
+    def invalidar_caches_observacion_ventanas_bin(
+        self,
+    ):
+        """
+        Obliga a que cuenta/URL/metadatos de la próxima comprobación
+        provengan de una observación nueva y no de una caché anterior.
+        """
+        for nombre in (
+            "browser_uia",
+            "context_metadata",
+        ):
+            try:
+                self._cache_operativo_bin(
+                    nombre
+                ).clear()
+            except Exception:
+                pass
+
+    def refrescar_observacion_ventanas_auditoria(
+        self,
+    ):
+        """
+        Crea una barrera de observación:
+
+        1. invalida cachés web/metadatos;
+        2. fuerza un EnumWindows nuevo;
+        3. procesa eventos pendientes;
+        4. devuelve la generación que contiene esa foto nueva.
+
+        Por tanto una corrección enviada en el intento anterior no
+        puede confirmarse usando la misma foto lógica de ventanas.
+        """
+        self.invalidar_caches_observacion_ventanas_bin()
+
+        try:
+            self.monitorizar_cambios_ventanas_bin()
+        except Exception:
+            pass
+
+        QApplication.processEvents()
+
+        try:
+            return int(
+                getattr(
+                    self,
+                    "_generacion_ventanas_bin",
+                    0,
+                )
+                or 0
+            )
+        except Exception:
+            return 0
+
+    def resetear_confirmacion_fresca_auditoria(
+        self,
+    ):
+        self.auditoria_contextual_confirmaciones_frescas = 0
+        self.auditoria_contextual_ultima_generacion_confirmada = -1
+        self.auditoria_contextual_hwnd_primera_confirmacion = 0
+
+    def clave_contexto_demostrado_auditoria(
+        self,
+        contexto,
+    ):
+        """
+        Identifica una ventana dentro de LA DEMOSTRACIÓN.
+
+        El HWND grabado se usa aquí únicamente para agrupar los
+        distintos estados que tuvo la misma ventana durante la
+        demostración. Nunca se exige que ese HWND exista en replay.
+
+        Si no existe HWND histórico, se usa una firma estable como
+        respaldo.
+        """
+        if not isinstance(
+            contexto,
+            dict,
+        ):
+            return None
+
+        if not contexto:
+            return None
+
+        if self.contexto_pertenece_a_bin(
+            contexto
+        ):
+            return None
+
+        if self.contexto_es_superficie_transitoria_windows(
+            contexto
+        ):
+            return None
+
+        try:
+            hwnd_demo = int(
+                contexto.get(
+                    "hwnd",
+                    0,
+                )
+                or 0
+            )
+        except Exception:
+            hwnd_demo = 0
+
+        if hwnd_demo:
+            return (
+                "hwnd_demo",
+                hwnd_demo,
+            )
+
+        tipo = str(
+            contexto.get(
+                "tipo_recurso",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        proceso = str(
+            contexto.get(
+                "proceso",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        clase = str(
+            contexto.get(
+                "clase",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        if tipo == "web":
+            cuenta = self.normalizar_cuenta_web_rescate(
+                contexto.get(
+                    "cuenta_navegador",
+                    "",
+                )
+            )
+
+            perfil = str(
+                contexto.get(
+                    "perfil_navegador",
+                    "",
+                )
+                or ""
+            ).strip().lower()
+
+            # URL se usa solamente como último respaldo. Cuando
+            # existe cuenta/perfil no debe convertir cada navegación
+            # de una misma ventana en una matrícula distinta.
+            url = ""
+
+            if not cuenta and not perfil:
+                url = self.normalizar_url_bin(
+                    contexto.get(
+                        "url",
+                        "",
+                    )
+                ).lower()
+
+            return (
+                "web",
+                proceso,
+                clase,
+                cuenta,
+                perfil,
+                url,
+            )
+
+        ruta = str(
+            contexto.get(
+                "ruta_recurso",
+                "",
+            )
+            or ""
+        ).strip()
+
+        if ruta:
+            try:
+                ruta = os.path.normcase(
+                    os.path.normpath(
+                        ruta
+                    )
+                )
+            except Exception:
+                ruta = ruta.lower()
+
+        ejecutable = str(
+            contexto.get(
+                "ejecutable",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        titulo = str(
+            contexto.get(
+                "titulo",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        return (
+            "normal",
+            tipo,
+            proceso,
+            clase,
+            ruta,
+            ejecutable,
+            titulo,
+        )
+
+    def accion_cierra_ventana_demostrada(
+        self,
+        accion,
+    ):
+        """
+        Reconoce cierres explícitos que sí podemos inferir sin
+        adivinar: cerrar_ventana y Alt+F4.
+        """
+        if not isinstance(
+            accion,
+            dict,
+        ):
+            return False
+
+        tipo = str(
+            accion.get(
+                "tipo",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        if tipo == "cerrar_ventana":
+            return True
+
+        if tipo in {
+            "tecla",
+            "atajo_teclado",
+        }:
+            tecla = str(
+                accion.get(
+                    "tecla",
+                    "",
+                )
+                or accion.get(
+                    "caracter",
+                    "",
+                )
+                or ""
+            ).strip().lower()
+
+            modificadores = {
+                str(valor or "").strip().lower()
+                for valor in (
+                    accion.get(
+                        "modificadores",
+                        [],
+                    )
+                    or []
+                )
+                if str(valor or "").strip()
+            }
+
+            return (
+                tecla == "f4"
+                and "alt" in modificadores
+            )
+
+        if tipo == "comando_teclado":
+            teclas = []
+
+            for parametro in (
+                accion.get(
+                    "parametros",
+                    [],
+                )
+                or []
+            ):
+                nombre = str(
+                    parametro.get(
+                        "tecla",
+                        "",
+                    )
+                    or ""
+                ).strip().lower()
+
+                if not nombre:
+                    continue
+
+                try:
+                    repeticiones = max(
+                        1,
+                        int(
+                            parametro.get(
+                                "repeticiones",
+                                1,
+                            )
+                            or 1
+                        ),
+                    )
+                except Exception:
+                    repeticiones = 1
+
+                teclas.extend(
+                    [nombre]
+                    * repeticiones
+                )
+
+            return (
+                "alt" in teclas
+                and "f4" in teclas
+            )
+
+        return False
+
+    def obtener_contextos_auditoria_demostracion(
+        self,
+        tarea,
+        hasta_indice=None,
+        incluir_despues_actual=True,
+    ):
+        """
+        Reconstruye al vuelo el ÚLTIMO estado demostrado de cada
+        ventana identificable.
+
+        No crea ni guarda ventanas_finales_memoria.
+        """
+        acciones = list(
+            tarea.get(
+                "acciones",
+                [],
+            )
+            or []
+        )
+
+        if hasta_indice is not None:
+            try:
+                hasta_indice = int(
+                    hasta_indice
+                )
+            except Exception:
+                hasta_indice = -1
+
+            if hasta_indice < 0:
+                acciones = []
+            else:
+                acciones = acciones[
+                    : hasta_indice + 1
+                ]
+
+        estados = {}
+
+        def registrar(
+            contexto,
+        ):
+            if not self.contexto_tiene_estado_operativo(
+                contexto
+            ):
+                return
+
+            clave = self.clave_contexto_demostrado_auditoria(
+                contexto
+            )
+
+            if clave is None:
+                return
+
+            # Mover al final si ya existía: el orden resultante
+            # representa la ÚLTIMA aparición demostrada de cada ventana.
+            estados.pop(
+                clave,
+                None,
+            )
+
+            estados[clave] = json.loads(
+                json.dumps(
+                    contexto,
+                    ensure_ascii=False,
+                )
+            )
+
+        for indice, accion in enumerate(
+            acciones
+        ):
+            contexto_objetivo = (
+                accion.get(
+                    "contexto_objetivo"
+                )
+                or {}
+            )
+
+            registrar(
+                contexto_objetivo
+            )
+
+            if self.accion_cierra_ventana_demostrada(
+                accion
+            ):
+                clave_cierre = (
+                    self.clave_contexto_demostrado_auditoria(
+                        contexto_objetivo
+                    )
+                )
+
+                if clave_cierre is not None:
+                    estados.pop(
+                        clave_cierre,
+                        None,
+                    )
+
+            es_ultima_incluida = (
+                hasta_indice is not None
+                and indice == len(acciones) - 1
+            )
+
+            if (
+                es_ultima_incluida
+                and not incluir_despues_actual
+            ):
+                continue
+
+            registrar(
+                accion.get(
+                    "contexto_despues"
+                )
+                or {}
+            )
+
+        return list(
+            estados.values()
+        )
+
+    def limpiar_estado_auditoria_contextual(
+        self,
+    ):
+        if hasattr(
+            self,
+            "timer_auditoria_contextual",
+        ):
+            self.timer_auditoria_contextual.stop()
+
+        self.auditoria_contextual_activa = False
+        self.auditoria_contextual_modo = None
+        self.auditoria_contextual_tarea_id = None
+        self.auditoria_contextual_contextos = []
+        self.auditoria_contextual_indice = 0
+        self.auditoria_contextual_intentos = 0
+        self.auditoria_contextual_inicio = None
+        self.auditoria_contextual_mensaje_error = ""
+        self.auditoria_contextual_fase_error = None
+        self.auditoria_contextual_hwnds_confirmados = []
+        self.auditoria_contextual_aperturas_finales = set()
+
+        self.resetear_confirmacion_fresca_auditoria()
+        self.auditoria_contextual_generacion_ultima_evaluacion = -1
+
+        self.intentos_supervisor = 0
+        self.inicio_espera_supervisor_monotonic = None
+        self.espera_supervisor_acumulada_ms = 0
+        self.ultima_decision_supervisor = None
+        self.ultimo_motivo_supervisor = ""
+        self.supervisor_hubo_wait = False
+
+    def poner_ventanas_auditoria_en_primer_plano(
+        self,
+    ):
+        """
+        Sube al frente el conjunto de ventanas que YA pasó la
+        auditoría, sin cambiar posición ni tamaño.
+
+        Windows sólo puede tener una ventana foreground activa. Por
+        eso se eleva todo el grupo en el Z-order y finalmente se
+        activa la última ventana demostrada que no esté minimizada.
+        """
+        if sys.platform != "win32":
+            return 0
+
+        hwnds = []
+        vistos = set()
+
+        for valor in (
+            self.auditoria_contextual_hwnds_confirmados
+            or []
+        ):
+            try:
+                hwnd = int(
+                    valor
+                    or 0
+                )
+            except Exception:
+                hwnd = 0
+
+            if not hwnd or hwnd in vistos:
+                continue
+
+            vistos.add(
+                hwnd
+            )
+            hwnds.append(
+                hwnd
+            )
+
+        if not hwnds:
+            return 0
+
+        try:
+            user32 = ctypes.windll.user32
+        except Exception:
+            return 0
+
+        levantadas = []
+        ultima_activable = None
+
+        for hwnd in hwnds:
+            try:
+                if not user32.IsWindow(
+                    hwnd
+                ):
+                    continue
+
+                if not user32.IsWindowVisible(
+                    hwnd
+                ):
+                    continue
+
+                # Mantener una ventana minimizada tal como quedó en
+                # la demostración; no la restauramos sólo por Z-order.
+                if user32.IsIconic(
+                    hwnd
+                ):
+                    continue
+
+                resultado = bool(
+                    user32.SetWindowPos(
+                        hwnd,
+                        0,  # HWND_TOP, sin convertirla en TOPMOST.
+                        0,
+                        0,
+                        0,
+                        0,
+                        SWP_NOMOVE
+                        | SWP_NOSIZE
+                        | SWP_NOACTIVATE
+                        | SWP_SHOWWINDOW,
+                    )
+                )
+
+                if resultado:
+                    levantadas.append(
+                        hwnd
+                    )
+                    ultima_activable = hwnd
+
+            except Exception:
+                continue
+
+        QApplication.processEvents()
+
+        if ultima_activable:
+            self.activar_hwnd_operativo(
+                ultima_activable
+            )
+
+        if levantadas:
+            self.registrar_evento_bin(
+                "READY",
+                "Ventanas demostradas colocadas en primer plano.",
+                (
+                    f"Ventanas elevadas: {len(levantadas)}\n"
+                    "Posición y tamaño no fueron modificados."
+                ),
+            )
+
+        return len(
+            levantadas
+        )
+
+    def iniciar_auditoria_contextual(
+        self,
+        tarea,
+        modo="final",
+        mensaje_error="",
+    ):
+        if not tarea:
+            return False
+
+        if self.auditoria_contextual_activa:
+            return True
+
+        modo = str(
+            modo
+            or "final"
+        ).strip().lower()
+
+        fase_error = str(
+            self.fase_ejecucion_real
+            or ""
+        )
+
+        hasta_indice = None
+        incluir_despues_actual = True
+
+        if modo == "error":
+            hasta_indice = self.indice_ejecucion_real
+
+            # En supervisor normal la acción YA fue enviada y
+            # el estado posterior demostrado sí debe existir.
+            # En preacción o fallo físico inmediato aún debemos
+            # restaurar el estado anterior para poder reintentar.
+            incluir_despues_actual = (
+                fase_error == "supervisor"
+            )
+
+        contextos = (
+            self.obtener_contextos_auditoria_demostracion(
+                tarea,
+                hasta_indice=hasta_indice,
+                incluir_despues_actual=(
+                    incluir_despues_actual
+                ),
+            )
+        )
+
+        # Si no existe ningún estado operativo demostrable,
+        # no inventamos una auditoría.
+        if not contextos:
+            if modo == "final":
+                self._finalizar_ejecucion_confirmada(
+                    tarea
+                )
+            else:
+                self._finalizar_ejecucion_con_error_confirmado(
+                    tarea,
+                    mensaje_error,
+                )
+
+            return False
+
+        if hasattr(
+            self,
+            "timer_ejecucion_accion",
+        ):
+            self.timer_ejecucion_accion.stop()
+
+        self.auditoria_contextual_activa = True
+        self.auditoria_contextual_modo = modo
+        self.auditoria_contextual_tarea_id = tarea.get(
+            "id"
+        )
+        self.auditoria_contextual_contextos = contextos
+        self.auditoria_contextual_indice = 0
+        self.auditoria_contextual_intentos = 0
+        self.auditoria_contextual_inicio = time.monotonic()
+        self.auditoria_contextual_mensaje_error = str(
+            mensaje_error
+            or ""
+        )
+        self.auditoria_contextual_fase_error = fase_error
+        self.auditoria_contextual_hwnds_confirmados = []
+        self.auditoria_contextual_aperturas_finales = set()
+
+        self.resetear_confirmacion_fresca_auditoria()
+        self.auditoria_contextual_generacion_ultima_evaluacion = -1
+
+        # El supervisor operativo usa intentos_supervisor para
+        # activar sus rescates web en los intentos 5 y 12.
+        self.intentos_supervisor = 0
+
+        if modo == "final":
+            titulo = "Auditoría final"
+            detalle = (
+                "Verificando el estado final demostrado "
+                f"de {len(contextos)} ventana(s)."
+            )
+        else:
+            titulo = "Revisando error"
+            detalle = (
+                "El error todavía no es definitivo. "
+                f"Reviso {len(contextos)} ventana(s) "
+                "contra la demostración."
+            )
+
+        tarea["detalle_estado"] = (
+            f"{titulo} · "
+            f"Ventana 1/{len(contextos)}"
+        )
+
+        self.actualizar_estado_cabecera_visor(
+            titulo,
+            f"· 1/{len(contextos)}",
+            AMARILLO,
+        )
+
+        self.registrar_evento_bin(
+            "VERIFICA",
+            titulo,
+            detalle,
+        )
+
+        self.actualizar_tarjeta_tarea(
+            tarea["id"]
+        )
+
+        self.timer_auditoria_contextual.start(
+            0
+        )
+
+        return True
+
+    def procesar_auditoria_contextual(
+        self,
+    ):
+        if not self.auditoria_contextual_activa:
+            return
+
+        tarea = self.obtener_tarea(
+            self.auditoria_contextual_tarea_id
+        )
+
+        if not tarea:
+            self.limpiar_estado_auditoria_contextual()
+            return
+
+        contextos = (
+            self.auditoria_contextual_contextos
+            or []
+        )
+
+        # ====================================================
+        # TODAS LAS VENTANAS YA FUERON CONFIRMADAS 2/2
+        # ====================================================
+        if self.auditoria_contextual_indice >= len(
+            contextos
+        ):
+            modo = self.auditoria_contextual_modo
+            fase_error = self.auditoria_contextual_fase_error
+
+            self.registrar_evento_bin(
+                "READY",
+                "Auditoría contextual completada.",
+                (
+                    f"{len(contextos)} ventana(s) coinciden "
+                    "con la demostración en dos observaciones "
+                    "frescas consecutivas."
+                ),
+            )
+
+            levantadas = (
+                self.poner_ventanas_auditoria_en_primer_plano()
+            )
+
+            if (
+                modo == "final"
+                and levantadas > 0
+            ):
+                self._omitir_traer_bin_al_frente_una_vez = True
+
+            self.limpiar_estado_auditoria_contextual()
+
+            if modo == "final":
+                self._finalizar_ejecucion_confirmada(
+                    tarea
+                )
+                return
+
+            # ================================================
+            # EL ERROR ERA RECUPERABLE
+            # ================================================
+            self.registrar_evento_bin(
+                "RECUPERA",
+                (
+                    "La revisión posterior al error "
+                    "encontró el estado correcto."
+                ),
+                (
+                    "No marco ERROR. BIN continúa "
+                    "la ejecución."
+                ),
+            )
+
+            if fase_error == "supervisor":
+                self.completar_accion_real_supervisada(
+                    tarea
+                )
+                return
+
+            self.fase_ejecucion_real = "espera_accion"
+            self.resultado_accion_real_actual = None
+            self.inicio_espera_supervisor_monotonic = None
+            self.espera_supervisor_acumulada_ms = 0
+            self.intentos_supervisor = 0
+            self.ultima_decision_supervisor = None
+            self.ultimo_motivo_supervisor = ""
+            self.supervisor_hubo_wait = False
+            self.delay_ejecucion_restante_ms = 0
+
+            tarea["detalle_estado"] = (
+                "Error descartado · "
+                "reintentando el paso actual"
+            )
+
+            self.guardar_estado_ejecutor_real_en_tarea(
+                tarea
+            )
+
+            self.actualizar_tarjeta_tarea(
+                tarea["id"]
+            )
+
+            self.timer_ejecucion_accion.start(
+                0
+            )
+            return
+
+        esperado = contextos[
+            self.auditoria_contextual_indice
+        ]
+
+        # ====================================================
+        # BARRERA DE OBSERVACIÓN FRESCA
+        # ====================================================
+        # Antes de TODA decisión hacemos una foto nueva de Windows
+        # y eliminamos cachés de URL/cuenta. Esto impide que un OK
+        # anterior a la corrección sea reutilizado después de abrir,
+        # mover o navegar una ventana.
+        # ====================================================
+        generacion = (
+            self.refrescar_observacion_ventanas_auditoria()
+        )
+
+        if (
+            generacion
+            <= self.auditoria_contextual_generacion_ultima_evaluacion
+        ):
+            self.timer_auditoria_contextual.start(
+                80
+            )
+            return
+
+        self.auditoria_contextual_generacion_ultima_evaluacion = (
+            generacion
+        )
+
+        self.auditoria_contextual_intentos += 1
+        self.intentos_supervisor = (
+            self.auditoria_contextual_intentos
+        )
+
+        if self.auditoria_contextual_inicio is None:
+            self.auditoria_contextual_inicio = (
+                time.monotonic()
+            )
+
+        resultado = (
+            self.asegurar_estado_contexto_ejecucion(
+                esperado,
+                permitir_abrir=True,
+                activar=False,
+            )
+        )
+
+        decision = str(
+            resultado.get(
+                "decision",
+                "WAIT",
+            )
+            or "WAIT"
+        ).strip().upper()
+
+        # ====================================================
+        # READY NO SIGNIFICA CONFIRMADA TODAVÍA
+        # ====================================================
+        # Se necesitan dos READY consecutivos en generaciones
+        # distintas. La primera lectura puede ser la lectura inmediata
+        # posterior a SetWindowPos / Ctrl+L / apertura de Chrome.
+        # ====================================================
+        if resultado.get("ok") or decision == "READY":
+            try:
+                hwnd_confirmado = int(
+                    resultado.get(
+                        "hwnd",
+                        0,
+                    )
+                    or (
+                        resultado.get(
+                            "contexto_actual"
+                        )
+                        or {}
+                    ).get(
+                        "hwnd",
+                        0,
+                    )
+                    or 0
+                )
+            except Exception:
+                hwnd_confirmado = 0
+
+            confirmaciones = int(
+                self.auditoria_contextual_confirmaciones_frescas
+                or 0
+            )
+
+            # Primera confirmación fresca.
+            if confirmaciones <= 0:
+                self.auditoria_contextual_confirmaciones_frescas = 1
+                self.auditoria_contextual_ultima_generacion_confirmada = (
+                    generacion
+                )
+                self.auditoria_contextual_hwnd_primera_confirmacion = (
+                    hwnd_confirmado
+                )
+
+                self.registrar_evento_bin(
+                    "VERIFICA",
+                    (
+                        "Auditoría: primera confirmación fresca "
+                        "1/2."
+                    ),
+                    (
+                        f"Generación: {generacion}\n"
+                        "BIN espera una nueva observación antes "
+                        "de aceptar esta ventana."
+                    ),
+                )
+
+                self.timer_auditoria_contextual.start(
+                    self.auditoria_contextual_intervalo_confirmacion_ms
+                )
+                return
+
+            # Debe ser otra generación y, cuando conocemos HWND,
+            # debe seguir siendo la misma ventana física.
+            generacion_anterior = int(
+                self.auditoria_contextual_ultima_generacion_confirmada
+                or -1
+            )
+
+            hwnd_anterior = int(
+                self.auditoria_contextual_hwnd_primera_confirmacion
+                or 0
+            )
+
+            if generacion <= generacion_anterior:
+                self.timer_auditoria_contextual.start(
+                    80
+                )
+                return
+
+            if (
+                hwnd_anterior
+                and hwnd_confirmado
+                and hwnd_anterior != hwnd_confirmado
+            ):
+                # La selección cambió entre lecturas. Empezamos 1/2
+                # otra vez con la nueva matrícula física.
+                self.auditoria_contextual_confirmaciones_frescas = 1
+                self.auditoria_contextual_ultima_generacion_confirmada = (
+                    generacion
+                )
+                self.auditoria_contextual_hwnd_primera_confirmacion = (
+                    hwnd_confirmado
+                )
+
+                self.registrar_evento_bin(
+                    "VERIFICA",
+                    (
+                        "La matrícula cambió entre confirmaciones; "
+                        "reinicio 1/2."
+                    ),
+                    f"Generación: {generacion}",
+                )
+
+                self.timer_auditoria_contextual.start(
+                    self.auditoria_contextual_intervalo_confirmacion_ms
+                )
+                return
+
+            numero = (
+                self.auditoria_contextual_indice
+                + 1
+            )
+
+            if (
+                hwnd_confirmado
+                and hwnd_confirmado
+                not in self.auditoria_contextual_hwnds_confirmados
+            ):
+                self.auditoria_contextual_hwnds_confirmados.append(
+                    hwnd_confirmado
+                )
+
+            self.registrar_evento_bin(
+                "READY",
+                (
+                    f"Auditoría: ventana {numero}/"
+                    f"{len(contextos)} confirmada 2/2."
+                ),
+                (
+                    f"Generaciones: {generacion_anterior} → "
+                    f"{generacion}\n\n"
+                    + self.formatear_contexto_operativo(
+                        resultado.get(
+                            "contexto_actual"
+                        )
+                        or esperado
+                    )
+                ),
+            )
+
+            self.auditoria_contextual_indice += 1
+            self.auditoria_contextual_intentos = 0
+            self.auditoria_contextual_inicio = (
+                time.monotonic()
+            )
+            self.intentos_supervisor = 0
+            self.resetear_confirmacion_fresca_auditoria()
+
+            if self.auditoria_contextual_indice < len(
+                contextos
+            ):
+                tarea["detalle_estado"] = (
+                    "Auditoría de ventanas · "
+                    f"Ventana "
+                    f"{self.auditoria_contextual_indice + 1}/"
+                    f"{len(contextos)}"
+                )
+
+                self.actualizar_estado_cabecera_visor(
+                    "Verificando ventanas",
+                    (
+                        f"· {self.auditoria_contextual_indice + 1}/"
+                        f"{len(contextos)}"
+                    ),
+                    AMARILLO,
+                )
+
+                self.actualizar_tarjeta_tarea(
+                    tarea["id"]
+                )
+
+            self.timer_auditoria_contextual.start(
+                self.auditoria_contextual_intervalo_confirmacion_ms
+            )
+            return
+
+        # Cualquier WAIT/FAILED rompe una secuencia 1/2 previa.
+        self.resetear_confirmacion_fresca_auditoria()
+
+        tipo = str(
+            esperado.get(
+                "tipo_recurso",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        cuenta = self.cuenta_web_estricta_esperada(
+            esperado
+        )
+
+        if tipo == "web" and cuenta:
+            max_intentos = 90
+            timeout_segundos = 45.0
+        else:
+            max_intentos = 40
+            timeout_segundos = 20.0
+
+        transcurrido = max(
+            0.0,
+            time.monotonic()
+            - self.auditoria_contextual_inicio,
+        )
+
+        agotado = bool(
+            decision == "FAILED"
+            or self.auditoria_contextual_intentos >= max_intentos
+            or transcurrido >= timeout_segundos
+        )
+
+        if not agotado:
+            self.registrar_evento_bin(
+                "VERIFICA",
+                (
+                    "Auditoría contextual todavía no coincide."
+                ),
+                (
+                    f"Ventana: "
+                    f"{self.auditoria_contextual_indice + 1}/"
+                    f"{len(contextos)}\n"
+                    f"Generación: {generacion}\n"
+                    f"Intento: "
+                    f"{self.auditoria_contextual_intentos}/"
+                    f"{max_intentos}\n"
+                    f"{resultado.get('motivo', '')}"
+                ),
+            )
+
+            self.timer_auditoria_contextual.start(
+                self.auditoria_contextual_intervalo_ms
+            )
+            return
+
+        # ====================================================
+        # ÚLTIMA ACCIÓN PREVENTIVA
+        # ====================================================
+        # Abrir no significa confirmar. Después de enviar la apertura
+        # se invalidan cachés, se espera y la ventana debe conseguir
+        # nuevamente READY 1/2 y READY 2/2.
+        # ====================================================
+        indice_contexto = int(
+            self.auditoria_contextual_indice
+        )
+
+        if (
+            indice_contexto
+            not in self.auditoria_contextual_aperturas_finales
+        ):
+            self.auditoria_contextual_aperturas_finales.add(
+                indice_contexto
+            )
+
+            apertura_final = (
+                self.abrir_contexto_directamente(
+                    esperado
+                )
+            )
+
+            if apertura_final.get("ok"):
+                self.invalidar_caches_observacion_ventanas_bin()
+                self.resetear_confirmacion_fresca_auditoria()
+
+                self.registrar_evento_bin(
+                    "CORRIGE",
+                    (
+                        "Última acción preventiva: "
+                        "reabro el contexto demostrado."
+                    ),
+                    (
+                        f"Generación previa: {generacion}\n"
+                        f"{apertura_final.get('detalle', '')}\n"
+                        "La apertura NO se acepta como confirmación; "
+                        "BIN esperará observaciones frescas 1/2 y 2/2."
+                    ),
+                )
+
+                self.auditoria_contextual_intentos = 0
+                self.intentos_supervisor = 0
+                self.auditoria_contextual_inicio = (
+                    time.monotonic()
+                )
+
+                self.timer_auditoria_contextual.start(
+                    800
+                )
+                return
+
+        modo = self.auditoria_contextual_modo
+        mensaje_error_original = (
+            self.auditoria_contextual_mensaje_error
+        )
+
+        detalle_fallo = (
+            "La auditoría de ventanas agotó sus intentos.\n\n"
+            f"Ventana esperada:\n"
+            f"{self.formatear_contexto_operativo(esperado)}\n\n"
+            f"Última generación evaluada: {generacion}\n\n"
+            f"Último resultado:\n"
+            f"{resultado.get('motivo', 'Sin coincidencia confirmada.')}"
+        )
+
+        self.registrar_evento_bin(
+            "ERROR",
+            "Auditoría contextual agotada.",
+            detalle_fallo,
+        )
+
+        self.limpiar_estado_auditoria_contextual()
+
+        if modo == "error" and mensaje_error_original:
+            detalle_fallo = (
+                f"{mensaje_error_original}\n\n"
+                "REVISIÓN FINAL DE VENTANAS\n"
+                f"{detalle_fallo}"
+            )
+
+        self._finalizar_ejecucion_con_error_confirmado(
+            tarea,
+            detalle_fallo,
+        )
+
+    def _finalizar_ejecucion_confirmada(self, tarea):
+        duracion_total = self.obtener_duracion_total_tarea(tarea)
+        repeticiones = self.obtener_repeticiones_tarea(tarea)
+
+        if hasattr(self, "timer_ejecucion_accion"):
+            self.timer_ejecucion_accion.stop()
+
+        self.ejecucion_fisica_activa = False
+        self.fase_ejecucion_real = "inactiva"
+        self.delay_ejecucion_restante_ms = 0
+        self.accion_real_actual = None
+        self.resultado_accion_real_actual = None
+        self.inicio_repeticion_real_monotonic = None
+        self.elapsed_repeticion_base_ms = 0
+        self.inicio_espera_supervisor_monotonic = None
+        self.espera_supervisor_acumulada_ms = 0
+        self.intentos_supervisor = 0
+        self.supervisor_hubo_wait = False
+        self.mantener_bin_visible_replay(False)
+        self.ocultar_barra_ejecucion()
+
+        ahora = datetime.now()
+
+        tarea["estado"] = "FINALIZADA"
+        tarea["elapsed_seconds"] = duracion_total
+        tarea["runtime_base_seconds"] = 0
+        tarea["transcurrido"] = segundos_a_hms(duracion_total)
+        tarea["progreso"] = 100
+        tarea["last_run_key"] = tarea.get("current_run_key")
+        tarea["current_run_key"] = None
+        tarea["runtime_started_at"] = None
+        tarea["queued_at"] = None
+        tarea["completed_at"] = ahora.isoformat()
+        tarea["ultima_ejecucion"] = ahora.isoformat()
+        tarea["accion_actual_indice"] = None
+        tarea["repeticion_actual"] = repeticiones
+        tarea["repeticiones_totales"] = repeticiones
+        tarea["ejecucion_real_indice"] = 0
+        tarea["ejecucion_real_repeticion"] = repeticiones
+        tarea["ejecuciones_reales_completadas"] = max(
+            tarea.get(
+                "ejecuciones_reales_completadas",
+                0,
+            ),
+            self.ejecuciones_reales_totales,
+        )
+        tarea["delay_ejecucion_restante_ms"] = 0
+        tarea["ejecucion_real_fase"] = "inactiva"
+        tarea["elapsed_repeticion_real_ms"] = 0
+
+        proxima = self.calcular_proxima_ejecucion_tarea(
+            tarea,
+            desde=ahora + timedelta(seconds=1),
+        )
+
+        ultima_texto = ahora.strftime("%d/%m %H:%M")
+
+        if proxima:
+            tarea["detalle_estado"] = (
+                "FINALIZADA\n"
+                f"Repeticiones: {repeticiones}/{repeticiones}\n"
+                f"Última ejecución: {ultima_texto}\n"
+                "Próxima ejecución: " + self.formatear_proxima_ejecucion(proxima)
+            )
+        else:
+            tarea["detalle_estado"] = (
+                "FINALIZADA\n"
+                f"Repeticiones: {repeticiones}/{repeticiones}\n"
+                f"Última ejecución: {ultima_texto}\n"
+                "Próxima ejecución: Sin programación"
+            )
+
+        self.tarea_ejecutando_id = None
+
+        if hasattr(self, "estado_bin"):
+            self.estado_bin.setText("● BIN OPERATIVO")
+            self.estado_bin.setStyleSheet(f"""
+                color: {VERDE};
+                font-weight: 800;
+                """)
+
+        self.actualizar_estado_cabecera_visor(
+            "Ejecución finalizada",
+            f"· Repeticiones {repeticiones}/{repeticiones}",
+            VERDE,
+        )
+
+        if hasattr(self, "mensaje_visor"):
+            self.mensaje_visor.setText(
+                "EJECUCIÓN FINALIZADA\n\n"
+                f"{tarea['nombre']}\n\n"
+                f"REPETICIONES {repeticiones}/{repeticiones}\n\n"
+                "BIN está disponible."
+            )
+
+        self.registrar_evento_bin(
+            "FINALIZA",
+            (
+                f"Finalicé '{tarea['nombre']}' tras "
+                f"{repeticiones} repetición(es)."
+            ),
+            (
+                "Próxima ejecución: "
+                + self.formatear_proxima_ejecucion(
+                    proxima
+                )
+                if proxima
+                else "No tiene una próxima ejecución."
+            ),
+        )
+
+        self.limpiar_panel_accion(
+            silencioso=True,
+        )
+
+        self.aplicar_limpieza_ventanas_configurada(
+            "después"
+        )
+
+        hay_tareas_en_cola = any(
+            item.get(
+                "estado"
+            )
+            == "EN COLA"
+            for item in self.tareas
+        )
+
+        omitir_bin_al_frente = bool(
+            getattr(
+                self,
+                "_omitir_traer_bin_al_frente_una_vez",
+                False,
+            )
+        )
+
+        self._omitir_traer_bin_al_frente_una_vez = False
+
+        if (
+            not hay_tareas_en_cola
+            and not omitir_bin_al_frente
+        ):
+            QTimer.singleShot(
+                50,
+                self.traer_bin_al_frente,
+            )
+
+        self.actualizar_tarjeta_tarea(tarea["id"])
+        self.refrescar_panel_acciones()
+        self.actualizar_cabecera_operativa()
+        self.guardar_tareas_en_disco()
+
+        QTimer.singleShot(
+            0,
+            self.volver_panel_acciones_arriba,
+        )
+
+        QTimer.singleShot(
+            100,
+            self.iniciar_siguiente_en_cola,
+        )
+
+    def _finalizar_ejecucion_con_error_confirmado(
+        self,
+        tarea,
+        mensaje,
+    ):
+        if hasattr(self, "timer_ejecucion_accion"):
+            self.timer_ejecucion_accion.stop()
+
+        self.ejecucion_fisica_activa = False
+        self.fase_ejecucion_real = "inactiva"
+        self.delay_ejecucion_restante_ms = 0
+        self.accion_real_actual = None
+        self.resultado_accion_real_actual = None
+        self.inicio_repeticion_real_monotonic = None
+        self.inicio_espera_supervisor_monotonic = None
+        self.espera_supervisor_acumulada_ms = 0
+        self.intentos_supervisor = 0
+        self.supervisor_hubo_wait = False
+        self.mantener_bin_visible_replay(False)
+        self.ocultar_barra_ejecucion()
+
+        self.aplicar_limpieza_ventanas_configurada(
+            "después"
+        )
+
+        QTimer.singleShot(
+            50,
+            self.traer_bin_al_frente,
+        )
+
+        tarea["estado"] = "ERROR"
+        tarea["runtime_started_at"] = None
+        tarea["detalle_estado"] = mensaje
+        tarea["accion_actual_indice"] = None
+        tarea["repeticiones_totales"] = self.obtener_repeticiones_tarea(tarea)
+        tarea["ejecucion_real_indice"] = self.indice_ejecucion_real
+        tarea["ejecucion_real_repeticion"] = self.repeticion_ejecucion_real
+        tarea["ejecuciones_reales_completadas"] = self.ejecuciones_reales_completadas
+        tarea["delay_ejecucion_restante_ms"] = 0
+        tarea["ejecucion_real_fase"] = "inactiva"
+
+        self.tarea_ejecutando_id = None
+
+        if hasattr(self, "estado_bin"):
+            self.estado_bin.setText("● BIN CON ERROR")
+            self.estado_bin.setStyleSheet(f"""
+                color: {ROJO};
+                font-weight: 800;
+                """)
+
+        repeticion_actual = tarea.get(
+            "repeticion_actual",
+            0,
+        )
+
+        repeticiones = tarea.get(
+            "repeticiones_totales",
+            1,
+        )
+
+        detalle = ""
+
+        if repeticion_actual:
+            detalle = f"· Repetición " f"{repeticion_actual}/{repeticiones}"
+
+        self.actualizar_estado_cabecera_visor(
+            "Error de ejecución",
+            detalle,
+            ROJO,
+        )
+
+        if hasattr(self, "mensaje_visor"):
+            self.mensaje_visor.setText(
+                "ERROR DE EJECUCIÓN\n\n" f"{tarea['nombre']}\n\n" f"{mensaje}"
+            )
+
+        self.registrar_evento_bin(
+            "ERROR",
+            f"Error en '{tarea['nombre']}'.",
+            mensaje,
+        )
+
+        self.actualizar_tarjeta_tarea(tarea["id"])
+        self.refrescar_panel_acciones()
+        self.actualizar_cabecera_operativa()
+        self.guardar_tareas_en_disco()
+
+        QTimer.singleShot(
+            0,
+            self.volver_panel_acciones_arriba,
+        )
+
+        QTimer.singleShot(
+            100,
+            self.iniciar_siguiente_en_cola,
+        )
+
     def iniciar_ejecucion(
         self,
         tarea,
@@ -17931,6 +23055,10 @@ class BIN(QMainWindow):
             self.actualizar_tarjeta_tarea(tarea["id"])
             return False
 
+        self.aplicar_limpieza_ventanas_configurada(
+            "antes"
+        )
+
         ahora = datetime.now()
 
         if run_key is None:
@@ -17944,6 +23072,8 @@ class BIN(QMainWindow):
         self.tarea_ejecutando_id = tarea["id"]
         self.tarea_seleccionada_id = tarea["id"]
         self.rutina_en_borrador = False
+
+        self.auditoria_error_rescates_por_paso = {}
 
         repeticiones = self.obtener_repeticiones_tarea(tarea)
 
@@ -18103,6 +23233,9 @@ class BIN(QMainWindow):
         self.actualizar_tarjeta_tarea(tarea["id"])
 
     def pausar_ejecucion(self, tarea):
+        if self.auditoria_contextual_activa:
+            self.limpiar_estado_auditoria_contextual()
+
         inicio_texto = tarea.get("runtime_started_at")
 
         if inicio_texto:
@@ -18259,133 +23392,16 @@ class BIN(QMainWindow):
         self.guardar_tareas_en_disco()
 
     def finalizar_ejecucion(self, tarea):
-        duracion_total = self.obtener_duracion_total_tarea(tarea)
-        repeticiones = self.obtener_repeticiones_tarea(tarea)
+        """
+        Antes de declarar FINALIZADA, BIN reconstruye desde la
+        demostración el último estado de cada ventana y lo confirma.
+        """
+        if self.auditoria_contextual_activa:
+            return
 
-        if hasattr(self, "timer_ejecucion_accion"):
-            self.timer_ejecucion_accion.stop()
-
-        self.ejecucion_fisica_activa = False
-        self.fase_ejecucion_real = "inactiva"
-        self.delay_ejecucion_restante_ms = 0
-        self.accion_real_actual = None
-        self.resultado_accion_real_actual = None
-        self.inicio_repeticion_real_monotonic = None
-        self.elapsed_repeticion_base_ms = 0
-        self.inicio_espera_supervisor_monotonic = None
-        self.espera_supervisor_acumulada_ms = 0
-        self.intentos_supervisor = 0
-        self.supervisor_hubo_wait = False
-        self.mantener_bin_visible_replay(False)
-        self.ocultar_barra_ejecucion()
-
-        ahora = datetime.now()
-
-        tarea["estado"] = "FINALIZADA"
-        tarea["elapsed_seconds"] = duracion_total
-        tarea["runtime_base_seconds"] = 0
-        tarea["transcurrido"] = segundos_a_hms(duracion_total)
-        tarea["progreso"] = 100
-        tarea["last_run_key"] = tarea.get("current_run_key")
-        tarea["current_run_key"] = None
-        tarea["runtime_started_at"] = None
-        tarea["queued_at"] = None
-        tarea["completed_at"] = ahora.isoformat()
-        tarea["ultima_ejecucion"] = ahora.isoformat()
-        tarea["accion_actual_indice"] = None
-        tarea["repeticion_actual"] = repeticiones
-        tarea["repeticiones_totales"] = repeticiones
-        tarea["ejecucion_real_indice"] = 0
-        tarea["ejecucion_real_repeticion"] = repeticiones
-        tarea["ejecuciones_reales_completadas"] = max(
-            tarea.get(
-                "ejecuciones_reales_completadas",
-                0,
-            ),
-            self.ejecuciones_reales_totales,
-        )
-        tarea["delay_ejecucion_restante_ms"] = 0
-        tarea["ejecucion_real_fase"] = "inactiva"
-        tarea["elapsed_repeticion_real_ms"] = 0
-
-        proxima = self.calcular_proxima_ejecucion_tarea(
+        self.iniciar_auditoria_contextual(
             tarea,
-            desde=ahora + timedelta(seconds=1),
-        )
-
-        ultima_texto = ahora.strftime("%d/%m %H:%M")
-
-        if proxima:
-            tarea["detalle_estado"] = (
-                "FINALIZADA\n"
-                f"Repeticiones: {repeticiones}/{repeticiones}\n"
-                f"Última ejecución: {ultima_texto}\n"
-                "Próxima ejecución: " + self.formatear_proxima_ejecucion(proxima)
-            )
-        else:
-            tarea["detalle_estado"] = (
-                "FINALIZADA\n"
-                f"Repeticiones: {repeticiones}/{repeticiones}\n"
-                f"Última ejecución: {ultima_texto}\n"
-                "Próxima ejecución: Sin programación"
-            )
-
-        self.tarea_ejecutando_id = None
-
-        if hasattr(self, "estado_bin"):
-            self.estado_bin.setText("● BIN OPERATIVO")
-            self.estado_bin.setStyleSheet(f"""
-                color: {VERDE};
-                font-weight: 800;
-                """)
-
-        self.actualizar_estado_cabecera_visor(
-            "Ejecución finalizada",
-            f"· Repeticiones {repeticiones}/{repeticiones}",
-            VERDE,
-        )
-
-        if hasattr(self, "mensaje_visor"):
-            self.mensaje_visor.setText(
-                "EJECUCIÓN FINALIZADA\n\n"
-                f"{tarea['nombre']}\n\n"
-                f"REPETICIONES {repeticiones}/{repeticiones}\n\n"
-                "BIN está disponible."
-            )
-
-        self.registrar_evento_bin(
-            "FINALIZA",
-            (
-                f"Finalicé '{tarea['nombre']}' tras "
-                f"{repeticiones} repetición(es)."
-            ),
-            (
-                "Próxima ejecución: "
-                + self.formatear_proxima_ejecucion(
-                    proxima
-                )
-                if proxima
-                else "No tiene una próxima ejecución."
-            ),
-        )
-
-        self.limpiar_panel_accion(
-            silencioso=True,
-        )
-
-        self.actualizar_tarjeta_tarea(tarea["id"])
-        self.refrescar_panel_acciones()
-        self.actualizar_cabecera_operativa()
-        self.guardar_tareas_en_disco()
-
-        QTimer.singleShot(
-            0,
-            self.volver_panel_acciones_arriba,
-        )
-
-        QTimer.singleShot(
-            100,
-            self.iniciar_siguiente_en_cola,
+            modo="final",
         )
 
     def finalizar_ejecucion_con_error(
@@ -18393,87 +23409,59 @@ class BIN(QMainWindow):
         tarea,
         mensaje,
     ):
-        if hasattr(self, "timer_ejecucion_accion"):
-            self.timer_ejecucion_accion.stop()
+        """
+        Un fallo de una acción/contexto no se convierte en ERROR
+        inmediatamente. Si existe una acción real en curso, BIN vuelve
+        a comprobar las ventanas demostradas hasta ese punto.
 
-        self.ejecucion_fisica_activa = False
-        self.fase_ejecucion_real = "inactiva"
-        self.delay_ejecucion_restante_ms = 0
-        self.accion_real_actual = None
-        self.resultado_accion_real_actual = None
-        self.inicio_repeticion_real_monotonic = None
-        self.inicio_espera_supervisor_monotonic = None
-        self.espera_supervisor_acumulada_ms = 0
-        self.intentos_supervisor = 0
-        self.supervisor_hubo_wait = False
-        self.mantener_bin_visible_replay(False)
-        self.ocultar_barra_ejecucion()
-
-        tarea["estado"] = "ERROR"
-        tarea["runtime_started_at"] = None
-        tarea["detalle_estado"] = mensaje
-        tarea["accion_actual_indice"] = None
-        tarea["repeticiones_totales"] = self.obtener_repeticiones_tarea(tarea)
-        tarea["ejecucion_real_indice"] = self.indice_ejecucion_real
-        tarea["ejecucion_real_repeticion"] = self.repeticion_ejecucion_real
-        tarea["ejecuciones_reales_completadas"] = self.ejecuciones_reales_completadas
-        tarea["delay_ejecucion_restante_ms"] = 0
-        tarea["ejecucion_real_fase"] = "inactiva"
-
-        self.tarea_ejecutando_id = None
-
-        if hasattr(self, "estado_bin"):
-            self.estado_bin.setText("● BIN CON ERROR")
-            self.estado_bin.setStyleSheet(f"""
-                color: {ROJO};
-                font-weight: 800;
-                """)
-
-        repeticion_actual = tarea.get(
-            "repeticion_actual",
-            0,
+        Si coinciden, descarta el error y continúa. Si la auditoría
+        agota sus intentos, recién entonces marca ERROR.
+        """
+        clave_rescate = (
+            int(
+                self.repeticion_ejecucion_real
+                or 0
+            ),
+            int(
+                self.indice_ejecucion_real
+                or 0
+            ),
         )
 
-        repeticiones = tarea.get(
-            "repeticiones_totales",
-            1,
-        )
-
-        detalle = ""
-
-        if repeticion_actual:
-            detalle = f"· Repetición " f"{repeticion_actual}/{repeticiones}"
-
-        self.actualizar_estado_cabecera_visor(
-            "Error de ejecución",
-            detalle,
-            ROJO,
-        )
-
-        if hasattr(self, "mensaje_visor"):
-            self.mensaje_visor.setText(
-                "ERROR DE EJECUCIÓN\n\n" f"{tarea['nombre']}\n\n" f"{mensaje}"
+        usados = int(
+            self.auditoria_error_rescates_por_paso.get(
+                clave_rescate,
+                0,
             )
+            or 0
+        )
 
-        self.registrar_evento_bin(
-            "ERROR",
-            f"Error en '{tarea['nombre']}'.",
+        puede_revisar_contexto = bool(
+            tarea
+            and tarea.get("estado") == "EJECUTANDO"
+            and self.ejecucion_fisica_activa
+            and self.accion_real_actual is not None
+            and self.plan_ejecucion_actual
+            and not self.auditoria_contextual_activa
+            and usados
+            < self.auditoria_error_max_rescates_por_paso
+        )
+
+        if puede_revisar_contexto:
+            self.auditoria_error_rescates_por_paso[
+                clave_rescate
+            ] = usados + 1
+
+            self.iniciar_auditoria_contextual(
+                tarea,
+                modo="error",
+                mensaje_error=mensaje,
+            )
+            return
+
+        self._finalizar_ejecucion_con_error_confirmado(
+            tarea,
             mensaje,
-        )
-
-        self.actualizar_tarjeta_tarea(tarea["id"])
-        self.refrescar_panel_acciones()
-        self.actualizar_cabecera_operativa()
-        self.guardar_tareas_en_disco()
-
-        QTimer.singleShot(
-            0,
-            self.volver_panel_acciones_arriba,
-        )
-
-        QTimer.singleShot(
-            100,
-            self.iniciar_siguiente_en_cola,
         )
 
     def iniciar_siguiente_en_cola(self):
@@ -22877,6 +27865,23 @@ class BIN(QMainWindow):
     # PANTALLA COMPLETA
     # ========================================================
 
+    def resizeEvent(
+        self,
+        event,
+    ):
+        super().resizeEvent(
+            event
+        )
+
+        if hasattr(
+            self,
+            "chat_overlay",
+        ):
+            QTimer.singleShot(
+                0,
+                self.ajustar_chat_overlay,
+            )
+
     def alternar_pantalla_completa(self):
 
         self.pantalla_completa = not self.pantalla_completa
@@ -23026,8 +28031,103 @@ class BIN(QMainWindow):
 
             return False
 
-            # ========================================================
+    # ========================================================
+    # TRAER BIN AL PRIMER PLANO
+    # ========================================================
 
+    def traer_bin_al_frente(
+        self,
+    ):
+        try:
+
+            # ------------------------------------------------
+            # QT
+            # ------------------------------------------------
+
+            if self.isMinimized():
+
+                self.showNormal()
+
+            else:
+
+                self.show()
+
+            self.raise_()
+
+            self.activateWindow()
+
+            if sys.platform != "win32":
+                return True
+
+            # ------------------------------------------------
+            # WINDOWS
+            # ------------------------------------------------
+
+            hwnd = int(
+                self.winId()
+            )
+
+            user32 = (
+                ctypes.windll.user32
+            )
+
+            # SW_RESTORE = 9
+            user32.ShowWindow(
+                hwnd,
+                9,
+            )
+
+            # Lo colocamos arriba temporalmente.
+            user32.SetWindowPos(
+                hwnd,
+                HWND_TOPMOST,
+                0,
+                0,
+                0,
+                0,
+                SWP_NOMOVE
+                | SWP_NOSIZE
+                | SWP_SHOWWINDOW,
+            )
+
+            # Y quitamos TOPMOST inmediatamente
+            # para no dejar BIN siempre encima.
+            user32.SetWindowPos(
+                hwnd,
+                HWND_NOTOPMOST,
+                0,
+                0,
+                0,
+                0,
+                SWP_NOMOVE
+                | SWP_NOSIZE
+                | SWP_SHOWWINDOW,
+            )
+
+            user32.BringWindowToTop(
+                hwnd
+            )
+
+            user32.SetForegroundWindow(
+                hwnd
+            )
+
+            self.raise_()
+
+            self.activateWindow()
+
+            return True
+
+        except Exception as error:
+
+            print(
+                "No pude traer BIN al frente:",
+                error,
+            )
+
+            return False
+
+    # ========================================================
     # MANTENER BIN ENCIMA DURANTE UNA DEMOSTRACIÓN
     # ========================================================
 
@@ -24956,6 +30056,297 @@ class BIN(QMainWindow):
 
         return None
 
+    # ========================================================
+    # ACTUALIZAR IDENTIDAD WEB EN LA MISMA FICHA HWND
+    # ========================================================
+
+    def actualizar_identidad_navegadores_en_fichas_bin(self):
+        """
+        Refresca perfil/cuenta de cada ventana de navegador visible
+        conservando la misma ficha asociada a su HWND.
+
+        No modifica acciones, demostraciones ni tareas.json.
+        No usa UI Automation de la página.
+        """
+
+        if sys.platform != "win32":
+            return
+
+        contextos = getattr(
+            self,
+            "_contextos_ventanas_monitor_bin",
+            None,
+        )
+
+        if not isinstance(contextos, dict):
+            contextos = {}
+
+            self._contextos_ventanas_monitor_bin = (
+                contextos
+            )
+
+        hwnds = (
+            self.enumerar_hwnds_ventanas_visibles_bin()
+        )
+
+        for hwnd in list(
+            hwnds
+            or []
+        ):
+            try:
+                hwnd = int(
+                    hwnd
+                )
+            except Exception:
+                continue
+
+            # ================================================
+            # LEER LA MISMA VENTANA ACTUAL
+            # ================================================
+
+            contexto_base = (
+                self.obtener_contexto_hwnd(
+                    hwnd,
+                    enriquecer=False,
+                )
+            )
+
+            if not contexto_base:
+                continue
+
+            if self.contexto_pertenece_a_bin(
+                contexto_base
+            ):
+                continue
+
+            proceso = str(
+                contexto_base.get(
+                    "proceso",
+                    "",
+                )
+                or ""
+            ).strip().lower()
+
+            # Sólo navegadores.
+            if not self.es_navegador_proceso(
+                proceso
+            ):
+                continue
+
+            # ================================================
+            # VOLVER A RESOLVER IDENTIDAD
+            #
+            # IMPORTANTE:
+            # No usamos enriquecer_contexto_operativo() aquí.
+            # Así evitamos que la caché context_metadata
+            # devuelva durante unos milisegundos la identidad
+            # anterior.
+            # ================================================
+
+            identidad = (
+                self.resolver_identidad_navegador(
+                    contexto_base.get(
+                        "pid"
+                    ),
+                    proceso,
+                    cuenta_uia="",
+                    perfil_uia="",
+                )
+            )
+
+            perfil_nuevo = str(
+                identidad.get(
+                    "perfil",
+                    "",
+                )
+                or ""
+            ).strip()
+
+            cuenta_nueva = str(
+                identidad.get(
+                    "cuenta",
+                    "",
+                )
+                or ""
+            ).strip()
+
+            origen_nuevo = str(
+                identidad.get(
+                    "origen",
+                    "",
+                )
+                or ""
+            ).strip()
+
+            user_data_dir_nuevo = str(
+                identidad.get(
+                    "user_data_dir",
+                    "",
+                )
+                or ""
+            ).strip()
+
+            # ================================================
+            # RECUPERAR LA MISMA FICHA DEL HWND
+            # ================================================
+
+            ficha = (
+                contextos.get(
+                    hwnd
+                )
+            )
+
+            if not isinstance(
+                ficha,
+                dict,
+            ):
+                # Si el navegador ya estaba abierto cuando
+                # arrancó BIN, puede que todavía no exista
+                # una ficha almacenada.
+                ficha = dict(
+                    contexto_base
+                )
+
+                contextos[
+                    hwnd
+                ] = ficha
+
+            else:
+                # Actualizamos los datos básicos actuales,
+                # pero seguimos trabajando sobre el MISMO HWND.
+                ficha.update(
+                    contexto_base
+                )
+
+            perfil_anterior = str(
+                ficha.get(
+                    "perfil_navegador",
+                    "",
+                )
+                or ""
+            ).strip()
+
+            cuenta_anterior = str(
+                ficha.get(
+                    "cuenta_navegador",
+                    "",
+                )
+                or ""
+            ).strip()
+
+            # ================================================
+            # ACTUALIZAR LA MISMA FICHA
+            # ================================================
+            #
+            # El selector inicial puede devolver:
+            #
+            # perfil = ""
+            # cuenta = ""
+            #
+            # Por eso una lectura vacía NO borra una identidad
+            # válida obtenida posteriormente.
+            # ================================================
+
+            if perfil_nuevo:
+                ficha[
+                    "perfil_navegador"
+                ] = perfil_nuevo
+
+            if cuenta_nueva:
+                ficha[
+                    "cuenta_navegador"
+                ] = cuenta_nueva
+
+            if origen_nuevo:
+                ficha[
+                    "cuenta_navegador_origen"
+                ] = origen_nuevo
+
+            if user_data_dir_nuevo:
+                ficha[
+                    "user_data_dir_navegador"
+                ] = user_data_dir_nuevo
+
+            ficha[
+                "tipo_recurso"
+            ] = "web"
+
+            # ================================================
+            # ¿CAMBIÓ LA IDENTIDAD?
+            # ================================================
+
+            cambio_identidad = bool(
+                (
+                    perfil_nuevo
+                    and perfil_nuevo
+                    != perfil_anterior
+                )
+                or (
+                    cuenta_nueva
+                    and cuenta_nueva
+                    != cuenta_anterior
+                )
+            )
+
+            if cambio_identidad:
+
+                # ============================================
+                # INVALIDAR SÓLO LA CACHÉ DE ESTE HWND
+                # ============================================
+                #
+                # enriquecer_contexto_operativo() usa una
+                # caché de 0.75 s:
+                #
+                # (HWND, proceso, título)
+                #
+                # Si acabamos de descubrir la identidad real,
+                # eliminamos únicamente las entradas de este
+                # HWND para que la próxima lectura enriquecida
+                # vea inmediatamente los nuevos datos.
+                # ============================================
+
+                cache_contexto = (
+                    self._cache_operativo_bin(
+                        "context_metadata"
+                    )
+                )
+
+                for clave in list(
+                    cache_contexto.keys()
+                ):
+                    try:
+                        if (
+                            isinstance(
+                                clave,
+                                tuple,
+                            )
+                            and clave
+                            and int(
+                                clave[0]
+                            )
+                            == hwnd
+                        ):
+                            cache_contexto.pop(
+                                clave,
+                                None,
+                            )
+
+                    except Exception:
+                        continue
+
+                # Sólo informa cuando realmente cambia.
+                # No genera mensajes cada segundo.
+                self.registrar_evento_bin(
+                    "IDENTIDAD",
+                    (
+                        "Actualicé la cuenta en la "
+                        "misma ficha de ventana."
+                    ),
+                    self.formatear_contexto_operativo(
+                        ficha
+                    ),
+                )
+
     def monitorizar_cambios_ventanas_bin(
         self,
     ):
@@ -24977,6 +30368,27 @@ class BIN(QMainWindow):
 
         actuales = (
             self.enumerar_hwnds_ventanas_visibles_bin()
+        )
+
+        # Cada llamada representa una observación REAL nueva de Windows.
+        # No depende de que hayan aparecido/desaparecido ventanas.
+        try:
+            self._generacion_ventanas_bin = (
+                int(
+                    getattr(
+                        self,
+                        "_generacion_ventanas_bin",
+                        0,
+                    )
+                    or 0
+                )
+                + 1
+            )
+        except Exception:
+            self._generacion_ventanas_bin = 1
+
+        self._momento_generacion_ventanas_bin = (
+            time.monotonic()
         )
 
         anteriores = getattr(
@@ -25321,6 +30733,20 @@ class BIN(QMainWindow):
 
         # Crear inmediatamente la línea base.
         self.monitorizar_cambios_ventanas_bin()
+
+        # ACTUALIZACIÓN CONTINUA DE PERFIL / CUENTA POR HWND
+        self.timer_identidad_navegadores_bin = QTimer(self)
+
+        self.timer_identidad_navegadores_bin.timeout.connect(
+            self.actualizar_identidad_navegadores_en_fichas_bin
+        )
+
+        self.timer_identidad_navegadores_bin.start(
+            1000
+        )
+
+        # Primera actualización inmediata.
+        self.actualizar_identidad_navegadores_en_fichas_bin()
 
         # SCHEDULER AUTOMÁTICO
         self.timer_scheduler = QTimer(self)
