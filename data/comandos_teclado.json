@@ -335,5 +335,20 @@
             "bloquear_actualizacion_automatica": true
         },
         "personalizado": true
+    },
+    {
+        "id": "custom-20260904030444289819",
+        "nombre": "clci ejemplo",
+        "parametros": [
+            {
+                "tecla": "Tab",
+                "repeticiones": 1
+            },
+            {
+                "tecla": "Tab",
+                "repeticiones": 1
+            }
+        ],
+        "personalizado": true
     }
 ]

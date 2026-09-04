@@ -4,10 +4,13 @@
     "nombre_usuario": "Jorge Isaac",
     "idioma": "ES",
     "interfaz": "Invisible",
-    "telefono": "3218828546",
     "correo": "jvilla10@outlook.es",
     "whatsapp": "3218828546",
-    "msm": "3218828546",
+    "whatsapp_web_cuenta_chrome": "",
     "notificar_falla_en": "Ninguna",
+    "notificar_exito_en": "Ninguna",
+    "despertar_pc_automaticamente": false,
+    "anticipacion_despertar_minutos": 15,
+    "sesion_sin_contrasena_confirmada": false,
     "limpieza_ventanas": "Ninguna"
 }

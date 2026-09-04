@@ -286,6 +286,10 @@ Menos pasos significan menos puntos posibles de fallo.
 
 16. Si no se tiene dominio completo del software, se recomienda dividir la tarea en secciónes ejemoplo Tarea 1: organizar mesa de trabajo 1:00 PM / tarea 2: Ejecutar acción Publicar en redes sociales 1:05 PM. Tarea 3: cerrar ventanas de mesa de trabajo 1:45 PM
 
+17. BIN puede iniciar tu equipo si está en estado de suspención, o invernación. Pero se recomienda crear una sección para BIN donde no tenga contraseña, ya que BIN actualmente no está autorizado para memorizar contraseñas.
+
+18. NO GRABES INICIOS DE SESIÓN, CONTRASEÑAS NI CÓDIGOS DE AUTENTICACIÓN. BIN Light registra acciones de teclado y no dispone actualmente de una bóveda segura de credenciales. Inicia sesión manualmente antes de grabar una rutina. Si una sesión expira, autentícate manualmente antes de volver a ejecutarla.
+
 ============================================================
 CONSIDERACIONES PARA AUTOMATIZACIONES WEB
 ============================================================

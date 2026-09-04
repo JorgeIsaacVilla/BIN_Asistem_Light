@@ -31,7 +31,7 @@ except ImportError:
 
 from pathlib import Path
 from datetime import datetime, timedelta
-from urllib.parse import urlsplit, unquote
+from urllib.parse import urlsplit, unquote, quote
 
 from PySide6.QtCore import Qt, QTimer, Signal, QTime, QThread
 from PySide6.QtGui import QImage, QPixmap, QIcon
@@ -89,6 +89,660 @@ MORADO = "#b982ff"
 AMARILLO_FLUORESCENTE = "#efff00"
 VERDE_FLUORESCENTE = "#39ff14"
 
+MANUAL_BIN_LIGHT = """
+BIN IA ASISTEM — LIGHT
+V1.6.15
+
+============================================================
+BIN IA ASISTEM — LIGHT v1.6.15
+============================================================
+
+BIN Light es una versión ligera de BIN orientada a la
+automatización de tareas repetitivas en Windows.
+
+Esta versión NO utiliza IA local.
+
+En su lugar, trabaja mediante un sistema avanzado de análisis
+automático, supervisión de contexto, decisiones condicionales,
+correcciones y ejecución física de acciones.
+
+BIN observa el entorno de trabajo, registra las acciones
+demostradas por el usuario y utiliza la información disponible
+de ventanas, aplicaciones, navegadores y recursos para intentar
+reproducir la tarea de la forma más estable posible.
+
+La prioridad de BIN Light es:
+
+- Bajo consumo de recursos.
+- Automatización mecánica de tareas.
+- Ejecución de secuencias largas.
+- Supervisión del estado de las ventanas.
+- Corrección automática cuando el entorno cambia.
+- Funcionamiento en equipos modestos.
+- Capacidad para permanecer activo durante períodos prolongados.
+- El asistente de BIN funciona en una sola pantalla, la principal.
+  Si se piensa grabar instrucciones o ejecutar tareas automatizadas,
+  se recomienda desconectar las pantallas externas y dejar solamente
+  la pantalla principal.
+
+
+============================================================
+REQUISITOS
+============================================================
+
+Sistema recomendado:
+
+Windows 10 / Windows 11
+Python 3
+
+
+Dependencias externas:
+
+PySide6
+psutil
+mss
+pynput
+
+
+Instalación:
+
+python -m pip install PySide6 psutil mss pynput
+
+
+Para comprobar las dependencias:
+
+python -c "import PySide6, psutil, mss, pynput; print('BIN Light: dependencias OK')"
+
+
+Para comprobar el archivo principal:
+
+python -m py_compile main.py
+
+
+Para ejecutar BIN:
+
+python main.py
+
+
+============================================================
+IMPORTANTE — ESTA VERSIÓN NO UTILIZA IA LOCAL
+============================================================
+
+BIN Light v1.6.15 no incorpora un modelo de inteligencia
+artificial local.
+
+Las decisiones durante una automatización son realizadas por
+el propio motor de BIN utilizando:
+
+- Contexto de las acciones.
+- Estado de las ventanas.
+- Procesos activos.
+- Posición y dimensiones de ventanas.
+- Rutas de archivos y carpetas.
+- URL del navegador.
+- Perfil del navegador.
+- Cuenta asociada cuando puede ser identificada.
+- Historial de la demostración.
+- Reglas y parámetros condicionales.
+- Verificaciones antes y después de las acciones.
+- Sistemas de corrección y recuperación.
+
+El objetivo es que BIN pueda adaptarse a pequeñas diferencias
+entre la demostración original y el entorno encontrado durante
+la ejecución.
+
+
+============================================================
+CHAT DE BIN
+============================================================
+
+BIN incluye un chat operativo integrado.
+
+En esta versión el chat funciona principalmente como registro
+y asistente local del sistema.
+
+Permite mostrar información sobre:
+
+- Acciones observadas.
+- Contextos detectados.
+- Correcciones realizadas.
+- Esperas.
+- Verificaciones.
+- Errores.
+- Estado de una ejecución.
+
+BIN también puede interactuar con Google Chrome durante las
+automatizaciones.
+
+Cuando existe conexión a Internet, las tareas demostradas
+pueden utilizar páginas y servicios web normalmente.
+
+
+============================================================
+AUTOMATIZACIÓN DE VENTANAS
+============================================================
+
+BIN Light supervisa continuamente las ventanas disponibles
+en Windows.
+
+Durante una tarea puede utilizar información como:
+
+- Aplicación o proceso.
+- Título de la ventana.
+- Clase de ventana.
+- Posición.
+- Tamaño.
+- Estado de la ventana.
+- Recurso abierto.
+- Ruta.
+- URL.
+- Perfil del navegador.
+- Cuenta asociada.
+
+Cuando BIN encuentra una ventana que corresponde al contexto
+esperado, puede intentar corregir automáticamente su posición,
+tamaño, URL u otros estados compatibles antes de continuar con
+la siguiente acción.
+
+Esto ayuda a conservar las condiciones necesarias para que
+clics, scrolls, escritura y comandos físicos ocurran en el
+lugar esperado.
+
+
+============================================================
+NAVEGADORES
+============================================================
+
+BIN puede trabajar con navegadores compatibles durante una
+automatización.
+
+Para obtener mejores resultados se recomienda utilizar una
+configuración sencilla y consistente.
+
+Especialmente en Google Chrome:
+
+Utiliza, siempre que sea posible, una sola cuenta de Google
+por cada perfil del navegador utilizado en una tarea.
+
+BIN puede identificar información del perfil y, cuando es
+observable, la cuenta asociada.
+
+Las contraseñas, autenticación multifactor, passkeys,
+confirmaciones desde teléfonos u otros mecanismos de seguridad
+deben ser realizados manualmente por el usuario.
+
+
+============================================================
+RECOMENDACIONES DE USO
+============================================================
+
+1. REDUCE LA CANTIDAD DE PASOS
+
+Utiliza la menor cantidad de acciones posible.
+
+Una tarea corta y directa normalmente será más resistente que
+una tarea llena de movimientos innecesarios.
+
+
+2. UTILIZA PASOS CLAROS Y PAUSADOS
+
+Evita realizar demasiadas acciones seguidas durante la
+demostración.
+
+BIN necesita tiempo para observar los cambios producidos en
+Windows.
+
+
+3. UTILIZA ESPERAS RAZONABLES
+
+Para aplicaciones o páginas que necesitan tiempo de carga,
+puede ser conveniente esperar aproximadamente entre 5 y
+12 segundos antes de continuar.
+
+Esto también permite que BIN tenga tiempo para detectar y
+corregir cambios inesperados.
+
+
+4. MANTÉN EL MISMO SOFTWARE
+
+Si enseñas una rutina utilizando una versión determinada de
+un programa, intenta conservar esa misma versión.
+
+Una actualización importante del software puede modificar:
+
+- Ventanas.
+- Botones.
+- Menús.
+- Coordenadas.
+- Distribución visual.
+- Comportamiento.
+
+Si el programa cambia demasiado, lo recomendable es volver a
+demostrar la tarea.
+
+
+5. EN RUTAS WEB, UTILIZA LA URL DIRECTAMENTE
+
+Cuando sea posible, navega directamente hacia la URL necesaria.
+
+Esto suele ser más estable que depender de varios clics para
+llegar a una página.
+
+
+6. MANTÉN UNA MESA DE TRABAJO CONSISTENTE
+
+Para tareas repetitivas es recomendable mantener un orden
+similar en el escritorio y en las aplicaciones utilizadas.
+
+BIN puede corregir determinados estados, pero una estructura
+predecible siempre mejora la estabilidad.
+
+
+7. CIERRA VENTANAS INNECESARIAS
+
+Antes de iniciar una automatización importante, intenta cerrar
+programas, ventanas o pestañas que no sean necesarias.
+
+Esto reduce posibles ambigüedades.
+
+
+8. RECOMENDACIÓN IMPORTANTE PARA VENTANAS
+
+Antes y después de mover o cambiar el tamaño de una ventana
+durante una demostración, haz clic en su barra de título.
+
+Esto ayuda a BIN a observar correctamente la ventana activa y
+actualizar información como:
+
+- Posición.
+- Tamaño.
+- Aplicación.
+- Contexto.
+- URL, cuando corresponde.
+
+
+9. EVITA PASOS INNECESARIOS
+
+Si una operación puede realizarse con una acción directa,
+prefiere esa opción.
+
+Menos pasos significan menos puntos posibles de fallo.
+
+
+10. MANTÉN LAS VENTANAS EN UN TAMAÑO ADECUADO
+
+Deja siempre las ventanas suficientemente extendidas.
+
+No dejes ventanas o pestañas extremadamente pequeñas o
+reducidas durante la demostración, después de la demostración
+o cuando prepares el entorno para una automatización.
+
+Windows puede conservar las últimas características de las
+ventanas y esto puede provocar correcciones adicionales,
+aumentar el procesamiento y alargar los tiempos de ejecución.
+
+
+11. PARA ORGANIZAR UNA MESA DE TRABAJO WEB, PREFIERE
+    INSTRUCCIONES DIRECTAS
+
+Si se requiere organizar una mesa de trabajo web, es preferible
+hacerlo mediante acciones o instrucciones directas en lugar de
+una demostración innecesariamente larga.
+
+Esto suele ser más exacto.
+
+
+12. LIMPIA LAS ACCIONES INNECESARIAS
+
+Si una tarea es repetitiva, después de grabarla revisa el
+Panel de acciones.
+
+Elimina movimientos, clics, scrolls u otras acciones que no
+sean necesarias para obtener el resultado final.
+
+Una instrucción más directa normalmente será más estable.
+
+
+13. VERIFICA LAS SESIONES DE LAS CUENTAS
+
+Comprueba periódicamente que las sesiones necesarias continúen
+abiertas.
+
+Los navegadores o servicios pueden cerrar una sesión debido a:
+
+- Expiración.
+- Eliminación de cookies.
+- Cambios de seguridad.
+- Actualizaciones.
+- Cierres manuales de sesión.
+
+
+14. PREFIERE ACCIONES DE LLAMADO DIRECTAS
+
+Siempre que sea posible, utiliza clics o acciones directas para
+llamar una aplicación, recurso o ventana.
+
+
+15. REVISA LOS MINIPROMPTS DESPUÉS DE GRABAR
+
+Después de entrenar o grabar una rutina, revisa los miniprompts
+y las acciones detectadas.
+
+Elimina scrolls y clics utilizados solamente para llegar a una
+ventana cuando BIN ya pueda identificar y llamar esa ventana
+directamente.
+
+Esto ayuda a reducir considerablemente el tiempo de ejecución.
+
+
+16. DIVIDE LAS TAREAS COMPLEJAS
+
+Si no se tiene dominio completo de un software o una rutina es
+demasiado extensa, puede ser conveniente dividirla.
+
+Ejemplo:
+
+Tarea 1:
+Organizar mesa de trabajo — 1:00 PM
+
+Tarea 2:
+Publicar en redes sociales — 1:05 PM
+
+Tarea 3:
+Cerrar ventanas de la mesa de trabajo — 1:45 PM
+
+
+17. PREPARA UNA SESIÓN ADECUADA PARA BIN
+
+BIN puede trabajar con equipos en los estados de energía que
+sean compatibles con la configuración disponible del sistema.
+
+Para automatizaciones desatendidas se recomienda utilizar una
+sesión de Windows preparada específicamente para BIN y evitar
+que una contraseña o pantalla de bloqueo impida el acceso al
+escritorio durante una tarea.
+
+BIN no debe utilizarse como almacenamiento de contraseñas.
+
+
+18. NO GRABES INICIOS DE SESIÓN, CONTRASEÑAS NI CÓDIGOS
+    DE AUTENTICACIÓN
+
+No incluyas dentro de una demostración de rutina pasos donde
+escribas:
+
+- Contraseñas.
+- PIN.
+- Códigos de verificación.
+- Códigos de autenticación multifactor.
+- Passkeys.
+- Frases de recuperación.
+- Tokens.
+- Otros datos privados de autenticación.
+
+BIN Light registra acciones de teclado y actualmente no
+incorpora una bóveda segura de credenciales diseñada para
+proteger contraseñas.
+
+Antes de grabar una rutina, inicia sesión manualmente en las
+aplicaciones y servicios necesarios.
+
+Si una sesión ha expirado, realiza nuevamente la autenticación
+de manera manual y después ejecuta o vuelve a grabar la rutina.
+
+Nunca utilices una demostración de BIN como método para
+almacenar o reproducir una contraseña.
+
+
+============================================================
+CONSIDERACIONES PARA AUTOMATIZACIONES WEB
+============================================================
+
+Las páginas web son entornos dinámicos.
+
+Una misma página puede cambiar debido a:
+
+- Tiempo de carga.
+- Redirecciones.
+- Sesiones.
+- Cookies.
+- Publicidad.
+- Actualizaciones del sitio.
+- Estado de la cuenta.
+- Conexión a Internet.
+
+Por esta razón, las automatizaciones web pueden necesitar más
+tiempo de espera y supervisión que una aplicación local.
+
+
+============================================================
+FILOSOFÍA DE BIN LIGHT
+============================================================
+
+Durante la demostración, BIN intenta capturar todo.
+
+Durante la ejecución, BIN analiza el entorno e intenta mantener
+las condiciones necesarias para continuar la tarea.
+
+Cuando puede corregir un estado de forma segura, intenta
+corregirlo.
+
+Cuando una acción física sigue siendo necesaria, conserva y
+ejecuta la acción física.
+
+El objetivo no es sustituir todas las acciones del usuario,
+sino reproducir de forma confiable las tareas que el usuario
+le ha enseñado.
+
+
+============================================================
+VERSIÓN
+============================================================
+
+BIN IA Asistem — Light
+
+Versión estable:
+
+v1.6.15
+
+
+============================================================
+ESTADO DEL PROYECTO
+============================================================
+
+BIN Light continúa en desarrollo.
+
+Las nuevas funciones deben incorporarse conservando como
+prioridades:
+
+- Estabilidad.
+- Bajo consumo.
+- Ejecución prolongada.
+- Compatibilidad con Windows.
+- Recuperación ante cambios del entorno.
+- Automatizaciones comprensibles y reproducibles.
+""".strip()
+
+# ============================================================
+# INSTANCIA ÚNICA DE BIN
+# ============================================================
+
+BIN_MUTEX_HANDLE = None
+
+
+def traer_instancia_bin_existente_al_frente():
+    if sys.platform != "win32":
+        return False
+
+    try:
+        user32 = ctypes.windll.user32
+
+        encontrado = {
+            "hwnd": 0
+        }
+
+        WNDENUMPROC = ctypes.WINFUNCTYPE(
+            wintypes.BOOL,
+            wintypes.HWND,
+            wintypes.LPARAM,
+        )
+
+        def callback(
+            hwnd,
+            lparam,
+        ):
+            try:
+                if not user32.IsWindowVisible(
+                    hwnd
+                ):
+                    return True
+
+                longitud = int(
+                    user32.GetWindowTextLengthW(
+                        hwnd
+                    )
+                    or 0
+                )
+
+                if longitud <= 0:
+                    return True
+
+                buffer = ctypes.create_unicode_buffer(
+                    longitud + 1
+                )
+
+                user32.GetWindowTextW(
+                    hwnd,
+                    buffer,
+                    longitud + 1,
+                )
+
+                titulo = str(
+                    buffer.value
+                    or ""
+                ).strip()
+
+                if "BIN IA Asistem" not in titulo:
+                    return True
+
+                encontrado[
+                    "hwnd"
+                ] = int(
+                    hwnd
+                )
+
+                return False
+
+            except Exception:
+                return True
+
+        user32.EnumWindows(
+            WNDENUMPROC(
+                callback
+            ),
+            0,
+        )
+
+        hwnd = int(
+            encontrado.get(
+                "hwnd",
+                0,
+            )
+            or 0
+        )
+
+        if not hwnd:
+            return False
+
+        user32.ShowWindow(
+            hwnd,
+            9,
+        )
+
+        user32.SetWindowPos(
+            hwnd,
+            HWND_TOPMOST,
+            0,
+            0,
+            0,
+            0,
+            SWP_NOMOVE
+            | SWP_NOSIZE
+            | SWP_SHOWWINDOW,
+        )
+
+        user32.SetWindowPos(
+            hwnd,
+            HWND_NOTOPMOST,
+            0,
+            0,
+            0,
+            0,
+            SWP_NOMOVE
+            | SWP_NOSIZE
+            | SWP_SHOWWINDOW,
+        )
+
+        user32.BringWindowToTop(
+            hwnd
+        )
+
+        user32.SetForegroundWindow(
+            hwnd
+        )
+
+        return True
+
+    except Exception:
+        return False
+
+
+def asegurar_instancia_unica_bin():
+    global BIN_MUTEX_HANDLE
+
+    if sys.platform != "win32":
+        return True
+
+    try:
+        kernel32 = ctypes.windll.kernel32
+
+        kernel32.SetLastError(
+            0
+        )
+
+        handle = kernel32.CreateMutexW(
+            None,
+            False,
+            "Local\\BIN_IA_ASISTEM_LIGHT_V1_6",
+        )
+
+        if not handle:
+            return True
+
+        error = int(
+            kernel32.GetLastError()
+            or 0
+        )
+
+        if error == 183:
+
+            traer_instancia_bin_existente_al_frente()
+
+            try:
+                kernel32.CloseHandle(
+                    handle
+                )
+            except Exception:
+                pass
+
+            return False
+
+        BIN_MUTEX_HANDLE = handle
+
+        return True
+
+    except Exception:
+        return True
 
 # ============================================================
 # DÍAS
@@ -1045,6 +1699,16 @@ class CommandLibraryDialog(QDialog):
             self.usar_accion_original = False
             self.comando_seleccionado = None
 
+            self.nombre_click_mouse.setText(
+                str(
+                    accion.get(
+                        "nombre_accion",
+                        "",
+                    )
+                    or ""
+                ).strip()
+            )
+
             if tipo == "click_derecho":
 
                 self.tipo_click_mouse.setCurrentText(
@@ -1421,8 +2085,25 @@ class CommandLibraryDialog(QDialog):
         pagina_clic_layout = QVBoxLayout(pagina_clic)
         pagina_clic_layout.setContentsMargins(0, 0, 0, 0)
 
-        label_nombre = QLabel("Nombre del comando")
-        pagina_clic_layout.addWidget(label_nombre)
+        titulo_comando = QLabel(
+            "CREAR COMANDO"
+        )
+
+        titulo_comando.setObjectName(
+            "tituloPanel"
+        )
+
+        pagina_clic_layout.addWidget(
+            titulo_comando
+        )
+
+        label_nombre = QLabel(
+            "Nombre del comando"
+        )
+
+        pagina_clic_layout.addWidget(
+            label_nombre
+        )
 
         self.nombre_comando = QLineEdit()
         self.nombre_comando.setPlaceholderText("Ej: Abrir Ejecutar")
@@ -1442,11 +2123,37 @@ class CommandLibraryDialog(QDialog):
         self.parametros_layout.setAlignment(Qt.AlignLeft)
         pagina_clic_layout.addWidget(self.parametros_contenedor)
 
-        self.boton_nuevo_parametro = QPushButton("+ AGREGAR NUEVO PARÁMETRO")
-        self.boton_nuevo_parametro.clicked.connect(self.agregar_nuevo_parametro)
-        pagina_clic_layout.addWidget(self.boton_nuevo_parametro)
+        self.boton_nuevo_parametro = QPushButton(
+            "+ AGREGAR NUEVO PARÁMETRO"
+        )
 
-        titulo_mouse = QLabel("AGREGAR CLIC")
+        self.boton_nuevo_parametro.clicked.connect(
+            self.agregar_nuevo_parametro
+        )
+
+        pagina_clic_layout.addWidget(
+            self.boton_nuevo_parametro
+        )
+
+        self.boton_crear_comando = QPushButton(
+            "CREAR COMANDO"
+        )
+
+        self.boton_crear_comando.setObjectName(
+            "botonPrincipal"
+        )
+
+        self.boton_crear_comando.clicked.connect(
+            self.crear_comando
+        )
+
+        pagina_clic_layout.addWidget(
+            self.boton_crear_comando
+        )
+
+        titulo_mouse = QLabel(
+            "AGREGAR CLIC"
+        )
         titulo_mouse.setObjectName("tituloPanel")
         pagina_clic_layout.addWidget(titulo_mouse)
 
@@ -1459,6 +2166,17 @@ class CommandLibraryDialog(QDialog):
         pagina_clic_layout.addWidget(descripcion_mouse)
 
         formulario_mouse = QFormLayout()
+
+        self.nombre_click_mouse = QLineEdit()
+
+        self.nombre_click_mouse.setPlaceholderText(
+            "Ej: Seleccionar boton Publicar"
+        )
+
+        formulario_mouse.addRow(
+            "Nombre de la accion:",
+            self.nombre_click_mouse,
+        )
 
         self.tipo_click_mouse = QComboBox()
         self.tipo_click_mouse.addItems(["Izquierdo", "Doble clic", "Derecho"])
@@ -1510,23 +2228,25 @@ class CommandLibraryDialog(QDialog):
 
         self.boton_usar_click = QPushButton("AGREGAR CLIC")
         self.boton_usar_click.setObjectName("botonPrincipal")
-        self.boton_usar_click.clicked.connect(self.seleccionar_click_mouse)
+        self.boton_usar_click.clicked.connect(
+        self.agregar_click_directo
+        )
+
         pagina_clic_layout.addWidget(self.boton_usar_click)
 
         pagina_clic_layout.addStretch()
 
-        botones_constructor = QHBoxLayout()
+        self.boton_cancelar = QPushButton(
+            "CANCELAR"
+        )
 
-        self.boton_crear_comando = QPushButton("CREAR COMANDO")
-        self.boton_crear_comando.setObjectName("botonPrincipal")
-        self.boton_cancelar = QPushButton("CANCELAR")
+        self.boton_cancelar.clicked.connect(
+            self.reject
+        )
 
-        self.boton_crear_comando.clicked.connect(self.crear_comando)
-        self.boton_cancelar.clicked.connect(self.reject)
-
-        botones_constructor.addWidget(self.boton_crear_comando)
-        botones_constructor.addWidget(self.boton_cancelar)
-        pagina_clic_layout.addLayout(botones_constructor)
+        pagina_clic_layout.addWidget(
+            self.boton_cancelar
+        )
 
         self.stack_constructor.addWidget(pagina_clic)
 
@@ -1648,7 +2368,7 @@ class CommandLibraryDialog(QDialog):
         ventana_layout.addLayout(formulario_ventana)
 
         self.boton_geometria_ventana = QPushButton(
-            "ALMACENAR CARACTERÍSTICAS DE VENTANA"
+            "SIMULAR ACCIÓN DE VENTANA"
         )
         self.boton_geometria_ventana.clicked.connect(self.capturar_geometria_ventana)
         ventana_layout.addWidget(self.boton_geometria_ventana)
@@ -2067,7 +2787,10 @@ class CommandLibraryDialog(QDialog):
         self.ancho_ventana.setValue(max(100, int(resultado.get("ancho", 1200) or 1200)))
         self.alto_ventana.setValue(max(80, int(resultado.get("alto", 800) or 800)))
         self.estado_ventana_editor.setCurrentText("Normal")
-        self.boton_geometria_ventana.setText("EDITAR CARACTERÍSTICAS DE VENTANA")
+        self.boton_geometria_ventana.setText(
+            "SIMULAR ACCIÓN DE VENTANA"
+        )
+
 
     def cargar_configuracion_ventana_editor(self, configuracion):
         configuracion = json.loads(
@@ -2121,7 +2844,10 @@ class CommandLibraryDialog(QDialog):
         self.estado_ventana_editor.setCurrentText(estado)
 
         self.cargar_lista_software_ventana(configuracion)
-        self.boton_geometria_ventana.setText("EDITAR CARACTERÍSTICAS DE VENTANA")
+        self.boton_geometria_ventana.setText(
+            "SIMULAR ACCIÓN DE VENTANA"
+        )
+
 
     def obtener_configuracion_ventana_editor(self, validar=True):
         tipo = str(self.tipo_ventana_editor.currentText() or "Web").strip().lower()
@@ -3383,7 +4109,17 @@ class CommandLibraryDialog(QDialog):
         self.boton_agregar_accion.setEnabled(
             True
         )
-        
+
+    def agregar_click_directo(
+        self,
+    ):
+        # El clic manual no se guarda en la biblioteca.
+        # Se prepara y se devuelve directamente como accion.
+        self.seleccionar_click_mouse()
+
+        self.agregar_accion()
+
+
     # ========================================================
     # CAPTURAR COORDENADAS CON EL MOUSE
     # ========================================================
@@ -3593,10 +4329,21 @@ class CommandLibraryDialog(QDialog):
             x_mouse = self.coordenada_mouse_x.value()
             y_mouse = self.coordenada_mouse_y.value()
 
+            nombre_click = (
+                self.nombre_click_mouse
+                .text()
+                .strip()
+            )
+
             texto_resumen = (
-                f"Clic {boton_mouse}\n\n"
-                f"Cantidad: {cantidad_mouse}\n"
-                f"X={x_mouse}, Y={y_mouse}"
+                (
+                    f"{nombre_click}\n\n"
+                    if nombre_click
+                    else ""
+                )
+                + f"Clic {boton_mouse}\n\n"
+                + f"Cantidad: {cantidad_mouse}\n"
+                + f"X={x_mouse}, Y={y_mouse}"
             )
 
         elif mantener_original:
@@ -3785,9 +4532,27 @@ class CommandLibraryDialog(QDialog):
                 tipo_accion = "click"
                 nombre_accion = "Clic izquierdo"
 
-            descripcion = f"{nombre_accion} en X={x}, Y={y}"
+            nombre_click = (
+                self.nombre_click_mouse
+                .text()
+                .strip()
+            )
+
+            descripcion_base = (
+                f"{nombre_accion} en X={x}, Y={y}"
+            )
+
+            if nombre_click:
+                descripcion = (
+                    f"{nombre_click} · "
+                    f"{descripcion_base}"
+                )
+            else:
+                descripcion = descripcion_base
+
             if cantidad == 2:
                 descripcion += " · 2 clics"
+
             if antes_ms > 0:
                 descripcion += f" · antes {antes_ms / 1000:g}s"
             if despues_ms > 0:
@@ -3797,6 +4562,7 @@ class CommandLibraryDialog(QDialog):
                 "tipo": tipo_accion,
                 "origen": "manual_mouse",
                 "descripcion": descripcion,
+                "nombre_accion": nombre_click,
                 "x": int(x),
                 "y": int(y),
                 "cantidad_clicks": cantidad,
@@ -4864,6 +5630,11 @@ class BIN(QMainWindow):
             / "configuracion.json"
         )
 
+        self.archivo_notificaciones = (
+            self.directorio_datos
+            / "notificaciones.json"
+        )
+
         self.directorio_datos.mkdir(
             parents=True,
             exist_ok=True,
@@ -4872,6 +5643,22 @@ class BIN(QMainWindow):
         self.configuracion = (
             self.cargar_configuracion()
         )
+
+        # ====================================================
+        # PREPARACIÓN DEL PC / NOTIFICACIONES
+        # ====================================================
+
+        self._wake_programado_para = None
+
+        self._preparacion_pc_activada_key = None
+
+        self.cola_notificaciones = (
+            self.cargar_cola_notificaciones()
+        )
+
+        self.notificacion_en_proceso = False
+
+        self.notificacion_actual_id = None
 
         # ====================================================
         # TAREAS DE DEMOSTRACIÓN
@@ -4985,7 +5772,7 @@ class BIN(QMainWindow):
 
         # La demostración física manda. BIN puede observar contexto,
         # pero no reemplaza automáticamente los pasos grabados.
-        self.compilacion_automatica_demostracion = False
+        self.compilacion_automatica_demostracion = True
 
         self.indice_ejecucion_real = 0
         self.repeticion_ejecucion_real = 1
@@ -5082,12 +5869,17 @@ class BIN(QMainWindow):
         # dependencia adicional; puede conectarse más adelante.
         self.proveedor_ia_visual = None
 
+        # Puente neutral para la IA BOT propia de BIN.
+        # La IA conversa e interpreta; el motor estable conserva
+        # la autoridad sobre replay, supervisor y auditoría.
+        self.proveedor_ia_bot = None
+
         # ====================================================
         # VENTANA
         # ====================================================
 
         self.setWindowTitle(
-            "BIN IA Asistem — Light v1.6.1"
+            "BIN IA Asistem — Light v1.6.15"
         )
 
         self.ruta_icono_bin = (
@@ -5155,6 +5947,50 @@ class BIN(QMainWindow):
             tarea.setdefault("completed_at", None)
             tarea.setdefault("ultima_ejecucion", tarea.get("completed_at"))
             tarea.setdefault("acciones", [])
+
+            # Mantener coherentes las acciones manuales de ventana
+            # creadas por versiones anteriores. Si una ejecucion previa
+            # ya aprendio una cuenta/perfil real, se conserva y, cuando
+            # Cuenta asociada estaba vacia, se reutiliza como identidad
+            # para las siguientes ejecuciones.
+            for accion in tarea.get("acciones", []):
+                if str(accion.get("tipo", "") or "").lower() != "comando_ventana":
+                    continue
+
+                ventana = accion.get("ventana") or {}
+                if not isinstance(ventana, dict):
+                    continue
+
+                contexto_anterior = accion.get("contexto_despues") or {}
+
+                if (
+                    str(ventana.get("tipo_ventana", "") or "").lower() == "web"
+                    and not str(ventana.get("cuenta_asociada", "") or "").strip()
+                ):
+                    cuenta_aprendida = str(
+                        contexto_anterior.get("cuenta_navegador", "") or ""
+                    ).strip()
+
+                    if cuenta_aprendida:
+                        ventana["cuenta_asociada"] = cuenta_aprendida
+
+                contexto_manual = self.contexto_desde_configuracion_ventana(
+                    ventana
+                )
+
+                if not contexto_manual.get("cuenta_navegador"):
+                    contexto_manual["cuenta_navegador"] = str(
+                        contexto_anterior.get("cuenta_navegador", "") or ""
+                    ).strip()
+
+                if not contexto_manual.get("perfil_navegador"):
+                    contexto_manual["perfil_navegador"] = str(
+                        contexto_anterior.get("perfil_navegador", "") or ""
+                    ).strip()
+
+                accion["contexto_despues"] = contexto_manual
+                accion["ventana"] = ventana
+
             tarea.setdefault(
                 "contexto",
                 "",
@@ -5302,11 +6138,23 @@ class BIN(QMainWindow):
             "nombre_usuario": "",
             "idioma": "ES",
             "interfaz": "Invisible",
-            "telefono": "",
             "correo": "",
             "whatsapp": "",
-            "msm": "",
+
+            # Perfil/cuenta de Chrome donde el usuario
+            # ya tiene WhatsApp Web autenticado.
+            "whatsapp_web_cuenta_chrome": "",
+
             "notificar_falla_en": "Ninguna",
+            "notificar_exito_en": "Ninguna",
+
+            # Preparación previa de tareas programadas.
+            # Sólo suspensión/hibernación. BIN no almacena
+            # ni intenta reproducir contraseñas de Windows.
+            "despertar_pc_automaticamente": False,
+            "anticipacion_despertar_minutos": 15,
+            "sesion_sin_contrasena_confirmada": False,
+
             "limpieza_ventanas": "Ninguna",
 
             # ================================================
@@ -5640,6 +6488,1948 @@ class BIN(QMainWindow):
             motivo=momento
         )
 
+    # ========================================================
+    # PREPARACIÓN AUTOMÁTICA DEL PC
+    # ========================================================
+
+    def comando_arranque_bin_programado(
+        self,
+    ):
+        if getattr(
+            sys,
+            "frozen",
+            False,
+        ):
+            return (
+                str(
+                    sys.executable
+                ),
+                "--wake-prep",
+            )
+
+        ejecutable_python = Path(
+            sys.executable
+        )
+
+        pythonw = ejecutable_python.with_name(
+            "pythonw.exe"
+        )
+
+        if pythonw.exists():
+            ejecutable_python = pythonw
+
+        script = str(
+            Path(
+                __file__
+            ).resolve()
+        )
+
+        argumentos = subprocess.list2cmdline(
+            [
+                script,
+                "--wake-prep",
+            ]
+        )
+
+        return (
+            str(
+                ejecutable_python
+            ),
+            argumentos,
+        )
+
+    def _nombre_tarea_despertar_windows(
+        self,
+    ):
+        return "BIN Light - Despertar"
+
+    def eliminar_tarea_despertar_windows(
+        self,
+    ):
+        if sys.platform != "win32":
+            self._wake_programado_para = None
+            return False
+
+        nombre = (
+            self._nombre_tarea_despertar_windows()
+        )
+
+        script = (
+            "$ErrorActionPreference='SilentlyContinue';"
+            f"Unregister-ScheduledTask -TaskName '{nombre}' "
+            "-Confirm:$false | Out-Null;"
+        )
+
+        try:
+            subprocess.run(
+                [
+                    "powershell.exe",
+                    "-NoProfile",
+                    "-NonInteractive",
+                    "-WindowStyle",
+                    "Hidden",
+                    "-Command",
+                    script,
+                ],
+                capture_output=True,
+                text=True,
+                timeout=8,
+                creationflags=getattr(
+                    subprocess,
+                    "CREATE_NO_WINDOW",
+                    0,
+                ),
+            )
+
+            self._wake_programado_para = None
+
+            return True
+
+        except Exception:
+            self._wake_programado_para = None
+
+            return False
+
+    def actualizar_programacion_despertar(
+        self,
+        forzar=False,
+    ):
+        if sys.platform != "win32":
+            return False
+
+        habilitado = bool(
+            self.configuracion.get(
+                "despertar_pc_automaticamente",
+                False,
+            )
+        )
+
+        sesion_confirmada = bool(
+            self.configuracion.get(
+                "sesion_sin_contrasena_confirmada",
+                False,
+            )
+        )
+
+        if (
+            not habilitado
+            or not sesion_confirmada
+        ):
+            if (
+                forzar
+                or self._wake_programado_para
+                is not None
+            ):
+                self.eliminar_tarea_despertar_windows()
+
+            return False
+
+        proxima = (
+            self.calcular_proxima_tarea()
+        )
+
+        if not proxima:
+            if (
+                forzar
+                or self._wake_programado_para
+                is not None
+            ):
+                self.eliminar_tarea_despertar_windows()
+
+            return False
+
+        momento_tarea, tarea = proxima
+
+        try:
+            anticipacion = int(
+                self.configuracion.get(
+                    "anticipacion_despertar_minutos",
+                    15,
+                )
+                or 15
+            )
+        except Exception:
+            anticipacion = 15
+
+        anticipacion = max(
+            1,
+            min(
+                120,
+                anticipacion,
+            ),
+        )
+
+        ahora = datetime.now()
+
+        momento_despertar = (
+            momento_tarea
+            - timedelta(
+                minutes=anticipacion
+            )
+        )
+
+        # Si se suspende dentro del período de preparación,
+        # el último punto seguro posible es la hora exacta.
+        if momento_despertar <= ahora:
+            momento_despertar = momento_tarea
+
+        if momento_despertar <= ahora:
+            return False
+
+        clave = (
+            f"{tarea.get('id')}|"
+            f"{momento_tarea.isoformat()}|"
+            f"{momento_despertar.isoformat()}"
+        )
+
+        if (
+            not forzar
+            and self._wake_programado_para
+            == clave
+        ):
+            return True
+
+        nombre = (
+            self._nombre_tarea_despertar_windows()
+        )
+
+        fecha_ps = (
+            momento_despertar.strftime(
+                "%Y-%m-%dT%H:%M:%S"
+            )
+        )
+
+        descripcion = (
+            "BIN Light despierta el equipo antes de la próxima "
+            "tarea programada. Sólo suspensión/hibernación."
+        )
+
+        ejecutable_bin, argumentos_bin = (
+            self.comando_arranque_bin_programado()
+        )
+
+        ejecutable_ps = str(
+            ejecutable_bin
+            or ""
+        ).replace(
+            "'",
+            "''",
+        )
+
+        argumentos_ps = str(
+            argumentos_bin
+            or ""
+        ).replace(
+            "'",
+            "''",
+        )
+
+        script = (
+            "$ErrorActionPreference='Stop';"
+
+            "$action=New-ScheduledTaskAction "
+            f"-Execute '{ejecutable_ps}' "
+            f"-Argument '{argumentos_ps}';"
+
+            f"$trigger=New-ScheduledTaskTrigger "
+            f"-Once -At ([datetime]'{fecha_ps}');"
+
+            "$settings=New-ScheduledTaskSettingsSet "
+            "-WakeToRun "
+            "-StartWhenAvailable "
+            "-AllowStartIfOnBatteries "
+            "-DontStopIfGoingOnBatteries;"
+
+            "$user=\"$env:USERDOMAIN\\$env:USERNAME\";"
+
+            "$principal=New-ScheduledTaskPrincipal "
+            "-UserId $user "
+            "-LogonType Interactive "
+            "-RunLevel Limited;"
+
+            f"Register-ScheduledTask "
+            f"-TaskName '{nombre}' "
+            "-Action $action "
+            "-Trigger $trigger "
+            "-Settings $settings "
+            "-Principal $principal "
+            f"-Description '{descripcion}' "
+            "-Force | Out-Null;"
+        )
+
+        try:
+            proceso = subprocess.run(
+                [
+                    "powershell.exe",
+                    "-NoProfile",
+                    "-NonInteractive",
+                    "-WindowStyle",
+                    "Hidden",
+                    "-Command",
+                    script,
+                ],
+                capture_output=True,
+                text=True,
+                timeout=12,
+                creationflags=getattr(
+                    subprocess,
+                    "CREATE_NO_WINDOW",
+                    0,
+                ),
+            )
+
+            if proceso.returncode != 0:
+
+                detalle = str(
+                    proceso.stderr
+                    or proceso.stdout
+                    or "No se pudo registrar el Wake Timer."
+                ).strip()
+
+                if forzar:
+                    self.registrar_evento_bin(
+                        "ERROR",
+                        "No pude programar el despertar del PC.",
+                        detalle,
+                    )
+
+                return False
+
+            self._wake_programado_para = clave
+
+            if forzar:
+                self.registrar_evento_bin(
+                    "PROGRAMA",
+                    "Despertar automático actualizado.",
+                    (
+                        f"Tarea: {tarea.get('nombre', 'Tarea')}\n"
+                        f"Ejecución: "
+                        f"{momento_tarea.strftime('%d/%m %H:%M')}\n"
+                        f"Despertar: "
+                        f"{momento_despertar.strftime('%d/%m %H:%M')}"
+                    ),
+                )
+
+            return True
+
+        except Exception as error:
+
+            if forzar:
+                self.registrar_evento_bin(
+                    "ERROR",
+                    "No pude programar el despertar del PC.",
+                    str(
+                        error
+                    ),
+                )
+
+            return False
+
+    def preparar_pc_tick(
+        self,
+    ):
+        self.actualizar_programacion_despertar(
+            forzar=False,
+        )
+
+        if not bool(
+            self.configuracion.get(
+                "despertar_pc_automaticamente",
+                False,
+            )
+        ):
+            return
+
+        if not bool(
+            self.configuracion.get(
+                "sesion_sin_contrasena_confirmada",
+                False,
+            )
+        ):
+            return
+
+        proxima = (
+            self.calcular_proxima_tarea()
+        )
+
+        if not proxima:
+            return
+
+        momento_tarea, tarea = proxima
+
+        try:
+            anticipacion = int(
+                self.configuracion.get(
+                    "anticipacion_despertar_minutos",
+                    15,
+                )
+                or 15
+            )
+        except Exception:
+            anticipacion = 15
+
+        anticipacion = max(
+            1,
+            min(
+                120,
+                anticipacion,
+            ),
+        )
+
+        ahora = datetime.now()
+
+        inicio_preparacion = (
+            momento_tarea
+            - timedelta(
+                minutes=anticipacion
+            )
+        )
+
+        if not (
+            inicio_preparacion
+            <= ahora
+            < momento_tarea
+        ):
+            return
+
+        clave = (
+            f"{tarea.get('id')}|"
+            f"{momento_tarea.isoformat()}"
+        )
+
+        if (
+            self._preparacion_pc_activada_key
+            == clave
+        ):
+            return
+
+        self._preparacion_pc_activada_key = clave
+
+        self.registrar_evento_bin(
+            "PREPARA",
+            "El PC está en la ventana de preparación.",
+            (
+                f"Tarea: {tarea.get('nombre', 'Tarea')}\n"
+                f"Hora: {momento_tarea.strftime('%d/%m %H:%M')}\n"
+                f"Anticipación: {anticipacion} min"
+            ),
+        )
+
+        QTimer.singleShot(
+            100,
+            self.traer_bin_al_frente,
+        )
+
+    # ========================================================
+    # COLA DE NOTIFICACIONES
+    # ========================================================
+
+    def cargar_cola_notificaciones(
+        self,
+    ):
+        try:
+            if not self.archivo_notificaciones.exists():
+                return []
+
+            with open(
+                self.archivo_notificaciones,
+                "r",
+                encoding="utf-8",
+            ) as archivo:
+
+                datos = json.load(
+                    archivo
+                )
+
+            if isinstance(
+                datos,
+                list,
+            ):
+                return datos
+
+        except Exception:
+            pass
+
+        return []
+
+    def guardar_cola_notificaciones(
+        self,
+    ):
+        try:
+            temporal = (
+                self.archivo_notificaciones.with_suffix(
+                    ".tmp"
+                )
+            )
+
+            with open(
+                temporal,
+                "w",
+                encoding="utf-8",
+            ) as archivo:
+
+                json.dump(
+                    self.cola_notificaciones,
+                    archivo,
+                    ensure_ascii=False,
+                    indent=4,
+                )
+
+            temporal.replace(
+                self.archivo_notificaciones
+            )
+
+            return True
+
+        except Exception as error:
+
+            self.registrar_evento_bin(
+                "ERROR",
+                "No pude guardar la cola de notificaciones.",
+                str(
+                    error
+                ),
+            )
+
+            return False
+
+    def canales_notificacion_configurados(
+        self,
+        tipo,
+    ):
+        clave = (
+            "notificar_exito_en"
+            if str(
+                tipo
+            ).lower() == "exito"
+            else "notificar_falla_en"
+        )
+
+        opcion = str(
+            self.configuracion.get(
+                clave,
+                "Ninguna",
+            )
+            or "Ninguna"
+        ).strip().lower()
+
+        if opcion == "whatsapp":
+            return [
+                "whatsapp"
+            ]
+
+        if opcion == "correo":
+            return [
+                "correo"
+            ]
+
+        if opcion == "whatsapp y correo":
+            return [
+                "whatsapp",
+                "correo",
+            ]
+
+        return []
+
+    def tratamiento_usuario_notificacion(
+        self,
+    ):
+        trato = str(
+            self.configuracion.get(
+                "trato",
+                "Señor",
+            )
+            or "Señor"
+        ).strip()
+
+        if trato == "Otro":
+
+            trato = str(
+                self.configuracion.get(
+                    "trato_otro",
+                    "",
+                )
+                or ""
+            ).strip()
+
+        nombre = str(
+            self.configuracion.get(
+                "nombre_usuario",
+                "",
+            )
+            or ""
+        ).strip()
+
+        if trato and nombre:
+            return (
+                f"{trato.lower()} {nombre}"
+            )
+
+        if nombre:
+            return nombre
+
+        if trato:
+            return trato.lower()
+
+        return "usuario"
+
+    def construir_mensaje_notificacion_tarea(
+        self,
+        tarea,
+        tipo,
+        detalle_error="",
+    ):
+        tratamiento = (
+            self.tratamiento_usuario_notificacion()
+        )
+
+        nombre_tarea = str(
+            tarea.get(
+                "nombre",
+                "Tarea",
+            )
+            or "Tarea"
+        ).strip()
+
+        hora = datetime.now().strftime(
+            "%d/%m/%Y %H:%M"
+        )
+
+        if str(
+            tipo
+        ).lower() == "exito":
+
+            asunto = (
+                "BIN · Tarea finalizada correctamente"
+            )
+
+            mensaje = (
+                f"Hola, {tratamiento}.\n\n"
+                "Le informo que la tarea "
+                f"“{nombre_tarea}” finalizó correctamente.\n\n"
+                f"Hora: {hora}.\n\n"
+                "— BIN IA Asistem"
+            )
+
+        else:
+
+            asunto = (
+                "BIN · Error de ejecución"
+            )
+
+            detalle_error = str(
+                detalle_error
+                or tarea.get(
+                    "detalle_estado",
+                    "Error de ejecución.",
+                )
+                or "Error de ejecución."
+            ).strip()
+
+            mensaje = (
+                f"Hola, {tratamiento}.\n\n"
+                "Le informo que la tarea "
+                f"“{nombre_tarea}” presentó un error.\n\n"
+                f"Detalle: {detalle_error}\n\n"
+                f"Hora: {hora}.\n\n"
+                "— BIN IA Asistem"
+            )
+
+        return (
+            asunto,
+            mensaje,
+        )
+
+    def encolar_notificacion_tarea(
+        self,
+        tarea,
+        tipo,
+        detalle_error="",
+    ):
+        canales = (
+            self.canales_notificacion_configurados(
+                tipo
+            )
+        )
+
+        if not canales:
+            return False
+
+        asunto, mensaje = (
+            self.construir_mensaje_notificacion_tarea(
+                tarea,
+                tipo,
+                detalle_error=detalle_error,
+            )
+        )
+
+        notificacion = {
+            "id": (
+                "notif-"
+                + datetime.now().strftime(
+                    "%Y%m%d%H%M%S%f"
+                )
+            ),
+            "creada_en": datetime.now().isoformat(),
+            "tipo": str(
+                tipo
+            ).lower(),
+            "tarea_id": tarea.get(
+                "id"
+            ),
+            "tarea_nombre": tarea.get(
+                "nombre",
+                "Tarea",
+            ),
+            "asunto": asunto,
+            "mensaje": mensaje,
+            "canales_pendientes": list(
+                canales
+            ),
+            "resultados": {},
+        }
+
+        self.cola_notificaciones.append(
+            notificacion
+        )
+
+        self.guardar_cola_notificaciones()
+
+        self.registrar_evento_bin(
+            "NOTIFICA",
+            "Notificación añadida a la cola.",
+            (
+                f"Tarea: {tarea.get('nombre', 'Tarea')}\n"
+                f"Canales: {', '.join(canales)}"
+            ),
+        )
+
+        QTimer.singleShot(
+            300,
+            self.procesar_cola_notificaciones,
+        )
+
+        return True
+
+    def resolver_perfil_navegador_por_cuenta_bin(
+        self,
+        proceso,
+        cuenta,
+    ):
+        cuenta = str(
+            cuenta
+            or ""
+        ).strip().lower()
+
+        if not cuenta:
+            return ""
+
+        perfiles = (
+            self.obtener_info_perfiles_navegador(
+                proceso
+            )
+        )
+
+        for (
+            directorio,
+            info,
+        ) in perfiles.items():
+
+            correo = str(
+                info.get(
+                    "cuenta",
+                    "",
+                )
+                or ""
+            ).strip().lower()
+
+            nombre = str(
+                info.get(
+                    "nombre",
+                    "",
+                )
+                or ""
+            ).strip().lower()
+
+            if (
+                correo
+                and correo == cuenta
+            ):
+                return str(
+                    directorio
+                )
+
+            if (
+                not correo
+                and nombre
+                and nombre == cuenta
+            ):
+                return str(
+                    directorio
+                )
+
+        return ""
+
+    def whatsapp_desktop_disponible(
+        self,
+    ):
+        if sys.platform != "win32":
+            return False
+
+        ruta = (
+            self.resolver_ruta_aplicacion_windows(
+                "WhatsApp.exe",
+                "",
+            )
+        )
+
+        if ruta:
+            return True
+
+        script = (
+            "$p=Get-AppxPackage *WhatsApp* "
+            "| Select-Object -First 1;"
+            "if($null -ne $p){Write-Output 'OK'}"
+        )
+
+        try:
+            resultado = subprocess.run(
+                [
+                    "powershell.exe",
+                    "-NoProfile",
+                    "-NonInteractive",
+                    "-WindowStyle",
+                    "Hidden",
+                    "-Command",
+                    script,
+                ],
+                capture_output=True,
+                text=True,
+                timeout=5,
+                creationflags=getattr(
+                    subprocess,
+                    "CREATE_NO_WINDOW",
+                    0,
+                ),
+            )
+
+            return (
+                "OK"
+                in str(
+                    resultado.stdout
+                    or ""
+                )
+            )
+
+        except Exception:
+            return False
+
+    def _obtener_notificacion_por_id(
+        self,
+        notificacion_id,
+    ):
+        for item in self.cola_notificaciones:
+
+            if item.get(
+                "id"
+            ) == notificacion_id:
+
+                return item
+
+        return None
+
+    def _terminar_canal_notificacion(
+        self,
+        notificacion_id,
+        canal,
+        exito,
+        detalle="",
+    ):
+        item = (
+            self._obtener_notificacion_por_id(
+                notificacion_id
+            )
+        )
+
+        if item is not None:
+
+            pendientes = list(
+                item.get(
+                    "canales_pendientes",
+                    [],
+                )
+                or []
+            )
+
+            pendientes = [
+                valor
+                for valor in pendientes
+                if valor != canal
+            ]
+
+            item[
+                "canales_pendientes"
+            ] = pendientes
+
+            resultados = item.setdefault(
+                "resultados",
+                {},
+            )
+
+            resultados[
+                canal
+            ] = {
+                "ok": bool(
+                    exito
+                ),
+                "detalle": str(
+                    detalle
+                    or ""
+                ),
+                "momento": (
+                    datetime.now().isoformat()
+                ),
+            }
+
+            if not pendientes:
+
+                self.cola_notificaciones = [
+                    registro
+                    for registro
+                    in self.cola_notificaciones
+                    if registro.get(
+                        "id"
+                    ) != notificacion_id
+                ]
+
+        self.guardar_cola_notificaciones()
+
+        self.notificacion_en_proceso = False
+
+        self.notificacion_actual_id = None
+
+        if exito:
+
+            self.registrar_evento_bin(
+                "NOTIFICA",
+                f"Notificación enviada por {canal}.",
+                detalle,
+            )
+
+        else:
+
+            self.registrar_evento_bin(
+                "ERROR",
+                f"No pude enviar la notificación por {canal}.",
+                detalle,
+            )
+
+        if self.obtener_tarea_ejecutando():
+            return
+
+        if any(
+            tarea.get(
+                "estado"
+            ) == "EN COLA"
+            for tarea in self.tareas
+        ):
+
+            QTimer.singleShot(
+                50,
+                self.iniciar_siguiente_en_cola,
+            )
+
+            return
+
+        QTimer.singleShot(
+            500,
+            self.procesar_cola_notificaciones,
+        )
+
+        if not self.cola_notificaciones:
+
+            QTimer.singleShot(
+                900,
+                self.traer_bin_al_frente,
+            )
+
+    def _pulsar_enter_notificacion(
+        self,
+    ):
+        if not self.asegurar_controladores_replay():
+            return False
+
+        try:
+            tecla = (
+                pynput_keyboard.Key.enter
+            )
+
+            self.keyboard_replay.press(
+                tecla
+            )
+
+            self.keyboard_replay.release(
+                tecla
+            )
+
+            return True
+
+        except Exception:
+            return False
+
+    def buscar_ventana_web_notificacion(
+        self,
+        cuenta,
+        perfil,
+        dominio,
+    ):
+        cuenta = str(
+            cuenta
+            or ""
+        ).strip()
+
+        perfil = str(
+            perfil
+            or ""
+        ).strip()
+
+        dominio = str(
+            dominio
+            or ""
+        ).strip().lower()
+
+        esperado = {
+            "tipo_recurso": "web",
+            "proceso": "chrome.exe",
+            "cuenta_navegador": cuenta,
+            "perfil_navegador": perfil,
+        }
+
+        candidatos = (
+            self.enumerar_ventanas_operativas(
+                esperado,
+                max_enriquecidas=24,
+            )
+        )
+
+        for contexto in candidatos:
+
+            # Cuenta/perfil siguen siendo autoritativos.
+            if (
+                self.identidad_contextos_operativos(
+                    esperado,
+                    contexto,
+                )
+                is not True
+            ):
+                continue
+
+            url_actual = str(
+                contexto.get(
+                    "url",
+                    "",
+                )
+                or ""
+            ).strip()
+
+            if not url_actual:
+                continue
+
+            try:
+                host = (
+                    urlsplit(
+                        url_actual
+                    ).netloc
+                    or ""
+                ).strip().lower()
+
+            except Exception:
+                host = ""
+
+            if (
+                host == dominio
+                or (
+                    dominio
+                    and host.endswith(
+                        "." + dominio
+                    )
+                )
+            ):
+                return {
+                    "ok": True,
+                    "contexto": contexto,
+                    "hwnd": contexto.get(
+                        "hwnd"
+                    ),
+                }
+
+        return {
+            "ok": False,
+            "contexto": None,
+            "hwnd": None,
+        }
+
+    def _iniciar_envio_whatsapp_web(
+        self,
+        notificacion_id,
+        telefono,
+        mensaje,
+    ):
+        cuenta = str(
+            self.configuracion.get(
+                "whatsapp_web_cuenta_chrome",
+                "",
+            )
+            or ""
+        ).strip()
+
+        if not cuenta:
+
+            self._terminar_canal_notificacion(
+                notificacion_id,
+                "whatsapp",
+                False,
+                (
+                    "WhatsApp Desktop no está disponible y no "
+                    "hay una cuenta de Chrome configurada para "
+                    "WhatsApp Web."
+                ),
+            )
+
+            return
+
+        perfil = (
+            self.resolver_perfil_navegador_por_cuenta_bin(
+                "chrome.exe",
+                cuenta,
+            )
+        )
+
+        if not perfil:
+
+            self._terminar_canal_notificacion(
+                notificacion_id,
+                "whatsapp",
+                False,
+                (
+                    "No pude relacionar la cuenta configurada "
+                    f"con un perfil local de Chrome: {cuenta}"
+                ),
+            )
+
+            return
+
+        url = (
+            "https://web.whatsapp.com/send?phone="
+            + quote(
+                telefono,
+                safe="",
+            )
+            + "&text="
+            + quote(
+                mensaje,
+                safe="",
+            )
+        )
+
+        resultado = (
+            self.abrir_contexto_directamente(
+                {
+                    "tipo_recurso": "web",
+                    "proceso": "chrome.exe",
+                    "perfil_navegador": perfil,
+                    "cuenta_navegador": cuenta,
+                    "url": url,
+                }
+            )
+        )
+
+        if not resultado.get(
+            "ok"
+        ):
+
+            self._terminar_canal_notificacion(
+                notificacion_id,
+                "whatsapp",
+                False,
+                resultado.get(
+                    "detalle",
+                    "No pude abrir WhatsApp Web.",
+                ),
+            )
+
+            return
+
+        QTimer.singleShot(
+            7000,
+            lambda identificador=notificacion_id,
+            cuenta_objetivo=cuenta:
+            self._confirmar_envio_whatsapp_web(
+                identificador,
+                cuenta_objetivo,
+                1,
+            ),
+        )
+
+    def _confirmar_envio_whatsapp_web(
+        self,
+        notificacion_id,
+        cuenta,
+        intento=1,
+    ):
+        if (
+            self.notificacion_actual_id
+            != notificacion_id
+        ):
+            return
+
+        item = (
+            self._obtener_notificacion_por_id(
+                notificacion_id
+            )
+        )
+
+        if item is None:
+            return
+
+        perfil = (
+            self.resolver_perfil_navegador_por_cuenta_bin(
+                "chrome.exe",
+                cuenta,
+            )
+        )
+
+        telefono = re.sub(
+            r"\D+",
+            "",
+            str(
+                self.configuracion.get(
+                    "whatsapp",
+                    "",
+                )
+                or ""
+            ),
+        )
+
+        mensaje = str(
+            item.get(
+                "mensaje",
+                "",
+            )
+            or ""
+        )
+
+        url_objetivo = (
+            "https://web.whatsapp.com/send?phone="
+            + quote(
+                telefono,
+                safe="",
+            )
+            + "&text="
+            + quote(
+                mensaje,
+                safe="",
+            )
+        )
+
+        busqueda = (
+            self.buscar_ventana_web_notificacion(
+                cuenta,
+                perfil,
+                "web.whatsapp.com",
+            )
+        )
+
+        if not busqueda.get(
+            "ok"
+        ):
+
+            if intento < 3:
+
+                QTimer.singleShot(
+                    3000,
+                    lambda:
+                    self._confirmar_envio_whatsapp_web(
+                        notificacion_id,
+                        cuenta,
+                        intento + 1,
+                    ),
+                )
+
+                return
+
+            self._terminar_canal_notificacion(
+                notificacion_id,
+                "whatsapp",
+                False,
+                (
+                    "WhatsApp Web no quedó disponible "
+                    "en el perfil configurado."
+                ),
+            )
+
+            return
+
+        hwnd = busqueda.get(
+            "hwnd"
+        )
+
+        if hwnd:
+
+            self.activar_hwnd_operativo(
+                hwnd
+            )
+
+        if not self._pulsar_enter_notificacion():
+
+            self._terminar_canal_notificacion(
+                notificacion_id,
+                "whatsapp",
+                False,
+                "No pude confirmar el envío con Enter.",
+            )
+
+            return
+
+        self._terminar_canal_notificacion(
+            notificacion_id,
+            "whatsapp",
+            True,
+            "WhatsApp Web recibió la orden de envío.",
+        )
+
+    def _confirmar_envio_whatsapp_desktop(
+        self,
+        notificacion_id,
+        telefono,
+        mensaje,
+    ):
+        if (
+            self.notificacion_actual_id
+            != notificacion_id
+        ):
+            return
+
+        busqueda = (
+            self.buscar_ventana_contexto_replay(
+                {
+                    "proceso": "WhatsApp.exe",
+                    "titulo": "",
+                    "clase": "",
+                },
+                activar=False,
+            )
+        )
+
+        if not busqueda.get(
+            "ok"
+        ):
+
+            self._iniciar_envio_whatsapp_web(
+                notificacion_id,
+                telefono,
+                mensaje,
+            )
+
+            return
+
+        hwnd = busqueda.get(
+            "hwnd"
+        )
+
+        if hwnd:
+
+            self.activar_hwnd_operativo(
+                hwnd
+            )
+
+        if not self._pulsar_enter_notificacion():
+
+            self._iniciar_envio_whatsapp_web(
+                notificacion_id,
+                telefono,
+                mensaje,
+            )
+
+            return
+
+        self._terminar_canal_notificacion(
+            notificacion_id,
+            "whatsapp",
+            True,
+            "WhatsApp Desktop recibió la orden de envío.",
+        )
+
+    def iniciar_envio_whatsapp_notificacion(
+        self,
+        item,
+    ):
+        telefono = re.sub(
+            r"\D+",
+            "",
+            str(
+                self.configuracion.get(
+                    "whatsapp",
+                    "",
+                )
+                or ""
+            ),
+        )
+
+        if not telefono:
+
+            self._terminar_canal_notificacion(
+                item.get(
+                    "id"
+                ),
+                "whatsapp",
+                False,
+                "No hay un número de WhatsApp configurado.",
+            )
+
+            return
+
+        mensaje = str(
+            item.get(
+                "mensaje",
+                "",
+            )
+            or ""
+        )
+
+        if self.whatsapp_desktop_disponible():
+
+            uri = (
+                "whatsapp://send?phone="
+                + quote(
+                    telefono,
+                    safe="",
+                )
+                + "&text="
+                + quote(
+                    mensaje,
+                    safe="",
+                )
+            )
+
+            try:
+                os.startfile(
+                    uri
+                )
+
+                QTimer.singleShot(
+                    4500,
+                    lambda identificador=item.get(
+                        "id"
+                    ),
+                    numero=telefono,
+                    texto=mensaje:
+                    self._confirmar_envio_whatsapp_desktop(
+                        identificador,
+                        numero,
+                        texto,
+                    ),
+                )
+
+                return
+
+            except Exception:
+                pass
+
+        self._iniciar_envio_whatsapp_web(
+            item.get(
+                "id"
+            ),
+            telefono,
+            mensaje,
+        )
+
+    def _confirmar_envio_correo(
+        self,
+        notificacion_id,
+        cuenta,
+        intento=1,
+    ):
+        if (
+            self.notificacion_actual_id
+            != notificacion_id
+        ):
+            return
+
+        item = (
+            self._obtener_notificacion_por_id(
+                notificacion_id
+            )
+        )
+
+        if item is None:
+            return
+
+        perfil = (
+            self.resolver_perfil_navegador_por_cuenta_bin(
+                "chrome.exe",
+                cuenta,
+            )
+        )
+
+        asunto = str(
+            item.get(
+                "asunto",
+                "BIN IA Asistem",
+            )
+            or "BIN IA Asistem"
+        )
+
+        mensaje = str(
+            item.get(
+                "mensaje",
+                "",
+            )
+            or ""
+        )
+
+        url_objetivo = (
+            "https://mail.google.com/mail/?view=cm&fs=1"
+            "&to="
+            + quote(
+                cuenta,
+                safe="",
+            )
+            + "&su="
+            + quote(
+                asunto,
+                safe="",
+            )
+            + "&body="
+            + quote(
+                mensaje,
+                safe="",
+            )
+        )
+
+        busqueda = (
+            self.buscar_ventana_web_notificacion(
+                cuenta,
+                perfil,
+                "mail.google.com",
+            )
+        )
+
+        if not busqueda.get(
+            "ok"
+        ):
+
+            if intento < 3:
+
+                QTimer.singleShot(
+                    3000,
+                    lambda:
+                    self._confirmar_envio_correo(
+                        notificacion_id,
+                        cuenta,
+                        intento + 1,
+                    ),
+                )
+
+                return
+
+            self._terminar_canal_notificacion(
+                notificacion_id,
+                "correo",
+                False,
+                (
+                    "Gmail no quedó disponible "
+                    "en el perfil configurado."
+                ),
+            )
+
+            return
+
+        hwnd = busqueda.get(
+            "hwnd"
+        )
+
+        if hwnd:
+
+            self.activar_hwnd_operativo(
+                hwnd
+            )
+
+        if not self.ejecutar_atajo_replay(
+            [
+                "Ctrl",
+            ],
+            "enter",
+        ):
+
+            self._terminar_canal_notificacion(
+                notificacion_id,
+                "correo",
+                False,
+                "No pude ejecutar Ctrl+Enter en Gmail.",
+            )
+
+            return
+
+        self._terminar_canal_notificacion(
+            notificacion_id,
+            "correo",
+            True,
+            "Gmail recibió la orden de envío.",
+        )
+
+    def iniciar_envio_correo_notificacion(
+        self,
+        item,
+    ):
+        correo = str(
+            self.configuracion.get(
+                "correo",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        if not correo:
+
+            self._terminar_canal_notificacion(
+                item.get(
+                    "id"
+                ),
+                "correo",
+                False,
+                "No hay un correo configurado.",
+            )
+
+            return
+
+        perfil = (
+            self.resolver_perfil_navegador_por_cuenta_bin(
+                "chrome.exe",
+                correo,
+            )
+        )
+
+        if not perfil:
+
+            self._terminar_canal_notificacion(
+                item.get(
+                    "id"
+                ),
+                "correo",
+                False,
+                (
+                    "No pude relacionar el correo configurado "
+                    f"con un perfil local de Chrome: {correo}"
+                ),
+            )
+
+            return
+
+        asunto = str(
+            item.get(
+                "asunto",
+                "BIN IA Asistem",
+            )
+            or "BIN IA Asistem"
+        )
+
+        mensaje = str(
+            item.get(
+                "mensaje",
+                "",
+            )
+            or ""
+        )
+
+        url = (
+            "https://mail.google.com/mail/?view=cm&fs=1"
+            "&to="
+            + quote(
+                correo,
+                safe="",
+            )
+            + "&su="
+            + quote(
+                asunto,
+                safe="",
+            )
+            + "&body="
+            + quote(
+                mensaje,
+                safe="",
+            )
+        )
+
+        resultado = (
+            self.abrir_contexto_directamente(
+                {
+                    "tipo_recurso": "web",
+                    "proceso": "chrome.exe",
+                    "perfil_navegador": perfil,
+                    "cuenta_navegador": correo,
+                    "url": url,
+                }
+            )
+        )
+
+        if not resultado.get(
+            "ok"
+        ):
+
+            self._terminar_canal_notificacion(
+                item.get(
+                    "id"
+                ),
+                "correo",
+                False,
+                resultado.get(
+                    "detalle",
+                    "No pude abrir Gmail.",
+                ),
+            )
+
+            return
+
+        QTimer.singleShot(
+            7000,
+            lambda identificador=item.get(
+                "id"
+            ),
+            cuenta_objetivo=correo:
+            self._confirmar_envio_correo(
+                identificador,
+                cuenta_objetivo,
+                1,
+            ),
+        )
+
+    def procesar_cola_notificaciones(
+        self,
+    ):
+        if self.notificacion_en_proceso:
+            return
+
+        if not self.cola_notificaciones:
+            return
+
+        if (
+            self.grabando
+            or self.ejecucion_fisica_activa
+            or self.auditoria_contextual_activa
+            or self.obtener_tarea_ejecutando()
+        ):
+            return
+
+        if any(
+            tarea.get(
+                "estado"
+            ) == "EN COLA"
+            for tarea in self.tareas
+        ):
+            return
+
+        proxima = (
+            self.calcular_proxima_tarea()
+        )
+
+        if proxima:
+
+            segundos = (
+                proxima[0]
+                - datetime.now()
+            ).total_seconds()
+
+            if (
+                0
+                <= segundos
+                <= 30
+            ):
+                return
+
+        item = (
+            self.cola_notificaciones[0]
+        )
+
+        pendientes = list(
+            item.get(
+                "canales_pendientes",
+                [],
+            )
+            or []
+        )
+
+        if not pendientes:
+
+            self.cola_notificaciones.pop(
+                0
+            )
+
+            self.guardar_cola_notificaciones()
+
+            QTimer.singleShot(
+                100,
+                self.procesar_cola_notificaciones,
+            )
+
+            return
+
+        canal = pendientes[
+            0
+        ]
+
+        self.notificacion_en_proceso = True
+
+        self.notificacion_actual_id = (
+            item.get(
+                "id"
+            )
+        )
+
+        if canal == "whatsapp":
+
+            self.iniciar_envio_whatsapp_notificacion(
+                item
+            )
+
+            return
+
+        if canal == "correo":
+
+            self.iniciar_envio_correo_notificacion(
+                item
+            )
+
+            return
+
+        self._terminar_canal_notificacion(
+            item.get(
+                "id"
+            ),
+            canal,
+            False,
+            "Canal de notificación desconocido.",
+        )
+
+    # ========================================================
+    # MANUAL DE BIN
+    # ========================================================
+
+    def abrir_manual(
+        self,
+    ):
+        dialogo = QDialog(
+            self
+        )
+
+        dialogo.setWindowTitle(
+            "Manual · BIN IA Asistem Light"
+        )
+
+        dialogo.resize(
+            860,
+            720,
+        )
+
+        dialogo.setMinimumSize(
+            620,
+            520,
+        )
+
+        principal = QVBoxLayout(
+            dialogo
+        )
+
+        principal.setContentsMargins(
+            14,
+            14,
+            14,
+            14,
+        )
+
+        principal.setSpacing(
+            10
+        )
+
+        titulo = QLabel(
+            "MANUAL DE BIN IA ASISTEM — LIGHT"
+        )
+
+        titulo.setObjectName(
+            "tituloDialogo"
+        )
+
+        principal.addWidget(
+            titulo
+        )
+
+        descripcion = QLabel(
+            "Guía de uso, recomendaciones y consideraciones "
+            "para automatizaciones con BIN Light."
+        )
+
+        descripcion.setWordWrap(
+            True
+        )
+
+        descripcion.setObjectName(
+            "textoSecundario"
+        )
+
+        principal.addWidget(
+            descripcion
+        )
+
+        manual = QTextEdit()
+
+        manual.setReadOnly(
+            True
+        )
+
+        manual.setPlainText(
+            MANUAL_BIN_LIGHT
+        )
+
+        manual.setLineWrapMode(
+            QTextEdit.WidgetWidth
+        )
+
+        manual.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarAlwaysOff
+        )
+
+        manual.setVerticalScrollBarPolicy(
+            Qt.ScrollBarAsNeeded
+        )
+
+        manual.setSizePolicy(
+            QSizePolicy.Expanding,
+            QSizePolicy.Expanding,
+        )
+
+        principal.addWidget(
+            manual,
+            1,
+        )
+
+        boton_cerrar = QPushButton(
+            "CERRAR MANUAL"
+        )
+
+        boton_cerrar.setObjectName(
+            "botonPrincipal"
+        )
+
+        boton_cerrar.clicked.connect(
+            dialogo.accept
+        )
+
+        principal.addWidget(
+            boton_cerrar
+        )
+
+        dialogo.exec()
+
     def abrir_configuracion(
         self,
     ):
@@ -5708,10 +8498,54 @@ class BIN(QMainWindow):
         # FORMULARIO
         # ----------------------------------------------------
 
-        formulario = QFormLayout()
+        scroll_configuracion = QScrollArea()
+
+        scroll_configuracion.setWidgetResizable(
+            True
+        )
+
+        scroll_configuracion.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarAlwaysOff
+        )
+
+        scroll_configuracion.setFrameShape(
+            QFrame.NoFrame
+        )
+
+        scroll_configuracion.setMinimumWidth(
+            0
+        )
+
+        scroll_configuracion.setSizePolicy(
+            QSizePolicy.Expanding,
+            QSizePolicy.Expanding,
+        )
+
+        contenedor_formulario = QWidget()
+
+        contenedor_formulario.setMinimumWidth(
+            0
+        )
+
+        contenedor_formulario.setSizePolicy(
+            QSizePolicy.Ignored,
+            QSizePolicy.Preferred,
+        )
+
+        formulario = QFormLayout(
+            contenedor_formulario
+        )
 
         formulario.setSpacing(
             10
+        )
+
+        formulario.setFieldGrowthPolicy(
+            QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow
+        )
+
+        formulario.setRowWrapPolicy(
+            QFormLayout.RowWrapPolicy.WrapLongRows
         )
 
         # ----------------------------------------------------
@@ -5928,25 +8762,9 @@ class BIN(QMainWindow):
         # DATOS DE CONTACTO
         # ----------------------------------------------------
 
-        telefono = QLineEdit()
-
-        telefono.setPlaceholderText(
-            "Número telefónico"
-        )
-
-        telefono.setText(
-            str(
-                self.configuracion.get(
-                    "telefono",
-                    "",
-                )
-            )
-        )
-
-        formulario.addRow(
-            "Número telefónico:",
-            telefono,
-        )
+        # ----------------------------------------------------
+        # DATOS DE CONTACTO / NOTIFICACIONES
+        # ----------------------------------------------------
 
         correo = QLineEdit()
 
@@ -5971,7 +8789,7 @@ class BIN(QMainWindow):
         whatsapp = QLineEdit()
 
         whatsapp.setPlaceholderText(
-            "WhatsApp"
+            "Número de WhatsApp del usuario"
         )
 
         whatsapp.setText(
@@ -5988,24 +8806,44 @@ class BIN(QMainWindow):
             whatsapp,
         )
 
-        msm = QLineEdit()
+        whatsapp_web_cuenta_chrome = QLineEdit()
 
-        msm.setPlaceholderText(
-            "MSM"
+        whatsapp_web_cuenta_chrome.setPlaceholderText(
+            "Ej: usuario@gmail.com"
         )
 
-        msm.setText(
+        whatsapp_web_cuenta_chrome.setText(
             str(
                 self.configuracion.get(
-                    "msm",
+                    "whatsapp_web_cuenta_chrome",
                     "",
                 )
             )
         )
 
         formulario.addRow(
-            "MSM:",
-            msm,
+            "Cuenta de Chrome para WhatsApp Web:",
+            whatsapp_web_cuenta_chrome,
+        )
+
+        nota_whatsapp = QLabel(
+            "BIN intentará usar primero la aplicación de WhatsApp. "
+            "Si no está disponible, podrá usar WhatsApp Web con el "
+            "perfil de Chrome indicado aquí. Escribe la cuenta de "
+            "Chrome donde ya tengas WhatsApp Web iniciado."
+        )
+
+        nota_whatsapp.setWordWrap(
+            True
+        )
+
+        nota_whatsapp.setObjectName(
+            "textoSecundario"
+        )
+
+        formulario.addRow(
+            "",
+            nota_whatsapp,
         )
 
         # ----------------------------------------------------
@@ -6017,9 +8855,9 @@ class BIN(QMainWindow):
         notificar_falla_en.addItems(
             [
                 "Ninguna",
-                "MSM",
                 "WhatsApp",
                 "Correo",
+                "WhatsApp y Correo",
             ]
         )
 
@@ -6037,10 +8875,40 @@ class BIN(QMainWindow):
             notificar_falla_en,
         )
 
+        # ----------------------------------------------------
+        # NOTIFICACIÓN AL FINALIZAR CORRECTAMENTE
+        # ----------------------------------------------------
+
+        notificar_exito_en = QComboBox()
+
+        notificar_exito_en.addItems(
+            [
+                "Ninguna",
+                "WhatsApp",
+                "Correo",
+                "WhatsApp y Correo",
+            ]
+        )
+
+        notificar_exito_en.setCurrentText(
+            str(
+                self.configuracion.get(
+                    "notificar_exito_en",
+                    "Ninguna",
+                )
+            )
+        )
+
+        formulario.addRow(
+            "Al finalizar correctamente notificar en:",
+            notificar_exito_en,
+        )
+
         nota_notificacion = QLabel(
-            "Guarda el canal preferido para futuras "
-            "notificaciones automáticas. El envío todavía "
-            "no está conectado en BIN Light."
+            "Las preferencias quedan guardadas para el módulo de "
+            "notificaciones de BIN. WhatsApp utilizará primero la "
+            "aplicación instalada y, si no está disponible, el perfil "
+            "de Chrome configurado para WhatsApp Web."
         )
 
         nota_notificacion.setWordWrap(
@@ -6054,6 +8922,135 @@ class BIN(QMainWindow):
         formulario.addRow(
             "",
             nota_notificacion,
+        )
+
+        aviso_seguridad = QLabel(
+            "SEGURIDAD: no grabes contraseñas, PIN, códigos MFA, "
+            "passkeys ni otros datos de autenticación dentro de "
+            "una demostración de rutina."
+        )
+
+        aviso_seguridad.setWordWrap(
+            True
+        )
+
+        aviso_seguridad.setObjectName(
+            "aviso"
+        )
+
+        formulario.addRow(
+            "",
+            aviso_seguridad,
+        )
+
+        # ----------------------------------------------------
+        # DESPERTAR DESDE SUSPENSIÓN / HIBERNACIÓN
+        # ----------------------------------------------------
+
+        despertar_pc_automaticamente = QCheckBox(
+            "Preparar el PC antes de las tareas programadas"
+        )
+
+        despertar_pc_automaticamente.setChecked(
+            bool(
+                self.configuracion.get(
+                    "despertar_pc_automaticamente",
+                    False,
+                )
+            )
+        )
+
+        formulario.addRow(
+            "Despertar PC:",
+            despertar_pc_automaticamente,
+        )
+
+        anticipacion_despertar = QSpinBox()
+
+        anticipacion_despertar.setRange(
+            1,
+            120,
+        )
+
+        anticipacion_despertar.setValue(
+            int(
+                self.configuracion.get(
+                    "anticipacion_despertar_minutos",
+                    15,
+                )
+                or 15
+            )
+        )
+
+        anticipacion_despertar.setSuffix(
+            " min"
+        )
+
+        formulario.addRow(
+            "Preparar antes:",
+            anticipacion_despertar,
+        )
+
+        sesion_sin_contrasena = QCheckBox(
+            "Confirmo que esta sesión puede reanudarse sin contraseña"
+        )
+
+        sesion_sin_contrasena.setChecked(
+            bool(
+                self.configuracion.get(
+                    "sesion_sin_contrasena_confirmada",
+                    False,
+                )
+            )
+        )
+
+        formulario.addRow(
+            "Sesión de Windows:",
+            sesion_sin_contrasena,
+        )
+
+        nota_despertar = QLabel(
+            "BIN puede programar un Wake Timer para despertar el equipo "
+            "desde suspensión o hibernación antes de la próxima tarea. "
+            "No enciende un PC completamente apagado y no almacena ni "
+            "introduce contraseñas de Windows. La sesión debe quedar "
+            "configurada para reanudarse directamente."
+        )
+
+        nota_despertar.setWordWrap(
+            True
+        )
+
+        nota_despertar.setObjectName(
+            "textoSecundario"
+        )
+
+        formulario.addRow(
+            "",
+            nota_despertar,
+        )
+
+        def actualizar_despertar_habilitado(
+            activo,
+        ):
+            anticipacion_despertar.setEnabled(
+                bool(
+                    activo
+                )
+            )
+
+            sesion_sin_contrasena.setEnabled(
+                bool(
+                    activo
+                )
+            )
+
+        despertar_pc_automaticamente.toggled.connect(
+            actualizar_despertar_habilitado
+        )
+
+        actualizar_despertar_habilitado(
+            despertar_pc_automaticamente.isChecked()
         )
 
         # ----------------------------------------------------
@@ -6126,8 +9123,37 @@ class BIN(QMainWindow):
         #     modo_bin,
         # )
 
-        principal.addLayout(
-            formulario
+        scroll_configuracion.setWidget(
+            contenedor_formulario
+        )
+
+        principal.addWidget(
+            scroll_configuracion,
+            1,
+        )
+
+        # ----------------------------------------------------
+        # MANUAL
+        # ----------------------------------------------------
+
+        boton_manual = QPushButton(
+            "MANUAL"
+        )
+
+        boton_manual.setObjectName(
+            "botonPrincipal"
+        )
+
+        boton_manual.setToolTip(
+            "Abrir manual de uso de BIN Light"
+        )
+
+        boton_manual.clicked.connect(
+            self.abrir_manual
+        )
+
+        principal.addWidget(
+            boton_manual
         )
 
         # ----------------------------------------------------
@@ -6202,10 +9228,6 @@ class BIN(QMainWindow):
         ] = interfaz.currentText()
 
         self.configuracion[
-            "telefono"
-        ] = telefono.text().strip()
-
-        self.configuracion[
             "correo"
         ] = correo.text().strip()
 
@@ -6214,12 +9236,28 @@ class BIN(QMainWindow):
         ] = whatsapp.text().strip()
 
         self.configuracion[
-            "msm"
-        ] = msm.text().strip()
+            "whatsapp_web_cuenta_chrome"
+        ] = whatsapp_web_cuenta_chrome.text().strip()
 
         self.configuracion[
             "notificar_falla_en"
         ] = notificar_falla_en.currentText()
+
+        self.configuracion[
+            "notificar_exito_en"
+        ] = notificar_exito_en.currentText()
+
+        self.configuracion[
+            "despertar_pc_automaticamente"
+        ] = despertar_pc_automaticamente.isChecked()
+
+        self.configuracion[
+            "anticipacion_despertar_minutos"
+        ] = anticipacion_despertar.value()
+
+        self.configuracion[
+            "sesion_sin_contrasena_confirmada"
+        ] = sesion_sin_contrasena.isChecked()
 
         self.configuracion[
             "limpieza_ventanas"
@@ -6228,6 +9266,10 @@ class BIN(QMainWindow):
         if self.guardar_configuracion():
 
             self.aplicar_visibilidad_interfaz()
+
+            self.actualizar_programacion_despertar(
+                forzar=True,
+            )
 
             QMessageBox.information(
                 self,
@@ -6368,7 +9410,7 @@ class BIN(QMainWindow):
         )
 
         subtitulo = QLabel(
-            "LIGHT v1.6.1"
+            "LIGHT v1.6.15"
         )
 
         subtitulo.setObjectName(
@@ -6752,8 +9794,25 @@ class BIN(QMainWindow):
             Qt.ScrollBarAsNeeded
         )
 
-        self.scroll_chat.setFixedHeight(
-            62
+        barra_chat = (
+            self.scroll_chat
+            .verticalScrollBar()
+        )
+
+        barra_chat.rangeChanged.connect(
+            lambda minimo, maximo, barra=barra_chat:
+            barra.setValue(
+                maximo
+            )
+        )
+
+        self.scroll_chat.setMinimumHeight(
+            38
+        )
+
+        self.scroll_chat.setSizePolicy(
+            QSizePolicy.Expanding,
+            QSizePolicy.Expanding,
         )
 
         self.scroll_chat.setFrameShape(
@@ -6800,7 +9859,7 @@ class BIN(QMainWindow):
             0,
             0,
             4,
-            0,
+            10,
         )
 
         mensaje_layout.setSpacing(
@@ -6852,7 +9911,8 @@ class BIN(QMainWindow):
         )
 
         chat_layout.addWidget(
-            self.scroll_chat
+            self.scroll_chat,
+            1,
         )
 
         # ====================================================
@@ -8110,6 +11170,18 @@ class BIN(QMainWindow):
             Qt.ScrollBarAsNeeded
         )
 
+        barra_chat_expandido = (
+            self.scroll_chat_expandido
+            .verticalScrollBar()
+        )
+
+        barra_chat_expandido.rangeChanged.connect(
+            lambda minimo, maximo, barra=barra_chat_expandido:
+            barra.setValue(
+                maximo
+            )
+        )
+
         self.scroll_chat_expandido.setFrameShape(
             QFrame.NoFrame
         )
@@ -8137,7 +11209,7 @@ class BIN(QMainWindow):
             4,
             4,
             8,
-            4,
+            12,
         )
 
         self.mensaje_chat_expandido = QLabel(
@@ -8678,6 +11750,166 @@ class BIN(QMainWindow):
             "INFO",
             mensaje,
         )
+
+    # ========================================================
+    # PUENTE PARA IA BOT DE BIN
+    # ========================================================
+
+    def conectar_ia_bot(
+        self,
+        proveedor,
+    ):
+        self.proveedor_ia_bot = proveedor
+
+        return (
+            proveedor is not None
+        )
+
+    def contexto_para_ia_bot(
+        self,
+    ):
+        tarea = None
+
+        if self.tarea_seleccionada_id is not None:
+
+            tarea_actual = self.obtener_tarea(
+                self.tarea_seleccionada_id
+            )
+
+            if tarea_actual:
+
+                tarea = {
+                    "id": tarea_actual.get(
+                        "id"
+                    ),
+                    "nombre": tarea_actual.get(
+                        "nombre",
+                        "",
+                    ),
+                    "estado": tarea_actual.get(
+                        "estado",
+                        "",
+                    ),
+                    "contexto": tarea_actual.get(
+                        "contexto",
+                        "",
+                    ),
+                    "acciones": len(
+                        tarea_actual.get(
+                            "acciones",
+                            [],
+                        )
+                        or []
+                    ),
+                }
+
+        return {
+            "nombre_usuario": (
+                self.configuracion.get(
+                    "nombre_usuario",
+                    "",
+                )
+            ),
+            "trato": (
+                self.configuracion.get(
+                    "trato",
+                    "Señor",
+                )
+            ),
+            "idioma": (
+                self.configuracion.get(
+                    "idioma",
+                    "ES",
+                )
+            ),
+            "tarea_seleccionada": tarea,
+            "bin_ocupado": bool(
+                self.obtener_tarea_ejecutando()
+            ),
+        }
+
+    def consultar_ia_bot(
+        self,
+        texto,
+    ):
+        proveedor = getattr(
+            self,
+            "proveedor_ia_bot",
+            None,
+        )
+
+        if proveedor is None:
+            return None
+
+        contexto = (
+            self.contexto_para_ia_bot()
+        )
+
+        try:
+            if hasattr(
+                proveedor,
+                "responder",
+            ):
+
+                respuesta = proveedor.responder(
+                    texto,
+                    contexto,
+                )
+
+            elif callable(
+                proveedor
+            ):
+
+                respuesta = proveedor(
+                    texto,
+                    contexto,
+                )
+
+            else:
+                return None
+
+        except Exception as error:
+
+            self.registrar_evento_bin(
+                "ERROR",
+                "La IA BOT de BIN produjo un error.",
+                str(
+                    error
+                ),
+            )
+
+            return None
+
+        if respuesta is None:
+            return None
+
+        if isinstance(
+            respuesta,
+            dict,
+        ):
+
+            respuesta = (
+                respuesta.get(
+                    "texto"
+                )
+                or respuesta.get(
+                    "respuesta"
+                )
+                or respuesta.get(
+                    "mensaje"
+                )
+            )
+
+        respuesta = str(
+            respuesta
+            or ""
+        ).strip()
+
+        return (
+            respuesta
+            or None
+        )
+
     def procesar_chat(self):
         if not hasattr(self, "entrada_chat"):
             return
@@ -8694,6 +11926,21 @@ class BIN(QMainWindow):
         self.registrar_mensaje_usuario(
             texto
         )
+
+        respuesta_bot = (
+            self.consultar_ia_bot(
+                texto
+            )
+        )
+
+        if respuesta_bot is not None:
+
+            self.registrar_evento_bin(
+                "BOT",
+                respuesta_bot,
+            )
+
+            return
 
         if self.tarea_seleccionada_id is None:
             self.actualizar_chat_bin(
@@ -8814,8 +12061,25 @@ class BIN(QMainWindow):
             if tarea_panel:
                 self.titulo_tarea_acciones.setText(tarea_panel.get("nombre", "TAREA"))
 
+            bloquear_panel_acciones = bool(
+                tarea_panel
+                and (
+                    tarea_panel.get(
+                        "estado"
+                    ) == "EJECUTANDO"
+                    or (
+                        tarea_panel.get(
+                            "estado"
+                        ) == "EN PAUSA"
+                        and tarea_panel.get(
+                            "current_run_key"
+                        )
+                    )
+                )
+            )
+
             self.boton_agregar_accion.setEnabled(
-                not bool(tarea_panel and tarea_panel.get("estado") == "EJECUTANDO")
+                not bloquear_panel_acciones
             )
             self.boton_guardar_rutina.setText("CAMBIOS GUARDADOS")
             self.boton_guardar_rutina.setEnabled(False)
@@ -8889,7 +12153,20 @@ class BIN(QMainWindow):
             eliminar = QPushButton("×")
 
             bloquear_edicion = bool(
-                tarea_panel and tarea_panel.get("estado") == "EJECUTANDO"
+                tarea_panel
+                and (
+                    tarea_panel.get(
+                        "estado"
+                    ) == "EJECUTANDO"
+                    or (
+                        tarea_panel.get(
+                            "estado"
+                        ) == "EN PAUSA"
+                        and tarea_panel.get(
+                            "current_run_key"
+                        )
+                    )
+                )
             )
 
             subir.setEnabled(indice > 0 and not bloquear_edicion)
@@ -9470,6 +12747,41 @@ class BIN(QMainWindow):
 
             return
 
+        if (
+            not self.rutina_en_borrador
+            and self.tarea_seleccionada_id is not None
+        ):
+            tarea_panel = self.obtener_tarea(
+                self.tarea_seleccionada_id
+            )
+
+            if (
+                tarea_panel
+                and (
+                    tarea_panel.get(
+                        "estado"
+                    ) == "EJECUTANDO"
+                    or (
+                        tarea_panel.get(
+                            "estado"
+                        ) == "EN PAUSA"
+                        and tarea_panel.get(
+                            "current_run_key"
+                        )
+                    )
+                )
+            ):
+                QMessageBox.information(
+                    self,
+                    "Ejecución activa",
+                    (
+                        "No puedes modificar el Panel de acciones "
+                        "mientras esta ejecución está activa o pausada."
+                    ),
+                )
+
+                return
+
         biblioteca = self.cargar_biblioteca_comandos()
 
         dialogo = CommandLibraryDialog(
@@ -9646,7 +12958,34 @@ class BIN(QMainWindow):
                 f"{len(tarea['acciones'])} acción(es) configurada(s)"
             )
         else:
-            tarea["detalle_estado"] = "SIN ACCIONES · Duración sin calcular"
+            tarea["detalle_estado"] = (
+                "SIN ACCIONES · Duración sin calcular"
+            )
+
+        # Una edición manual del Panel de acciones no debe disparar
+        # inmediatamente una ejecución programada cuya hora ya pasó.
+        if not tarea.get(
+            "current_run_key"
+        ):
+            run_key_vencida = (
+                self.clave_programada_para_ahora(
+                    tarea,
+                    datetime.now(),
+                )
+            )
+
+            if (
+                run_key_vencida
+                and tarea.get(
+                    "last_run_key"
+                ) != run_key_vencida
+                and tarea.get(
+                    "last_skipped_run_key"
+                ) != run_key_vencida
+            ):
+                tarea[
+                    "last_skipped_run_key"
+                ] = run_key_vencida
 
         self.guardar_tareas_en_disco()
         self.refrescar_lista_tareas()
@@ -10123,14 +13462,35 @@ class BIN(QMainWindow):
             return None
 
         try:
-            hora, minuto = [int(valor) for valor in tarea.get("hora", "").split(":")]
+            hora, minuto = [
+                int(valor)
+                for valor in tarea.get(
+                    "hora",
+                    "",
+                ).split(":")
+            ]
         except Exception:
             return None
 
-        if ahora.hour != hora or ahora.minute != minuto:
+        momento_programado = ahora.replace(
+            hour=hora,
+            minute=minuto,
+            second=0,
+            microsecond=0,
+        )
+
+        # La hora es el momento mínimo de inicio, no una ventana
+        # de sólo 60 segundos. Si BIN despierta o queda libre más
+        # tarde, la ejecución de ese día continúa siendo válida.
+        if ahora < momento_programado:
             return None
 
-        return "sched-" + ahora.strftime("%Y%m%d-") + f"{hora:02}{minuto:02}"
+        return (
+            "sched-"
+            + momento_programado.strftime(
+                "%Y%m%d-%H%M"
+            )
+        )
 
     def ejecutar_ahora(self, tarea_id):
         tarea = self.obtener_tarea(tarea_id)
@@ -10150,6 +13510,60 @@ class BIN(QMainWindow):
             )
 
             self.actualizar_chat_bin(mensaje)
+            return
+
+            # ----------------------------------------------------
+        # EVITAR COLISIÓN CON NOTIFICACIONES AUTOMÁTICAS
+        # ----------------------------------------------------
+
+        if self.notificacion_en_proceso:
+
+            # Si era una ejecución ya pausada, no creamos
+            # otra ejecución ni alteramos su run_key.
+            if (
+                tarea.get("estado") == "EN PAUSA"
+                and tarea.get("current_run_key")
+            ):
+                mensaje = (
+                    "BIN está terminando una notificación automática. "
+                    "La tarea pausada podrá continuar cuando BIN quede libre."
+                )
+
+                QMessageBox.information(
+                    self,
+                    "BIN está ocupado",
+                    mensaje,
+                )
+
+                self.actualizar_chat_bin(
+                    mensaje
+                )
+
+                return
+
+            ahora = datetime.now()
+
+            run_key = (
+                "manual-"
+                + ahora.strftime(
+                    "%Y%m%d-%H%M%S"
+                )
+            )
+
+            self.poner_en_cola(
+                tarea,
+                run_key,
+            )
+
+            mensaje = (
+                f"La tarea '{tarea['nombre']}' quedó EN COLA "
+                "porque BIN está terminando una notificación automática."
+            )
+
+            self.actualizar_chat_bin(
+                mensaje
+            )
+
             return
 
         if tarea.get("estado") == "EN PAUSA" and tarea.get("current_run_key"):
@@ -10177,13 +13591,26 @@ class BIN(QMainWindow):
 
         ahora = datetime.now()
 
-        run_key = self.clave_programada_para_ahora(
+        run_key_programada = self.clave_programada_para_ahora(
             tarea,
             ahora,
         )
 
-        if run_key is None:
-            run_key = "manual-" + ahora.strftime("%Y%m%d-%H%M%S")
+        if (
+            run_key_programada
+            and tarea.get("last_run_key") != run_key_programada
+            and tarea.get("last_skipped_run_key") != run_key_programada
+            and tarea.get("current_run_key") != run_key_programada
+        ):
+            run_key = run_key_programada
+
+        else:
+            run_key = (
+                "manual-"
+                + ahora.strftime(
+                    "%Y%m%d-%H%M%S"
+                )
+            )
 
         self.iniciar_ejecucion(
             tarea,
@@ -11268,31 +14695,95 @@ class BIN(QMainWindow):
 
     def normalizar_url_bin(self, url):
         texto = str(url or "").strip()
+
         if not texto:
             return ""
 
-        if self.parece_url_o_dominio(texto) and "://" not in texto:
+        if (
+            self.parece_url_o_dominio(texto)
+            and "://" not in texto
+        ):
             texto = "https://" + texto
 
         try:
-            partes = urlsplit(texto)
-            if not partes.scheme:
-                return texto.rstrip("/").lower()
+            partes = urlsplit(
+                texto
+            )
 
-            esquema = partes.scheme.lower()
-            host = (partes.netloc or "").lower()
-            ruta = "" if partes.path == "/" else (partes.path or "")
-            consulta = "?" + partes.query if partes.query else ""
-            fragmento = "#" + partes.fragment if partes.fragment else ""
+            if not partes.scheme:
+                return texto.rstrip(
+                    "/"
+                ).lower()
+
+            esquema = (
+                partes.scheme
+                .lower()
+            )
+
+            host = (
+                partes.netloc
+                or ""
+            ).lower()
+
+            # Para navegación web normal:
+            #
+            # http / https
+            # www.dominio.com / dominio.com
+            #
+            # representan la misma identidad operativa para BIN.
+            if esquema in {
+                "http",
+                "https",
+            }:
+                esquema = "https"
+
+                if host.startswith(
+                    "www."
+                ):
+                    host = host[
+                        4:
+                    ]
+
+            ruta = (
+                ""
+                if partes.path == "/"
+                else (
+                    partes.path
+                    or ""
+                )
+            )
+
+            consulta = (
+                "?"
+                + partes.query
+                if partes.query
+                else ""
+            )
+
+            fragmento = (
+                "#"
+                + partes.fragment
+                if partes.fragment
+                else ""
+            )
 
             if host:
                 return (
-                    f"{esquema}://{host}{ruta}{consulta}{fragmento}"
-                ).rstrip("/")
+                    f"{esquema}://"
+                    f"{host}"
+                    f"{ruta}"
+                    f"{consulta}"
+                    f"{fragmento}"
+                ).rstrip(
+                    "/"
+                )
+
         except Exception:
             pass
 
-        return texto.rstrip("/")
+        return texto.rstrip(
+            "/"
+        ).lower()
 
     def observar_navegador_uia(
         self,
@@ -13143,6 +16634,73 @@ class BIN(QMainWindow):
 
         return True
 
+    def aprender_identidad_web_manual(
+        self,
+        esperado,
+        actual,
+    ):
+        """
+        Si una accion manual web no fijo Cuenta asociada, BIN puede
+        aprender la identidad real del navegador solo despues de
+        confirmar la URL exacta. Nunca deduce la cuenta desde texto
+        arbitrario de la pagina.
+        """
+        if not isinstance(esperado, dict) or not isinstance(actual, dict):
+            return False
+
+        if str(esperado.get("tipo_recurso", "") or "").strip().lower() != "web":
+            return False
+
+        if not bool(esperado.get("contexto_manual")):
+            return False
+
+        if self.normalizar_cuenta_web_rescate(
+            esperado.get("cuenta_navegador", "")
+        ):
+            return False
+
+        url_esperada = self.normalizar_url_bin(
+            esperado.get("url", "")
+        ).lower()
+
+        url_actual = self.normalizar_url_bin(
+            actual.get("url", "")
+        ).lower()
+
+        if not url_esperada or not url_actual or url_esperada != url_actual:
+            return False
+
+        cuenta_actual = self.normalizar_cuenta_web_rescate(
+            actual.get("cuenta_navegador", "")
+        )
+
+        perfil_actual = str(
+            actual.get("perfil_navegador", "") or ""
+        ).strip()
+
+        if not cuenta_actual and not perfil_actual:
+            return False
+
+        if cuenta_actual:
+            esperado["cuenta_navegador"] = cuenta_actual
+            esperado["cuenta_asociada_manual"] = cuenta_actual
+
+        if perfil_actual:
+            esperado["perfil_navegador"] = perfil_actual
+
+        self.registrar_evento_bin(
+            "ASOCIA",
+            "Aprendi la identidad del navegador para la accion manual.",
+            (
+                f"Cuenta: {cuenta_actual or 'no observable'}\n"
+                f"Perfil: {perfil_actual or 'no observable'}\n"
+                f"URL: {url_actual}"
+            ),
+        )
+
+        return True
+
+
     def resolver_ventana_web_por_matricula_bin(self, esperado):
         """
         Reconstruye una matrícula web en cada revisión.
@@ -13235,6 +16793,25 @@ class BIN(QMainWindow):
 
             if perfil_e:
                 return None
+
+            # Una accion WEB manual sin cuenta/perfil no puede fijar
+            # cualquier ventana de Chrome solo porque el proceso coincide.
+            # En ese caso la URL digitada por el usuario es la identidad
+            # principal. Si todavia no es observable, esperamos.
+            if bool(esperado.get("contexto_manual")):
+                url_e = self.normalizar_url_bin(
+                    esperado.get("url", "")
+                ).lower()
+
+                url_a = self.normalizar_url_bin(
+                    contexto.get("url", "")
+                ).lower()
+
+                if url_e:
+                    if not url_a:
+                        return None
+
+                    return url_e == url_a
 
             return bool(
                 proceso_e
@@ -13805,6 +17382,12 @@ class BIN(QMainWindow):
                     if resultado_matricula.get(
                         "confirmada"
                     ):
+                        if coincide is True:
+                            self.aprender_identidad_web_manual(
+                                esperado,
+                                contexto,
+                            )
+
                         estado_rescate = (
                             self.obtener_estado_rescate_web(
                                 esperado
@@ -13888,6 +17471,11 @@ class BIN(QMainWindow):
             )
 
             if coincide is True:
+                self.aprender_identidad_web_manual(
+                    esperado,
+                    contexto,
+                )
+
                 return {
                     "ok": True,
                     "contexto": contexto,
@@ -15466,6 +19054,15 @@ class BIN(QMainWindow):
         )
 
     def correccion_apertura_en_cooldown(self, esperado, segundos=5.0):
+        # Una accion manual de ventana ya lanzo explicitamente su apertura.
+        # Mientras el supervisor verifica URL/cuenta/geometria, no debe
+        # crear otra ventana de navegador cada pocos segundos.
+        if bool((esperado or {}).get("contexto_manual")):
+            segundos = max(
+                float(segundos),
+                60.0,
+            )
+
         cache = self._cache_operativo_bin("correction_launch")
         clave = self.clave_correccion_contexto(esperado)
         ahora = time.monotonic()
@@ -19438,6 +23035,25 @@ class BIN(QMainWindow):
             configuracion.get("cuenta_web", "") or ""
         ).strip()
 
+        # La cuenta asociada, cuando el usuario la indica, si forma
+        # parte de la identidad autoritativa del navegador.
+        #
+        # Si queda vacia, Cuenta web se conserva como pista manual,
+        # pero no se fuerza como cuenta de Chrome porque puede ser
+        # un nombre de usuario del servicio y no un correo/perfil.
+        cuenta_navegador_manual = (
+            cuenta_asociada
+            if tipo_recurso == "web"
+            else ""
+        )
+
+        cuenta_asociada_visible = (
+            cuenta_asociada
+            or cuenta_web
+            if tipo_recurso == "web"
+            else ""
+        )
+
         localizador = url if tipo_recurso == "web" else ruta
 
         return {
@@ -19452,12 +23068,14 @@ class BIN(QMainWindow):
             "ruta_recurso": ruta if tipo_recurso == "recurso" else "",
             "localizador": localizador,
             "perfil_navegador": "",
-            # Los campos manuales quedan almacenados sin alterar la matrícula
-            # automática estable. La cuenta asociada se usa sólo al enviar la
-            # apertura del navegador; no reescribe la observación automática.
-            "cuenta_navegador": "",
-            "cuenta_asociada_manual": cuenta_asociada if tipo_recurso == "web" else "",
+            # En acciones manuales la Cuenta asociada explicita es
+            # autoritativa para distinguir perfiles/ventanas de Chrome.
+            # Cuenta web continua siendo una pista del servicio y puede
+            # usarse como respaldo visual cuando la cuenta asociada se omite.
+            "cuenta_navegador": cuenta_navegador_manual,
+            "cuenta_asociada_manual": cuenta_asociada_visible,
             "cuenta_web_manual": cuenta_web if tipo_recurso == "web" else "",
+
             "tipo_ventana_manual": tipo,
             "software_nombre_manual": str(
                 configuracion.get("software_nombre", "") or ""
@@ -19478,6 +23096,36 @@ class BIN(QMainWindow):
         configuracion = accion.get("ventana") or {}
         contexto = self.contexto_desde_configuracion_ventana(configuracion)
 
+        # Si una ejecucion anterior ya aprendio la cuenta/perfil de esta
+        # misma accion manual, los reutilizamos aunque el usuario hubiera
+        # dejado Cuenta asociada vacia inicialmente.
+        contexto_guardado = accion.get("contexto_despues") or {}
+
+        if str(contexto.get("tipo_recurso", "") or "").lower() == "web":
+            if not contexto.get("cuenta_navegador"):
+                cuenta_aprendida = str(
+                    contexto_guardado.get("cuenta_navegador", "") or ""
+                ).strip()
+
+                if cuenta_aprendida:
+                    contexto["cuenta_navegador"] = cuenta_aprendida
+                    contexto["cuenta_asociada_manual"] = cuenta_aprendida
+
+                    if not str(configuracion.get("cuenta_asociada", "") or "").strip():
+                        configuracion["cuenta_asociada"] = cuenta_aprendida
+
+            if not contexto.get("perfil_navegador"):
+                perfil_aprendido = str(
+                    contexto_guardado.get("perfil_navegador", "") or ""
+                ).strip()
+
+                if perfil_aprendido:
+                    contexto["perfil_navegador"] = perfil_aprendido
+
+            accion["contexto_despues"] = json.loads(
+                json.dumps(contexto, ensure_ascii=False)
+            )
+
         self.registrar_evento_bin(
             "EJECUTA",
             "Comando manual de ventana.",
@@ -19485,19 +23133,127 @@ class BIN(QMainWindow):
         )
 
         contexto_apertura = json.loads(
-            json.dumps(contexto, ensure_ascii=False)
+            json.dumps(
+                contexto,
+                ensure_ascii=False,
+            )
         )
 
-        # Sólo para la orden de apertura, la cuenta manual alimenta el
-        # resolvedor Profile/Local State que ya existe. El contexto guardado
-        # para supervisión permanece intacto.
-        if (
-            str(contexto_apertura.get("tipo_recurso", "") or "").lower() == "web"
-            and configuracion.get("cuenta_asociada")
-        ):
+        # Antes de abrir una ventana nueva, comprobar si la ventana web
+        # solicitada ya existe. Si coincide, reutilizamos el mismo HWND y
+        # corregimos solo la geometria necesaria.
+        if str(contexto.get("tipo_recurso", "") or "").lower() == "web":
+            existente = self.buscar_ventana_estado_operativo(
+                contexto
+            )
+
+            if existente.get("ok"):
+                hwnd_existente = existente.get("hwnd")
+                contexto_existente = existente.get("contexto") or {}
+
+                cuenta_aprendida = str(
+                    contexto.get(
+                        "cuenta_navegador",
+                        "",
+                    )
+                    or ""
+                ).strip()
+
+                perfil_aprendido = str(
+                    contexto.get(
+                        "perfil_navegador",
+                        "",
+                    )
+                    or ""
+                ).strip()
+
+                if (
+                    cuenta_aprendida
+                    and not str(
+                        configuracion.get(
+                            "cuenta_asociada",
+                            "",
+                        )
+                        or ""
+                    ).strip()
+                ):
+                    configuracion[
+                        "cuenta_asociada"
+                    ] = cuenta_aprendida
+
+                accion["contexto_despues"] = json.loads(
+                    json.dumps(
+                        contexto,
+                        ensure_ascii=False,
+                    )
+                )
+
+                if hwnd_existente:
+                    if not self.geometria_contextos_coincide(
+                        contexto,
+                        contexto_existente,
+                    ):
+                        self.aplicar_geometria_contexto(
+                            hwnd_existente,
+                            contexto,
+                        )
+
+                    geometria_objetivo = (
+                        contexto.get(
+                            "geometria"
+                        )
+                        or {}
+                    )
+
+                    if not geometria_objetivo.get(
+                        "minimizada"
+                    ):
+                        self.activar_hwnd_operativo(
+                            hwnd_existente
+                        )
+
+                self._cache_operativo_bin(
+                    "correction_launch"
+                )[
+                    self.clave_correccion_contexto(
+                        contexto
+                    )
+                ] = time.monotonic()
+
+                self.registrar_evento_bin(
+                    "READY",
+                    "Reutilizo la ventana web que ya coincide.",
+                    (
+                        f"Cuenta: {cuenta_aprendida or 'no fijada'}\n"
+                        f"Perfil: {perfil_aprendido or 'no fijado'}\n"
+                        f"URL: {contexto.get('url') or '--'}"
+                    ),
+                )
+
+                return {
+                    "ok": True,
+                    "estado": "ENVIADO",
+                    "recuperable": False,
+                    "metodo": "comando_ventana",
+                    "detalle": (
+                        "Ventana web existente reutilizada."
+                    ),
+                }
+
+        # La misma identidad utilizada por el supervisor se usa tambien
+        # para resolver el perfil al abrir Chrome. Asi apertura y busqueda
+        # no trabajan con dos matriculas distintas.
+        if str(
+            contexto_apertura.get("tipo_recurso", "") or ""
+        ).lower() == "web":
             contexto_apertura["cuenta_navegador"] = str(
-                configuracion.get("cuenta_asociada") or ""
+                contexto.get("cuenta_navegador", "") or ""
             ).strip()
+
+            contexto_apertura["perfil_navegador"] = str(
+                contexto.get("perfil_navegador", "") or ""
+            ).strip()
+
 
         tipo_manual = str(
             configuracion.get("tipo_ventana", "") or ""
@@ -19528,6 +23284,18 @@ class BIN(QMainWindow):
                 resultado = self.abrir_contexto_directamente(contexto_apertura)
         else:
             resultado = self.abrir_contexto_directamente(contexto_apertura)
+
+        if resultado.get("ok") and str(
+            contexto_apertura.get("tipo_recurso", "") or ""
+        ).lower() == "web":
+            cache_aperturas = self._cache_operativo_bin(
+                "correction_launch"
+            )
+
+            cache_aperturas[
+                self.clave_correccion_contexto(contexto)
+            ] = time.monotonic()
+
 
         if not resultado.get("ok"):
             return {
@@ -23269,10 +27037,76 @@ class BIN(QMainWindow):
 
         ahora = datetime.now()
 
+        # Tiempo REAL consumido por la ejecución, incluyendo
+        # esperas del supervisor, correcciones y auditoría final.
+        duracion_real = int(
+            tarea.get(
+                "elapsed_seconds",
+                0,
+            )
+            or 0
+        )
+
+        inicio_texto = tarea.get(
+            "runtime_started_at"
+        )
+
+        if inicio_texto:
+            try:
+                inicio_real = datetime.fromisoformat(
+                    inicio_texto
+                )
+
+                base_real = int(
+                    tarea.get(
+                        "runtime_base_seconds",
+                        0,
+                    )
+                    or 0
+                )
+
+                duracion_real = max(
+                    duracion_real,
+                    base_real
+                    + int(
+                        (ahora - inicio_real)
+                        .total_seconds()
+                    ),
+                )
+
+            except Exception:
+                pass
+
+        duracion_real = max(
+            0,
+            duracion_real,
+        )
+
         tarea["estado"] = "FINALIZADA"
-        tarea["elapsed_seconds"] = duracion_total
+
+        tarea["elapsed_seconds"] = (
+            duracion_real
+        )
+
         tarea["runtime_base_seconds"] = 0
-        tarea["transcurrido"] = segundos_a_hms(duracion_total)
+
+        tarea["transcurrido"] = (
+            segundos_a_hms(
+                duracion_real
+            )
+        )
+
+        tarea[
+            "duracion_real_ultima_segundos"
+        ] = duracion_real
+
+        tarea[
+            "desfase_duracion_segundos"
+        ] = (
+            duracion_real
+            - duracion_total
+        )
+
         tarea["progreso"] = 100
         tarea["last_run_key"] = tarea.get("current_run_key")
         tarea["current_run_key"] = None
@@ -23394,6 +27228,11 @@ class BIN(QMainWindow):
         self.actualizar_cabecera_operativa()
         self.guardar_tareas_en_disco()
 
+        self.encolar_notificacion_tarea(
+            tarea,
+            "exito",
+        )
+
         QTimer.singleShot(
             0,
             self.volver_panel_acciones_arriba,
@@ -23490,6 +27329,12 @@ class BIN(QMainWindow):
         self.refrescar_panel_acciones()
         self.actualizar_cabecera_operativa()
         self.guardar_tareas_en_disco()
+
+        self.encolar_notificacion_tarea(
+            tarea,
+            "error",
+            detalle_error=mensaje,
+        )
 
         QTimer.singleShot(
             0,
@@ -23941,9 +27786,22 @@ class BIN(QMainWindow):
         if self.obtener_tarea_ejecutando():
             return
 
-        en_cola = [tarea for tarea in self.tareas if tarea.get("estado") == "EN COLA"]
+        if self.notificacion_en_proceso:
+            return
+
+        en_cola = [
+            tarea
+            for tarea in self.tareas
+            if tarea.get("estado") == "EN COLA"
+        ]
 
         if not en_cola:
+
+            QTimer.singleShot(
+                250,
+                self.procesar_cola_notificaciones,
+            )
+
             return
 
         en_cola.sort(
@@ -24159,7 +28017,10 @@ class BIN(QMainWindow):
 
             actual = self.obtener_tarea_ejecutando()
 
-            if actual:
+            if (
+                actual
+                or self.notificacion_en_proceso
+            ):
                 self.poner_en_cola(
                     tarea,
                     run_key,
@@ -31259,8 +35120,34 @@ class BIN(QMainWindow):
 
         # SCHEDULER AUTOMÁTICO
         self.timer_scheduler = QTimer(self)
-        self.timer_scheduler.timeout.connect(self.scheduler_tick)
-        self.timer_scheduler.start(1000)
+        self.timer_scheduler.timeout.connect(
+            self.scheduler_tick
+        )
+        self.timer_scheduler.start(
+            1000
+        )
+
+        # PREPARACIÓN DE SUSPENSIÓN / HIBERNACIÓN
+        self.timer_preparacion_pc = QTimer(self)
+
+        self.timer_preparacion_pc.timeout.connect(
+            self.preparar_pc_tick
+        )
+
+        self.timer_preparacion_pc.start(
+            30000
+        )
+
+        # NOTIFICACIONES PENDIENTES
+        self.timer_notificaciones = QTimer(self)
+
+        self.timer_notificaciones.timeout.connect(
+            self.procesar_cola_notificaciones
+        )
+
+        self.timer_notificaciones.start(
+            5000
+        )
 
         # GUARDADO PERIÓDICO DEL ESTADO
         self.timer_guardado_runtime = QTimer(self)
@@ -31268,8 +35155,14 @@ class BIN(QMainWindow):
         self.timer_guardado_runtime.start(5000)
 
         self.actualizar_reloj()
+
         self.actualizar_sistema()
+
         self.scheduler_tick()
+
+        self.preparar_pc_tick()
+
+        self.procesar_cola_notificaciones()
 
     # ========================================================
     # ESTILOS
@@ -32489,6 +36382,11 @@ class BIN(QMainWindow):
 
 if __name__ == "__main__":
 
+    if not asegurar_instancia_unica_bin():
+        sys.exit(
+            0
+        )
+
     # ========================================================
     # IDENTIDAD DE BIN EN WINDOWS
     # ========================================================
@@ -32498,7 +36396,7 @@ if __name__ == "__main__":
         try:
 
             ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
-                "BIN.IA.Asistem.Light.v1.6.1"
+                "BIN.IA.Asistem.Light.v1.6.15"
             )
 
         except Exception:
@@ -32546,6 +36444,13 @@ if __name__ == "__main__":
     bin_app = BIN()
 
     bin_app.show()
+
+    if "--wake-prep" in sys.argv:
+
+        QTimer.singleShot(
+            700,
+            bin_app.traer_bin_al_frente,
+        )
 
     sys.exit(
         app.exec()
