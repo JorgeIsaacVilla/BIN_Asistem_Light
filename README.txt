@@ -30,6 +30,8 @@ La prioridad de BIN Light es:
 - Capacidad para permanecer activo durante períodos prolongados.
 - El asistente de BIN funciona en una sola pantalla (La principal) Por la que idealmente, si se pienza grabar instrucciones, y/o ejecutar tareas automatizada, se recomienda desconectar las pantallas externas y dejarla sola con la principal.
 
+se preparó el codigo para el modo entrenamiento - Iniciando por la adaptación a pantallas. El algoritmo trabaja con dos memorias de pantalla. Posición apsoluta y la adaptable. para que por ejemplo; si se entrena la IA para realizar unt rabajo en softwre, y se pasa ese entrenamiento para un equipo de resolución diferente, la IA pueda adaptarse a la nueva resolución. Esto es muy importante para que la IA pueda trabajar en diferentes equipos, y no se limite a un solo equipo. (CORREGIDO)
+
 ============================================================
 REQUISITOS
 ============================================================

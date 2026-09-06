@@ -19,6 +19,7 @@
 #9) Esta versión de código, a partir de aquí, permite introducir texto en el entrenamiento en modo Manual-> desde "+Añadir acción".
 
 #Eso son todos los errores que encontré en la prueba
+#En este push se preparó el codigo para el modo entrenamiento - Iniciando por la adaptación a pantallas. El algoritmo trabaja con dos memorias de pantalla. Posición apsoluta y la adaptable. para que por ejemplo; si se entrena la IA para realizar unt rabajo en softwre, y se pasa ese entrenamiento para un equipo de resolución diferente, la IA pueda adaptarse a la nueva resolución. Esto es muy importante para que la IA pueda trabajar en diferentes equipos, y no se limite a un solo equipo. (CORREGIDO)
 #============================================================================================
 
 import sys
@@ -3022,14 +3023,44 @@ class CommandLibraryDialog(QDialog):
                 return None
 
         estado = self.estado_ventana_editor.currentText()
+
         geometria = {
-            "x": int(self.posicion_x_ventana.value()),
-            "y": int(self.posicion_y_ventana.value()),
-            "ancho": int(self.ancho_ventana.value()),
-            "alto": int(self.alto_ventana.value()),
-            "maximizada": estado == "Maximizada",
-            "minimizada": estado == "Minimizada",
+            "x": int(
+                self.posicion_x_ventana.value()
+            ),
+            "y": int(
+                self.posicion_y_ventana.value()
+            ),
+            "ancho": int(
+                self.ancho_ventana.value()
+            ),
+            "alto": int(
+                self.alto_ventana.value()
+            ),
+            "maximizada": (
+                estado
+                == "Maximizada"
+            ),
+            "minimizada": (
+                estado
+                == "Minimizada"
+            ),
         }
+
+        padre = self.parent()
+
+        if (
+            padre is not None
+            and hasattr(
+                padre,
+                "enriquecer_geometria_portable",
+            )
+        ):
+            geometria = (
+                padre.enriquecer_geometria_portable(
+                    geometria
+                )
+            )
 
         return {
             "tipo_ventana": tipo,
@@ -4853,6 +4884,20 @@ class CommandLibraryDialog(QDialog):
                 "contexto_objetivo": None,
                 "contexto_despues": None,
             }
+
+            padre = self.parent()
+
+            if (
+                padre is not None
+                and hasattr(
+                    padre,
+                    "enriquecer_accion_coordenadas_portables",
+                )
+            ):
+                padre.enriquecer_accion_coordenadas_portables(
+                    self.accion_resultado,
+                    None,
+                )
 
             if es_derecho:
                 QMessageBox.information(
@@ -17124,8 +17169,15 @@ class BIN(QMainWindow):
         ejecutable = str(resultado.get("ejecutable", "") or "").strip()
 
         geometria = self.obtener_geometria_ventana(hwnd)
+
         if geometria:
-            resultado["geometria"] = geometria
+            resultado[
+                "geometria"
+            ] = (
+                self.enriquecer_geometria_portable(
+                    geometria
+                )
+            )
 
         clave_cache = (int(hwnd or 0), proceso_l, titulo)
         caro = self._cache_operativo_obtener(
@@ -17596,6 +17648,12 @@ class BIN(QMainWindow):
                 "geometria"
             )
             or {}
+        )
+
+        geo_esperada = (
+            self.resolver_geometria_portable(
+                geo_esperada
+            )
         )
 
         if not geo_esperada:
@@ -18590,6 +18648,12 @@ class BIN(QMainWindow):
 
         if not geometria:
             return True
+
+        geometria = (
+            self.resolver_geometria_portable(
+                geometria
+            )
+        )
 
         try:
             user32 = ctypes.windll.user32
@@ -20188,6 +20252,12 @@ class BIN(QMainWindow):
                         "geometria"
                     )
                     or {}
+                )
+
+                geometria = (
+                    self.resolver_geometria_portable(
+                        geometria
+                    )
                 )
 
                 if geometria.get(
@@ -23882,17 +23952,20 @@ class BIN(QMainWindow):
             "click_derecho",
         }:
             try:
-                x = int(
-                    accion.get(
-                        "x"
+                punto_portable = (
+                    self.resolver_punto_accion_portable(
+                        accion,
+                        "principal",
+                        contexto,
                     )
                 )
 
-                y = int(
-                    accion.get(
-                        "y"
+                if punto_portable is None:
+                    raise ValueError(
+                        "Coordenadas inválidas"
                     )
-                )
+
+                x, y = punto_portable
 
             except Exception:
                 return {
@@ -24091,8 +24164,21 @@ class BIN(QMainWindow):
         
         if tipo == "click_central":
             try:
-                x = int(accion.get("x"))
-                y = int(accion.get("y"))
+                punto_portable = (
+                    self.resolver_punto_accion_portable(
+                        accion,
+                        "principal",
+                        contexto,
+                    )
+                )
+
+                if punto_portable is None:
+                    raise ValueError(
+                        "Coordenadas inválidas"
+                    )
+
+                x, y = punto_portable
+
             except Exception:
                 return {
                     "ok": False,
@@ -24124,8 +24210,21 @@ class BIN(QMainWindow):
                 }
 
             try:
-                x = int(accion.get("x"))
-                y = int(accion.get("y"))
+                punto_portable = (
+                    self.resolver_punto_accion_portable(
+                        accion,
+                        "principal",
+                        contexto,
+                    )
+                )
+
+                if punto_portable is None:
+                    raise ValueError(
+                        "Coordenadas inválidas"
+                    )
+
+                x, y = punto_portable
+
             except Exception:
                 return {
                     "ok": False,
@@ -24229,11 +24328,46 @@ class BIN(QMainWindow):
             datos = dict(accion)
 
             if tipo == "arrastre_central":
-                datos["boton"] = "central"
-            elif tipo == "arrastre_derecho":
-                datos["boton"] = "derecho"
+                datos[
+                    "boton"
+                ] = "central"
 
-            ok = self.ejecutar_arrastre_fisico(datos)
+            elif tipo == "arrastre_derecho":
+                datos[
+                    "boton"
+                ] = "derecho"
+
+            punto_inicio = (
+                self.resolver_punto_accion_portable(
+                    accion,
+                    "inicio",
+                    contexto,
+                )
+            )
+
+            punto_fin = (
+                self.resolver_punto_accion_portable(
+                    accion,
+                    "fin",
+                    contexto,
+                )
+            )
+
+            if punto_inicio is not None:
+                (
+                    datos["x_inicio"],
+                    datos["y_inicio"],
+                ) = punto_inicio
+
+            if punto_fin is not None:
+                (
+                    datos["x_fin"],
+                    datos["y_fin"],
+                ) = punto_fin
+
+            ok = self.ejecutar_arrastre_fisico(
+                datos
+            )
 
             return {
                 "ok": bool(ok),
@@ -24457,12 +24591,59 @@ class BIN(QMainWindow):
             "contexto_manual": True,
             "bloquear_actualizacion_automatica": True,
             "geometria": {
-                "x": int(geo.get("x", 0) or 0),
-                "y": int(geo.get("y", 0) or 0),
-                "ancho": max(1, int(geo.get("ancho", 1200) or 1200)),
-                "alto": max(1, int(geo.get("alto", 800) or 800)),
-                "maximizada": bool(geo.get("maximizada")),
-                "minimizada": bool(geo.get("minimizada")),
+                "x": int(
+                    geo.get(
+                        "x",
+                        0,
+                    )
+                    or 0
+                ),
+                "y": int(
+                    geo.get(
+                        "y",
+                        0,
+                    )
+                    or 0
+                ),
+                "ancho": max(
+                    1,
+                    int(
+                        geo.get(
+                            "ancho",
+                            1200,
+                        )
+                        or 1200
+                    ),
+                ),
+                "alto": max(
+                    1,
+                    int(
+                        geo.get(
+                            "alto",
+                            800,
+                        )
+                        or 800
+                    ),
+                ),
+                "maximizada": bool(
+                    geo.get(
+                        "maximizada"
+                    )
+                ),
+                "minimizada": bool(
+                    geo.get(
+                        "minimizada"
+                    )
+                ),
+                "adaptativa": json.loads(
+                    json.dumps(
+                        geo.get(
+                            "adaptativa"
+                        )
+                        or {},
+                        ensure_ascii=False,
+                    )
+                ),
             },
         }
 
@@ -30291,6 +30472,11 @@ class BIN(QMainWindow):
                 datos_extra
             )
 
+        self.enriquecer_accion_coordenadas_portables(
+            accion,
+            contexto_objetivo,
+        )
+
         self.rutina_borrador.append(
             accion
         )
@@ -34003,6 +34189,880 @@ class BIN(QMainWindow):
             return False
 
     # ========================================================
+    # COORDENADAS / GEOMETRÍA ADAPTATIVAS
+    # ========================================================
+
+    def obtener_area_pantalla_portable(
+        self,
+        usar_area_trabajo=False,
+    ):
+        if sys.platform == "win32":
+            try:
+                user32 = ctypes.windll.user32
+
+                if usar_area_trabajo:
+                    rect = wintypes.RECT()
+
+                    if user32.SystemParametersInfoW(
+                        0x0030,
+                        0,
+                        ctypes.byref(rect),
+                        0,
+                    ):
+                        return {
+                            "x": int(rect.left),
+                            "y": int(rect.top),
+                            "ancho": max(
+                                1,
+                                int(
+                                    rect.right
+                                    - rect.left
+                                ),
+                            ),
+                            "alto": max(
+                                1,
+                                int(
+                                    rect.bottom
+                                    - rect.top
+                                ),
+                            ),
+                        }
+
+                ancho = int(
+                    user32.GetSystemMetrics(0)
+                    or 0
+                )
+
+                alto = int(
+                    user32.GetSystemMetrics(1)
+                    or 0
+                )
+
+                if ancho > 0 and alto > 0:
+                    return {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": ancho,
+                        "alto": alto,
+                    }
+
+            except Exception:
+                pass
+
+        try:
+            pantalla = (
+                QApplication.primaryScreen()
+            )
+
+            if pantalla is None:
+                return None
+
+            rect = (
+                pantalla.availableGeometry()
+                if usar_area_trabajo
+                else pantalla.geometry()
+            )
+
+            return {
+                "x": int(
+                    rect.x()
+                ),
+                "y": int(
+                    rect.y()
+                ),
+                "ancho": max(
+                    1,
+                    int(
+                        rect.width()
+                    ),
+                ),
+                "alto": max(
+                    1,
+                    int(
+                        rect.height()
+                    ),
+                ),
+            }
+
+        except Exception:
+            return None
+
+    def enriquecer_geometria_portable(
+        self,
+        geometria,
+    ):
+        geometria = json.loads(
+            json.dumps(
+                geometria or {},
+                ensure_ascii=False,
+            )
+        )
+
+        if not geometria:
+            return geometria
+
+        if isinstance(
+            geometria.get(
+                "adaptativa"
+            ),
+            dict,
+        ):
+            return geometria
+
+        area = (
+            self.obtener_area_pantalla_portable(
+                usar_area_trabajo=True,
+            )
+        )
+
+        if not area:
+            return geometria
+
+        try:
+            ancho_area = max(
+                1,
+                int(
+                    area[
+                        "ancho"
+                    ]
+                ),
+            )
+
+            alto_area = max(
+                1,
+                int(
+                    area[
+                        "alto"
+                    ]
+                ),
+            )
+
+            geometria[
+                "adaptativa"
+            ] = {
+                "area_origen": dict(
+                    area
+                ),
+                "x_rel": (
+                    int(
+                        geometria.get(
+                            "x",
+                            0,
+                        )
+                    )
+                    - int(
+                        area[
+                            "x"
+                        ]
+                    )
+                )
+                / ancho_area,
+                "y_rel": (
+                    int(
+                        geometria.get(
+                            "y",
+                            0,
+                        )
+                    )
+                    - int(
+                        area[
+                            "y"
+                        ]
+                    )
+                )
+                / alto_area,
+                "ancho_rel": (
+                    max(
+                        1,
+                        int(
+                            geometria.get(
+                                "ancho",
+                                1,
+                            )
+                        ),
+                    )
+                    / ancho_area
+                ),
+                "alto_rel": (
+                    max(
+                        1,
+                        int(
+                            geometria.get(
+                                "alto",
+                                1,
+                            )
+                        ),
+                    )
+                    / alto_area
+                ),
+            }
+
+        except Exception:
+            pass
+
+        return geometria
+
+    def resolver_geometria_portable(
+        self,
+        geometria,
+    ):
+        geometria = (
+            geometria
+            or {}
+        )
+
+        resultado = dict(
+            geometria
+        )
+
+        adaptativa = (
+            geometria.get(
+                "adaptativa"
+            )
+            or {}
+        )
+
+        origen = (
+            adaptativa.get(
+                "area_origen"
+            )
+            or {}
+        )
+
+        if (
+            not adaptativa
+            or not origen
+        ):
+            return resultado
+
+        actual = (
+            self.obtener_area_pantalla_portable(
+                usar_area_trabajo=True,
+            )
+        )
+
+        if not actual:
+            return resultado
+
+        try:
+            mismo_entorno = (
+                int(
+                    origen.get(
+                        "x",
+                        0,
+                    )
+                )
+                == int(
+                    actual.get(
+                        "x",
+                        0,
+                    )
+                )
+                and int(
+                    origen.get(
+                        "y",
+                        0,
+                    )
+                )
+                == int(
+                    actual.get(
+                        "y",
+                        0,
+                    )
+                )
+                and int(
+                    origen.get(
+                        "ancho",
+                        0,
+                    )
+                )
+                == int(
+                    actual.get(
+                        "ancho",
+                        0,
+                    )
+                )
+                and int(
+                    origen.get(
+                        "alto",
+                        0,
+                    )
+                )
+                == int(
+                    actual.get(
+                        "alto",
+                        0,
+                    )
+                )
+            )
+
+            # Mismo entorno:
+            # conservar los píxeles exactos originales.
+            if mismo_entorno:
+                return resultado
+
+            resultado[
+                "x"
+            ] = int(
+                round(
+                    int(
+                        actual[
+                            "x"
+                        ]
+                    )
+                    + float(
+                        adaptativa.get(
+                            "x_rel",
+                            0.0,
+                        )
+                    )
+                    * int(
+                        actual[
+                            "ancho"
+                        ]
+                    )
+                )
+            )
+
+            resultado[
+                "y"
+            ] = int(
+                round(
+                    int(
+                        actual[
+                            "y"
+                        ]
+                    )
+                    + float(
+                        adaptativa.get(
+                            "y_rel",
+                            0.0,
+                        )
+                    )
+                    * int(
+                        actual[
+                            "alto"
+                        ]
+                    )
+                )
+            )
+
+            resultado[
+                "ancho"
+            ] = max(
+                1,
+                int(
+                    round(
+                        float(
+                            adaptativa.get(
+                                "ancho_rel",
+                                1.0,
+                            )
+                        )
+                        * int(
+                            actual[
+                                "ancho"
+                            ]
+                        )
+                    )
+                ),
+            )
+
+            resultado[
+                "alto"
+            ] = max(
+                1,
+                int(
+                    round(
+                        float(
+                            adaptativa.get(
+                                "alto_rel",
+                                1.0,
+                            )
+                        )
+                        * int(
+                            actual[
+                                "alto"
+                            ]
+                        )
+                    )
+                ),
+            )
+
+        except Exception:
+            return dict(
+                geometria
+            )
+
+        return resultado
+
+    def enriquecer_accion_coordenadas_portables(
+        self,
+        accion,
+        contexto=None,
+    ):
+        if not isinstance(
+            accion,
+            dict,
+        ):
+            return accion
+
+        if isinstance(
+            accion.get(
+                "coordenadas_portables"
+            ),
+            dict,
+        ):
+            return accion
+
+        pantalla = (
+            self.obtener_area_pantalla_portable(
+                usar_area_trabajo=False,
+            )
+        )
+
+        if not pantalla:
+            return accion
+
+        geometria_ventana = (
+            (contexto or {}).get(
+                "geometria"
+            )
+            or {}
+        )
+
+        puntos = {}
+
+        for (
+            nombre,
+            clave_x,
+            clave_y,
+        ) in (
+            (
+                "principal",
+                "x",
+                "y",
+            ),
+            (
+                "inicio",
+                "x_inicio",
+                "y_inicio",
+            ),
+            (
+                "fin",
+                "x_fin",
+                "y_fin",
+            ),
+        ):
+            if (
+                accion.get(
+                    clave_x
+                )
+                is None
+                or accion.get(
+                    clave_y
+                )
+                is None
+            ):
+                continue
+
+            try:
+                x = int(
+                    accion.get(
+                        clave_x
+                    )
+                )
+
+                y = int(
+                    accion.get(
+                        clave_y
+                    )
+                )
+
+                punto = {
+                    "x_rel_pantalla": (
+                        x
+                        - int(
+                            pantalla[
+                                "x"
+                            ]
+                        )
+                    )
+                    / max(
+                        1,
+                        int(
+                            pantalla[
+                                "ancho"
+                            ]
+                        ),
+                    ),
+                    "y_rel_pantalla": (
+                        y
+                        - int(
+                            pantalla[
+                                "y"
+                            ]
+                        )
+                    )
+                    / max(
+                        1,
+                        int(
+                            pantalla[
+                                "alto"
+                            ]
+                        ),
+                    ),
+                }
+
+                if geometria_ventana:
+                    gx = int(
+                        geometria_ventana.get(
+                            "x",
+                            0,
+                        )
+                    )
+
+                    gy = int(
+                        geometria_ventana.get(
+                            "y",
+                            0,
+                        )
+                    )
+
+                    ga = max(
+                        1,
+                        int(
+                            geometria_ventana.get(
+                                "ancho",
+                                1,
+                            )
+                        ),
+                    )
+
+                    gh = max(
+                        1,
+                        int(
+                            geometria_ventana.get(
+                                "alto",
+                                1,
+                            )
+                        ),
+                    )
+
+                    if (
+                        gx
+                        <= x
+                        <= gx + ga
+                        and gy
+                        <= y
+                        <= gy + gh
+                    ):
+                        punto[
+                            "ventana"
+                        ] = {
+                            "x_rel": (
+                                x - gx
+                            )
+                            / ga,
+                            "y_rel": (
+                                y - gy
+                            )
+                            / gh,
+                        }
+
+                puntos[
+                    nombre
+                ] = punto
+
+            except Exception:
+                continue
+
+        if puntos:
+            accion[
+                "coordenadas_portables"
+            ] = {
+                "pantalla_origen": dict(
+                    pantalla
+                ),
+                "puntos": puntos,
+            }
+
+        return accion
+
+    def resolver_punto_accion_portable(
+        self,
+        accion,
+        nombre="principal",
+        contexto=None,
+    ):
+        mapa_claves = {
+            "principal": (
+                "x",
+                "y",
+            ),
+            "inicio": (
+                "x_inicio",
+                "y_inicio",
+            ),
+            "fin": (
+                "x_fin",
+                "y_fin",
+            ),
+        }
+
+        clave_x, clave_y = (
+            mapa_claves.get(
+                nombre,
+                (
+                    "x",
+                    "y",
+                ),
+            )
+        )
+
+        try:
+            original = (
+                int(
+                    accion.get(
+                        clave_x
+                    )
+                ),
+                int(
+                    accion.get(
+                        clave_y
+                    )
+                ),
+            )
+
+        except Exception:
+            return None
+
+        portable = (
+            accion.get(
+                "coordenadas_portables"
+            )
+            or {}
+        )
+
+        origen = (
+            portable.get(
+                "pantalla_origen"
+            )
+            or {}
+        )
+
+        punto = (
+            (
+                portable.get(
+                    "puntos"
+                )
+                or {}
+            ).get(
+                nombre
+            )
+            or {}
+        )
+
+        if (
+            not origen
+            or not punto
+        ):
+            return original
+
+        actual = (
+            self.obtener_area_pantalla_portable(
+                usar_area_trabajo=False,
+            )
+        )
+
+        if not actual:
+            return original
+
+        try:
+            mismo_entorno = (
+                int(
+                    origen.get(
+                        "x",
+                        0,
+                    )
+                )
+                == int(
+                    actual.get(
+                        "x",
+                        0,
+                    )
+                )
+                and int(
+                    origen.get(
+                        "y",
+                        0,
+                    )
+                )
+                == int(
+                    actual.get(
+                        "y",
+                        0,
+                    )
+                )
+                and int(
+                    origen.get(
+                        "ancho",
+                        0,
+                    )
+                )
+                == int(
+                    actual.get(
+                        "ancho",
+                        0,
+                    )
+                )
+                and int(
+                    origen.get(
+                        "alto",
+                        0,
+                    )
+                )
+                == int(
+                    actual.get(
+                        "alto",
+                        0,
+                    )
+                )
+            )
+
+            # No cambiamos absolutamente nada
+            # cuando la pantalla es la misma.
+            if mismo_entorno:
+                return original
+
+            relativo_ventana = (
+                punto.get(
+                    "ventana"
+                )
+                or {}
+            )
+
+            geometria = (
+                (contexto or {}).get(
+                    "geometria"
+                )
+                or {}
+            )
+
+            # Preferencia:
+            # posición relativa dentro de la ventana.
+            if (
+                relativo_ventana
+                and geometria
+            ):
+                geo_actual = (
+                    self.resolver_geometria_portable(
+                        geometria
+                    )
+                )
+
+                return (
+                    int(
+                        round(
+                            int(
+                                geo_actual.get(
+                                    "x",
+                                    0,
+                                )
+                            )
+                            + float(
+                                relativo_ventana.get(
+                                    "x_rel",
+                                    0.0,
+                                )
+                            )
+                            * max(
+                                1,
+                                int(
+                                    geo_actual.get(
+                                        "ancho",
+                                        1,
+                                    )
+                                ),
+                            )
+                        )
+                    ),
+                    int(
+                        round(
+                            int(
+                                geo_actual.get(
+                                    "y",
+                                    0,
+                                )
+                            )
+                            + float(
+                                relativo_ventana.get(
+                                    "y_rel",
+                                    0.0,
+                                )
+                            )
+                            * max(
+                                1,
+                                int(
+                                    geo_actual.get(
+                                        "alto",
+                                        1,
+                                    )
+                                ),
+                            )
+                        )
+                    ),
+                )
+
+            # Fallback:
+            # posición proporcional en la pantalla.
+            return (
+                int(
+                    round(
+                        int(
+                            actual[
+                                "x"
+                            ]
+                        )
+                        + float(
+                            punto.get(
+                                "x_rel_pantalla",
+                                0.0,
+                            )
+                        )
+                        * int(
+                            actual[
+                                "ancho"
+                            ]
+                        )
+                    )
+                ),
+                int(
+                    round(
+                        int(
+                            actual[
+                                "y"
+                            ]
+                        )
+                        + float(
+                            punto.get(
+                                "y_rel_pantalla",
+                                0.0,
+                            )
+                        )
+                        * int(
+                            actual[
+                                "alto"
+                            ]
+                        )
+                    )
+                ),
+            )
+
+        except Exception:
+            return original
+
+    # ========================================================
     # TRAER BIN AL PRIMER PLANO
     # ========================================================
 
@@ -34475,9 +35535,18 @@ class BIN(QMainWindow):
             if enriquecer:
                 return self.enriquecer_contexto_operativo(contexto)
 
-            geometria = self.obtener_geometria_ventana(hwnd)
+            geometria = self.obtener_geometria_ventana(
+                hwnd
+            )
+
             if geometria:
-                contexto["geometria"] = geometria
+                contexto[
+                    "geometria"
+                ] = (
+                    self.enriquecer_geometria_portable(
+                        geometria
+                    )
+                )
 
             return contexto
 
