@@ -9,6 +9,7 @@
     "whatsapp_web_cuenta_chrome": "jvilla10@outlook.es",
     "notificar_falla_en": "Ninguna",
     "notificar_exito_en": "Ninguna",
+    "espera_limpieza_ventanas_segundos": 5,
     "despertar_pc_automaticamente": false,
     "anticipacion_despertar_minutos": 15,
     "sesion_sin_contrasena_confirmada": false

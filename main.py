@@ -8,7 +8,7 @@
 
 #4) Evalua la opción para hacer los clics he interacciónes (Como cambios de ventana, entre otros) invisibles ante la ejecución de tareas, ya que tengo el precentimiendo, que las acciónes guardadas, tambien se están haciendo sobre la interfaz de BIN. Evalua si esto tambien afectaria el clic del usuario, y de ser así, entonces haremos invisible los clics, menos el boton de frenar acción. (ESTA NO SE HARÁ)
 
-#5) Organicé mi mesa de trabajo en modo manual (Escribiendo comando por comando), Una ventana a la izquierda 50% width 100% height, y otras 2 a la derecha, 50% width y height, una arriba y otra abajo. Al momento de ejecutar, las organizó inicialmente Bien, pero dejó un espacio entre la ventana de la izquierda, y las ventanas de la derecha, Luego intentó corregirlo, anexando más ventanas, he intentnado acomodarla segun la memoria. PEro al final dió error. No me molesta los protocolos de corrección, Lo que me molesta son los espacios del centro, ya que en otras acciónes y otras ejecuciónes tambien deja espacios. Yo creo que es por lo del margen de error de 8px, evaluemoslo u corrijamoslo. 
+#5) Organicé mi mesa de trabajo en modo manual (Escribiendo comando por comando), Una ventana a la izquierda 50% width 100% height, y otras 2 a la derecha, 50% width y height, una arriba y otra abajo. Al momento de ejecutar, las organizó inicialmente Bien, pero dejó un espacio entre la ventana de la izquierda, y las ventanas de la derecha, Luego intentó corregirlo, anexando más ventanas, he intentnado acomodarla segun la memoria. PEro al final dió error. No me molesta los protocolos de corrección, Lo que me molesta son los espacios del centro, ya que en otras acciónes y otras ejecuciónes tambien deja espacios. Yo creo que es por lo del margen de error de 8px, evaluemoslo u corrijamoslo.  (CORREGIDO)
 
 #6) En las pruebas, probé un comando de imprimir pantalla, Pero no lo ejecutó. yo estoy seguro que comandos similares, tampoco están funcionando. Evalualo y corrijamoslo. (CORREGIDO)
 
@@ -18,7 +18,6 @@
 
 #Eso son todos los errores que encontré en la prueba
 #============================================================================================
-
 
 import sys
 import json
@@ -15113,6 +15112,210 @@ class BIN(QMainWindow):
         except Exception:
             return None
 
+    def obtener_geometria_visible_ventana(
+        self,
+        hwnd,
+    ):
+        if sys.platform != "win32" or not hwnd:
+            return None
+
+        try:
+            user32 = ctypes.windll.user32
+            dwmapi = ctypes.windll.dwmapi
+
+            rect = wintypes.RECT()
+
+            resultado = dwmapi.DwmGetWindowAttribute(
+                wintypes.HWND(
+                    int(hwnd)
+                ),
+                9,
+                ctypes.byref(
+                    rect
+                ),
+                ctypes.sizeof(
+                    rect
+                ),
+            )
+
+            if int(resultado) == 0:
+                ancho = int(
+                    rect.right
+                    - rect.left
+                )
+
+                alto = int(
+                    rect.bottom
+                    - rect.top
+                )
+
+                if ancho > 0 and alto > 0:
+                    return {
+                        "x": int(
+                            rect.left
+                        ),
+                        "y": int(
+                            rect.top
+                        ),
+                        "ancho": ancho,
+                        "alto": alto,
+                        "maximizada": bool(
+                            user32.IsZoomed(
+                                int(hwnd)
+                            )
+                        ),
+                        "minimizada": bool(
+                            user32.IsIconic(
+                                int(hwnd)
+                            )
+                        ),
+                    }
+
+        except Exception:
+            pass
+
+        return self.obtener_geometria_ventana(
+            hwnd
+        )
+
+    def convertir_geometria_visible_a_rect_ventana(
+        self,
+        hwnd,
+        geometria_visible,
+    ):
+        destino = dict(
+            geometria_visible
+            or {}
+        )
+
+        if not destino:
+            return destino
+
+        rect_ventana = (
+            self.obtener_geometria_ventana(
+                hwnd
+            )
+        )
+
+        rect_visible = (
+            self.obtener_geometria_visible_ventana(
+                hwnd
+            )
+        )
+
+        if (
+            not rect_ventana
+            or not rect_visible
+        ):
+            return destino
+
+        izquierda = (
+            int(
+                rect_visible["x"]
+            )
+            - int(
+                rect_ventana["x"]
+            )
+        )
+
+        arriba = (
+            int(
+                rect_visible["y"]
+            )
+            - int(
+                rect_ventana["y"]
+            )
+        )
+
+        derecha = (
+            int(
+                rect_ventana["x"]
+            )
+            + int(
+                rect_ventana["ancho"]
+            )
+            - int(
+                rect_visible["x"]
+            )
+            - int(
+                rect_visible["ancho"]
+            )
+        )
+
+        abajo = (
+            int(
+                rect_ventana["y"]
+            )
+            + int(
+                rect_ventana["alto"]
+            )
+            - int(
+                rect_visible["y"]
+            )
+            - int(
+                rect_visible["alto"]
+            )
+        )
+
+        if any(
+            abs(
+                int(valor)
+            ) > 64
+            for valor in (
+                izquierda,
+                arriba,
+                derecha,
+                abajo,
+            )
+        ):
+            return destino
+
+        destino["x"] = (
+            int(
+                geometria_visible.get(
+                    "x",
+                    0,
+                )
+            )
+            - izquierda
+        )
+
+        destino["y"] = (
+            int(
+                geometria_visible.get(
+                    "y",
+                    0,
+                )
+            )
+            - arriba
+        )
+
+        destino["ancho"] = max(
+            1,
+            int(
+                geometria_visible.get(
+                    "ancho",
+                    1,
+                )
+            )
+            + izquierda
+            + derecha,
+        )
+
+        destino["alto"] = max(
+            1,
+            int(
+                geometria_visible.get(
+                    "alto",
+                    1,
+                )
+            )
+            + arriba
+            + abajo,
+        )
+
+        return destino
+
     def _powershell_bin(self, script, timeout=2.5):
         if sys.platform != "win32":
             return None
@@ -17132,33 +17335,106 @@ class BIN(QMainWindow):
             else None
         )
     
-    def geometria_contextos_coincide(self, esperado, actual, tolerancia=8):
-        geo_e = esperado.get("geometria") or {}
-        if not geo_e:
+    def geometria_contextos_coincide(
+        self,
+        esperado,
+        actual,
+        tolerancia=8,
+    ):
+        geo_esperada = (
+            esperado.get(
+                "geometria"
+            )
+            or {}
+        )
+
+        if not geo_esperada:
             return True
 
-        geo_a = actual.get("geometria") or {}
-        if not geo_a:
+        geo_actual = (
+            actual.get(
+                "geometria"
+            )
+            or {}
+        )
+
+        if not geo_actual:
             return False
 
-        if bool(geo_e.get("maximizada")) != bool(geo_a.get("maximizada")):
+        # ================================================
+        # ESTADO DE VENTANA
+        # ================================================
+
+        if bool(
+            geo_esperada.get(
+                "maximizada"
+            )
+        ) != bool(
+            geo_actual.get(
+                "maximizada"
+            )
+        ):
             return False
-        if bool(geo_e.get("minimizada")) != bool(geo_a.get("minimizada")):
+
+        if bool(
+            geo_esperada.get(
+                "minimizada"
+            )
+        ) != bool(
+            geo_actual.get(
+                "minimizada"
+            )
+        ):
             return False
-        if geo_e.get("maximizada"):
+
+        # Una ventana maximizada depende del área de trabajo
+        # de Windows, no de X/Y/ancho/alto manuales.
+        if geo_esperada.get(
+            "maximizada"
+        ):
             return True
 
-        for clave in ("x", "y", "ancho", "alto"):
-            if clave not in geo_e:
+        # ================================================
+        # POSICIÓN Y TAMAÑO
+        # ================================================
+
+        for clave in (
+            "x",
+            "y",
+            "ancho",
+            "alto",
+        ):
+            if clave not in geo_esperada:
                 continue
+
             try:
-                if abs(int(geo_e[clave]) - int(geo_a.get(clave))) > int(tolerancia):
-                    return False
+                esperado_valor = int(
+                    geo_esperada[
+                        clave
+                    ]
+                )
+
+                actual_valor = int(
+                    geo_actual.get(
+                        clave
+                    )
+                )
+
             except Exception:
                 return False
 
-        return True
+            diferencia = abs(
+                esperado_valor
+                - actual_valor
+            )
 
+            if diferencia > int(
+                tolerancia
+            ):
+                return False
+
+        return True
+    
     def aprender_identidad_web_manual(
         self,
         esperado,
@@ -18047,45 +18323,124 @@ class BIN(QMainWindow):
             ),
         }
     
-    def aplicar_geometria_contexto(self, hwnd, esperado):
+    def aplicar_geometria_contexto(
+        self,
+        hwnd,
+        esperado,
+    ):
         if sys.platform != "win32" or not hwnd:
             return False
 
-        geometria = esperado.get("geometria") or {}
+        geometria = (
+            esperado.get(
+                "geometria"
+            )
+            or {}
+        )
+
         if not geometria:
             return True
 
         try:
             user32 = ctypes.windll.user32
-            hwnd = int(hwnd)
 
-            if geometria.get("minimizada"):
-                user32.ShowWindow(hwnd, 6)
+            hwnd = int(
+                hwnd
+            )
+
+            # ================================================
+            # MINIMIZADA
+            # ================================================
+
+            if geometria.get(
+                "minimizada"
+            ):
+                user32.ShowWindow(
+                    hwnd,
+                    6,
+                )
+
                 return True
 
-            if geometria.get("maximizada"):
-                user32.ShowWindow(hwnd, 3)
+            # ================================================
+            # MAXIMIZADA
+            # ================================================
+
+            if geometria.get(
+                "maximizada"
+            ):
+                user32.ShowWindow(
+                    hwnd,
+                    3,
+                )
+
                 QApplication.processEvents()
+
                 return True
 
-            user32.ShowWindow(hwnd, 9)
+            # ================================================
+            # VENTANA NORMAL
+            #
+            # Los valores que escribió el usuario son
+            # autoritativos.
+            #
+            # No los convertimos a otro sistema de
+            # coordenadas.
+            # ================================================
+
+            user32.ShowWindow(
+                hwnd,
+                9,
+            )
+
+            QApplication.processEvents()
 
             correcto = bool(
                 user32.SetWindowPos(
                     hwnd,
                     0,
-                    int(geometria.get("x", 0)),
-                    int(geometria.get("y", 0)),
-                    max(1, int(geometria.get("ancho", 1))),
-                    max(1, int(geometria.get("alto", 1))),
-                    SWP_NOZORDER | SWP_NOACTIVATE,
+                    int(
+                        geometria.get(
+                            "x",
+                            0,
+                        )
+                    ),
+                    int(
+                        geometria.get(
+                            "y",
+                            0,
+                        )
+                    ),
+                    max(
+                        1,
+                        int(
+                            geometria.get(
+                                "ancho",
+                                1,
+                            )
+                        ),
+                    ),
+                    max(
+                        1,
+                        int(
+                            geometria.get(
+                                "alto",
+                                1,
+                            )
+                        ),
+                    ),
+                    SWP_NOZORDER
+                    | SWP_NOACTIVATE,
                 )
             )
+
             QApplication.processEvents()
+
             return correcto
+
         except Exception:
             return False
-
+              
     def activar_hwnd_operativo(self, hwnd):
         if sys.platform != "win32" or not hwnd:
             return False
@@ -19355,6 +19710,34 @@ class BIN(QMainWindow):
             or ""
         ).strip()
 
+        es_web_manual_chromium = (
+            tipo == "web"
+            and bool(
+                esperado.get(
+                    "contexto_manual"
+                )
+            )
+            and proceso.strip().lower()
+            in {
+                "chrome.exe",
+                "msedge.exe",
+                "brave.exe",
+                "opera.exe",
+            }
+        )
+
+        if (
+            es_web_manual_chromium
+            and not url
+        ):
+            return {
+                "ok": False,
+                "detalle": (
+                    "El comando web manual no tiene "
+                    "una URL válida para abrir."
+                ),
+            }
+
         # ====================================================
         # RESOLVER CUENTA → PERFIL DEL NAVEGADOR
         # ====================================================
@@ -19485,6 +19868,30 @@ class BIN(QMainWindow):
                     ),
                 )
 
+            elif es_web_manual_chromium:
+                self.registrar_evento_bin(
+                    "ERROR",
+                    (
+                        "No pude resolver la cuenta manual "
+                        "a un perfil local del navegador."
+                    ),
+                    (
+                        f"Navegador: {proceso or '--'}\n"
+                        f"Cuenta: {cuenta}\n"
+                        f"URL: {url or '--'}"
+                    ),
+                )
+
+                return {
+                    "ok": False,
+                    "detalle": (
+                        "La cuenta configurada no pudo "
+                        "relacionarse con un perfil local "
+                        "del navegador. No abriré una "
+                        "ventana con una cuenta dudosa."
+                    ),
+                }
+
             elif not perfil:
                 self.registrar_evento_bin(
                     "ANALIZA",
@@ -19500,15 +19907,101 @@ class BIN(QMainWindow):
                     ),
                 )
 
+        if (
+            es_web_manual_chromium
+            and perfil
+        ):
+            esperado[
+                "perfil_navegador"
+            ] = perfil
+
         if tipo == "web" and url:
             binario = self.resolver_ruta_aplicacion_windows(
                 proceso,
                 ejecutable,
             )
-            comando = [binario or proceso]
+
+            comando = [
+                binario
+                or proceso
+            ]
+
             if perfil:
-                comando.append("--profile-directory=" + perfil)
-            comando.extend(["--new-window", url])
+                comando.append(
+                    "--profile-directory="
+                    + perfil
+                )
+
+            if es_web_manual_chromium:
+                geometria = (
+                    esperado.get(
+                        "geometria"
+                    )
+                    or {}
+                )
+
+                if geometria.get(
+                    "maximizada"
+                ):
+                    comando.append(
+                        "--start-maximized"
+                    )
+
+                elif not geometria.get(
+                    "minimizada"
+                ):
+                    x = int(
+                        geometria.get(
+                            "x",
+                            0,
+                        )
+                        or 0
+                    )
+
+                    y = int(
+                        geometria.get(
+                            "y",
+                            0,
+                        )
+                        or 0
+                    )
+
+                    ancho = max(
+                        1,
+                        int(
+                            geometria.get(
+                                "ancho",
+                                1200,
+                            )
+                            or 1200
+                        ),
+                    )
+
+                    alto = max(
+                        1,
+                        int(
+                            geometria.get(
+                                "alto",
+                                800,
+                            )
+                            or 800
+                        ),
+                    )
+
+                    comando.append(
+                        f"--window-position={x},{y}"
+                    )
+
+                    comando.append(
+                        f"--window-size={ancho},{alto}"
+                    )
+
+            comando.extend(
+                [
+                    "--new-window",
+                    url,
+                ]
+            )
 
             try:
                 if not comando[0]:
@@ -19899,6 +20392,112 @@ class BIN(QMainWindow):
         busqueda = self.buscar_ventana_estado_operativo(
             esperado
         )
+
+        # ====================================================
+        # GRACIA DE APERTURA DIRECTA WEB MANUAL
+        # ====================================================
+        #
+        # Una acción web manual acaba de lanzar explícitamente
+        # navegador + perfil + URL + geometría.
+        #
+        # Durante unos segundos NO iniciamos barridos, rescates
+        # ni correcciones sobre otras ventanas. Primero damos
+        # tiempo a que aparezca exactamente la ventana pedida.
+        # ====================================================
+
+        es_web_manual = (
+            bool(
+                esperado.get(
+                    "contexto_manual"
+                )
+            )
+            and str(
+                esperado.get(
+                    "tipo_recurso",
+                    "",
+                )
+                or ""
+            ).strip().lower()
+            == "web"
+            and self.es_navegador_proceso(
+                esperado.get(
+                    "proceso",
+                    "",
+                )
+            )
+        )
+
+        if es_web_manual:
+            cache_lanzamiento_directo = (
+                self._cache_operativo_bin(
+                    "manual_direct_launch"
+                )
+            )
+
+            clave_lanzamiento_directo = (
+                self.clave_correccion_contexto(
+                    esperado
+                )
+            )
+
+            try:
+                lanzamiento_en = float(
+                    cache_lanzamiento_directo.get(
+                        clave_lanzamiento_directo,
+                        0.0,
+                    )
+                    or 0.0
+                )
+            except Exception:
+                lanzamiento_en = 0.0
+
+            if lanzamiento_en:
+                transcurrido_lanzamiento = (
+                    time.monotonic()
+                    - lanzamiento_en
+                )
+
+                if busqueda.get(
+                    "ok"
+                ):
+                    cache_lanzamiento_directo.pop(
+                        clave_lanzamiento_directo,
+                        None,
+                    )
+
+                    self.intentos_supervisor = 0
+                    self.inicio_espera_supervisor_monotonic = (
+                        time.monotonic()
+                    )
+
+                elif transcurrido_lanzamiento < 12.0:
+                    return {
+                        "ok": False,
+                        "decision": "WAIT",
+                        "motivo": (
+                            "La ventana web manual fue lanzada "
+                            "directamente con su perfil. Espero "
+                            "a que Chrome exponga esa misma "
+                            "cuenta antes de iniciar correcciones."
+                        ),
+                        "contexto_actual": (
+                            busqueda.get(
+                                "contexto"
+                            )
+                        ),
+                    }
+
+                else:
+                    cache_lanzamiento_directo.pop(
+                        clave_lanzamiento_directo,
+                        None,
+                    )
+
+                    self.intentos_supervisor = 0
+                    self.espera_supervisor_acumulada_ms = 0
+                    self.inicio_espera_supervisor_monotonic = (
+                        time.monotonic()
+                    )
 
         # ====================================================
         # ACCIÓN CORRECTIVA 1
@@ -23626,6 +24225,35 @@ class BIN(QMainWindow):
         # dejado Cuenta asociada vacia inicialmente.
         contexto_guardado = accion.get("contexto_despues") or {}
 
+        es_web_manual_directo = (
+            str(
+                contexto.get(
+                    "tipo_recurso",
+                    "",
+                )
+                or ""
+            ).strip().lower()
+            == "web"
+            and bool(
+                contexto.get(
+                    "contexto_manual"
+                )
+            )
+            and str(
+                contexto.get(
+                    "proceso",
+                    "",
+                )
+                or ""
+            ).strip().lower()
+            in {
+                "chrome.exe",
+                "msedge.exe",
+                "brave.exe",
+                "opera.exe",
+            }
+        )
+
         if str(contexto.get("tipo_recurso", "") or "").lower() == "web":
             if not contexto.get("cuenta_navegador"):
                 cuenta_aprendida = str(
@@ -23667,7 +24295,17 @@ class BIN(QMainWindow):
         # Antes de abrir una ventana nueva, comprobar si la ventana web
         # solicitada ya existe. Si coincide, reutilizamos el mismo HWND y
         # corregimos solo la geometria necesaria.
-        if str(contexto.get("tipo_recurso", "") or "").lower() == "web":
+        if (
+            str(
+                contexto.get(
+                    "tipo_recurso",
+                    "",
+                )
+                or ""
+            ).lower()
+            == "web"
+            and not es_web_manual_directo
+        ):
             existente = self.buscar_ventana_estado_operativo(
                 contexto
             )
@@ -23813,6 +24451,45 @@ class BIN(QMainWindow):
         if resultado.get("ok") and str(
             contexto_apertura.get("tipo_recurso", "") or ""
         ).lower() == "web":
+            perfil_lanzado = str(
+                contexto_apertura.get(
+                    "perfil_navegador",
+                    "",
+                )
+                or ""
+            ).strip()
+
+            if perfil_lanzado:
+                contexto[
+                    "perfil_navegador"
+                ] = perfil_lanzado
+
+                accion[
+                    "contexto_despues"
+                ] = json.loads(
+                    json.dumps(
+                        contexto,
+                        ensure_ascii=False,
+                    )
+                )
+
+            if es_web_manual_directo:
+                self._cache_operativo_bin(
+                    "web_rescue_state"
+                ).clear()
+
+                cache_lanzamiento_directo = (
+                    self._cache_operativo_bin(
+                        "manual_direct_launch"
+                    )
+                )
+
+                cache_lanzamiento_directo[
+                    self.clave_correccion_contexto(
+                        contexto
+                    )
+                ] = time.monotonic()
+
             cache_aperturas = self._cache_operativo_bin(
                 "correction_launch"
             )
@@ -28048,6 +28725,14 @@ class BIN(QMainWindow):
         self.rutina_en_borrador = False
 
         self.auditoria_error_rescates_por_paso = {}
+
+        self._cache_operativo_bin(
+            "web_rescue_state"
+        ).clear()
+
+        self._cache_operativo_bin(
+            "manual_direct_launch"
+        ).clear()
 
         repeticiones = self.obtener_repeticiones_tarea(tarea)
 
