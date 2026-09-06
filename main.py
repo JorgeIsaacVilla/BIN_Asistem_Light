@@ -1,4 +1,4 @@
-#v1.6.15
+#v1.6.16
 #============================================================================================
 #1) En el boton "+Añadir acción" en el modulo de Agregar comando clic, primero: simulo el clic. Cuando segundo: cuando preciono el boton de Crear comando ó Agregar acción, Me sale el popUp para decidir el tiempo que debe durar antes y despues del clic. Doy agregar, Y no lo agrega... (CORREGIDO)
 
@@ -15,6 +15,8 @@
 #7) Al finalizar las tareas por error, o por finalización exitosa, Si abre whatsapp y escribe el mensaje; pero, no lo envia, y en correo, sale se configuró el panel local. y no se pudo mandar por correo. Yo creo que es porque no tenía la opción de que si nó está instalado, abrirlo en web y una cuenta asociada donde esté abierta. // Me preocupa que mi correo es outlook, no gemail. así que tenemos que dar la opción para diferentes proveedores de correos.
 
 #8) al finalizar antes y despues, si cierra las ventanas. Pero en el caso de los documentos que requieren validación para guardar, o no guardar, frena el proceso de cerrado de ventanas. además hay que darle por defaul 5 segundos despues de cerrar las ventanas, y luego empezar a ejecutar la tarea. y me gustaria que ese tiempo de espera sea configurable en configuración. Así si el PC es más lento, entonces el usuario podrá estimar el tiempo, y aplicar el cambio. (En este punto no se me ocurre una solución para los guardados. Solo que los archivos sean guardados automaticamente en escritorio con el nombre y la hora de la tarea, pero no se me ocurre como.) (CORREGIDO - Pendiente por probar despues de compilación)
+
+#9) Esta versión de código, a partir de aquí, permite introducir texto en el entrenamiento en modo Manual-> desde "+Añadir acción".
 
 #Eso son todos los errores que encontré en la prueba
 #============================================================================================
@@ -110,10 +112,10 @@ VERDE_FLUORESCENTE = "#39ff14"
 
 MANUAL_BIN_LIGHT = """
 BIN IA ASISTEM — LIGHT
-V1.6.15
+V1.6.16
 
 ============================================================
-BIN IA ASISTEM — LIGHT v1.6.15
+BIN IA ASISTEM — LIGHT v1.6.16
 ============================================================
 
 BIN Light es una versión ligera de BIN orientada a la
@@ -187,7 +189,7 @@ python main.py
 IMPORTANTE — ESTA VERSIÓN NO UTILIZA IA LOCAL
 ============================================================
 
-BIN Light v1.6.15 no incorpora un modelo de inteligencia
+BIN Light v1.6.16 no incorpora un modelo de inteligencia
 artificial local.
 
 Las decisiones durante una automatización son realizadas por
@@ -512,6 +514,7 @@ de manera manual y después ejecuta o vuelve a grabar la rutina.
 Nunca utilices una demostración de BIN como método para
 almacenar o reproducir una contraseña.
 
+19. Se recomienda que dentro del proceso si el archivo requiere guardar cambios, Dentro de la demostración, y la instrucción manual, Se haga el guardado de los archivos manipulados por BIN. De esta manera evitaremos coliciones con el cerrado de ventana automatico de archivos que requieren guardados. Ya que como medida de protección de sus datos he información tratada, el software no hace acciones automaticas para este caso.
 
 ============================================================
 CONSIDERACIONES PARA AUTOMATIZACIONES WEB
@@ -562,7 +565,7 @@ BIN IA Asistem — Light
 
 Versión estable:
 
-v1.6.15
+v1.6.16
 
 
 ============================================================
@@ -1600,6 +1603,8 @@ class CommandLibraryDialog(QDialog):
         self.parametros_widgets = []
         self.modo_mouse_seleccionado = False
         self.modo_ventana_seleccionado = False
+        self.modo_texto_seleccionado = False
+        self.texto_manual_pendiente = ""
         self.modo_constructor_actual = "clic"
 
         self.listener_captura_coordenadas = None
@@ -1657,6 +1662,48 @@ class CommandLibraryDialog(QDialog):
                 + self.resumen_configuracion_ventana(configuracion)
                 + "\n\nPuedes modificar estas características. "
                   "Al guardar, se actualiza esta acción en tareas.json."
+            )
+
+            self.boton_agregar_accion.setEnabled(True)
+            return
+
+        # ====================================================
+        # ACCIÓN DE TEXTO
+        # ====================================================
+        if tipo == "escribir_texto":
+            self.texto_manual_pendiente = str(
+                accion.get(
+                    "texto",
+                    "",
+                )
+                or ""
+            )
+
+            self.modo_texto_seleccionado = True
+            self.modo_mouse_seleccionado = False
+            self.modo_ventana_seleccionado = False
+            self.usar_accion_original = False
+            self.comando_seleccionado = None
+
+            vista_previa = (
+                self.texto_manual_pendiente
+                .replace(
+                    "\n",
+                    " ↵ ",
+                )
+            )
+
+            if len(vista_previa) > 180:
+                vista_previa = (
+                    vista_previa[:177]
+                    + "..."
+                )
+
+            self.label_seleccionado.setText(
+                "ACCIÓN ACTUAL · TEXTO\n"
+                + vista_previa
+                + "\n\nPulsa AGREGAR TEXTO para modificarlo "
+                  "o GUARDAR CAMBIOS para conservarlo."
             )
 
             self.boton_agregar_accion.setEnabled(True)
@@ -2079,6 +2126,7 @@ class CommandLibraryDialog(QDialog):
 
         self.boton_modo_clic = QPushButton("AGREGAR COMANDO CLIC")
         self.boton_modo_ventana = QPushButton("AGREGAR COMANDO VENTANA")
+        self.boton_modo_texto = QPushButton("AGREGAR TEXTO")
 
         self.boton_modo_clic.setCheckable(True)
         self.boton_modo_ventana.setCheckable(True)
@@ -2089,9 +2137,13 @@ class CommandLibraryDialog(QDialog):
         self.boton_modo_ventana.clicked.connect(
             lambda: self.cambiar_modo_constructor("ventana")
         )
+        self.boton_modo_texto.clicked.connect(
+            self.iniciar_texto_manual
+        )
 
         selector_modo.addWidget(self.boton_modo_clic)
         selector_modo.addWidget(self.boton_modo_ventana)
+        selector_modo.addWidget(self.boton_modo_texto)
         constructor_layout.addLayout(selector_modo)
 
         self.stack_constructor = QStackedWidget()
@@ -2573,6 +2625,8 @@ class CommandLibraryDialog(QDialog):
         modo = "ventana" if str(modo).lower() == "ventana" else "clic"
         self.modo_constructor_actual = modo
 
+        self.modo_texto_seleccionado = False
+
         if hasattr(self, "stack_constructor"):
             self.stack_constructor.setCurrentIndex(1 if modo == "ventana" else 0)
 
@@ -3024,6 +3078,7 @@ class CommandLibraryDialog(QDialog):
 
         self.modo_ventana_seleccionado = True
         self.modo_mouse_seleccionado = False
+        self.modo_texto_seleccionado = False
         self.usar_accion_original = False
         self.comando_seleccionado = None
 
@@ -3987,6 +4042,65 @@ class CommandLibraryDialog(QDialog):
             )
 
     # ========================================================
+    # AGREGAR TEXTO MANUAL
+    # ========================================================
+
+    def iniciar_texto_manual(
+        self,
+    ):
+        texto, aceptado = (
+            QInputDialog.getMultiLineText(
+                self,
+                "Agregar texto",
+                (
+                    "Texto que BIN debe digitar en el "
+                    "campo enfocado:"
+                ),
+                self.texto_manual_pendiente,
+            )
+        )
+
+        if not aceptado:
+            return
+
+        if texto == "":
+            QMessageBox.warning(
+                self,
+                "Texto requerido",
+                "Escribe el texto que BIN debe digitar.",
+            )
+            return
+
+        self.texto_manual_pendiente = texto
+        self.modo_texto_seleccionado = True
+        self.modo_mouse_seleccionado = False
+        self.modo_ventana_seleccionado = False
+        self.usar_accion_original = False
+        self.comando_seleccionado = None
+
+        vista_previa = texto.replace(
+            "\n",
+            " ↵ ",
+        )
+
+        if len(vista_previa) > 180:
+            vista_previa = (
+                vista_previa[:177]
+                + "..."
+            )
+
+        self.label_seleccionado.setText(
+            "TEXTO SELECCIONADO\n"
+            + vista_previa
+        )
+
+        self.boton_agregar_accion.setEnabled(
+            True
+        )
+
+        self.agregar_accion()
+
+    # ========================================================
     # SELECCIONAR COMANDO
     # ========================================================
 
@@ -4006,6 +4120,7 @@ class CommandLibraryDialog(QDialog):
         self.comando_seleccionado = comando
         self.usar_accion_original = False
         self.modo_mouse_seleccionado = False
+        self.modo_texto_seleccionado = False
 
         if str(comando.get("tipo_comando", "") or "").lower() == "ventana":
             self.cambiar_modo_constructor("ventana")
@@ -4087,6 +4202,7 @@ class CommandLibraryDialog(QDialog):
 
         self.modo_mouse_seleccionado = True
         self.modo_ventana_seleccionado = False
+        self.modo_texto_seleccionado = False
         self.usar_accion_original = False
         self.comando_seleccionado = None
 
@@ -4294,6 +4410,7 @@ class CommandLibraryDialog(QDialog):
 
         usar_mouse = bool(self.modo_mouse_seleccionado)
         usar_ventana = bool(self.modo_ventana_seleccionado)
+        usar_texto = bool(self.modo_texto_seleccionado)
 
         mantener_original = (
             self.modo_edicion_accion
@@ -4306,6 +4423,7 @@ class CommandLibraryDialog(QDialog):
             and not mantener_original
             and not usar_mouse
             and not usar_ventana
+            and not usar_texto
         ):
             return
 
@@ -4344,7 +4462,27 @@ class CommandLibraryDialog(QDialog):
         # ====================================================
         # RESUMEN
         # ====================================================
-        if usar_ventana:
+        if usar_texto:
+            vista_previa = (
+                self.texto_manual_pendiente
+                .replace(
+                    "\n",
+                    " ↵ ",
+                )
+            )
+
+            if len(vista_previa) > 300:
+                vista_previa = (
+                    vista_previa[:297]
+                    + "..."
+                )
+
+            texto_resumen = (
+                "Texto manual\n\n"
+                + vista_previa
+            )
+
+        elif usar_ventana:
             nombre = (
                 comando.get("nombre", "Comando de ventana")
                 if comando_ventana_guardado
@@ -4449,6 +4587,87 @@ class CommandLibraryDialog(QDialog):
 
         antes_ms = int(espera_antes.value() * 1000)
         despues_ms = int(espera_despues.value() * 1000)
+
+        # ====================================================
+        # TEXTO MANUAL
+        # ====================================================
+        if usar_texto:
+            texto_manual = str(
+                self.texto_manual_pendiente
+                or ""
+            )
+
+            if texto_manual == "":
+                return
+
+            vista_descripcion = texto_manual.replace(
+                "\n",
+                " ↵ ",
+            )
+
+            if len(vista_descripcion) > 80:
+                vista_descripcion = (
+                    vista_descripcion[:77]
+                    + "..."
+                )
+
+            descripcion = (
+                "Texto · "
+                + vista_descripcion
+            )
+
+            if antes_ms > 0:
+                descripcion += (
+                    f" · antes {antes_ms / 1000:g}s"
+                )
+
+            if despues_ms > 0:
+                descripcion += (
+                    f" · después {despues_ms / 1000:g}s"
+                )
+
+            contexto_objetivo = None
+            contexto_despues = None
+
+            if (
+                self.modo_edicion_accion
+                and self.accion_editar
+            ):
+                contexto_objetivo = json.loads(
+                    json.dumps(
+                        self.accion_editar.get(
+                            "contexto_objetivo"
+                        ),
+                        ensure_ascii=False,
+                    )
+                )
+
+                contexto_despues = json.loads(
+                    json.dumps(
+                        self.accion_editar.get(
+                            "contexto_despues"
+                        ),
+                        ensure_ascii=False,
+                    )
+                )
+
+            self.accion_resultado = {
+                "tipo": "escribir_texto",
+                "origen": (
+                    "edicion_usuario"
+                    if self.modo_edicion_accion
+                    else "manual_texto"
+                ),
+                "descripcion": descripcion,
+                "texto": texto_manual,
+                "espera_antes_ms": antes_ms,
+                "espera_despues_ms": despues_ms,
+                "contexto_objetivo": contexto_objetivo,
+                "contexto_despues": contexto_despues,
+            }
+
+            self.accept()
+            return
 
         # ====================================================
         # COMANDO / ACCIÓN DE VENTANA
@@ -6133,7 +6352,7 @@ class BIN(QMainWindow):
         # ====================================================
 
         self.setWindowTitle(
-            "BIN IA Asistem — Light v1.6.15"
+            "BIN IA Asistem — Light v1.6.16"
         )
 
         self.ruta_icono_bin = (
@@ -9733,7 +9952,7 @@ class BIN(QMainWindow):
         )
 
         subtitulo = QLabel(
-            "LIGHT v1.6.15"
+            "LIGHT v1.6.16"
         )
 
         subtitulo.setObjectName(
@@ -37764,7 +37983,7 @@ if __name__ == "__main__":
         try:
 
             ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
-                "BIN.IA.Asistem.Light.v1.6.15"
+                "BIN.IA.Asistem.Light.v1.6.16"
             )
 
         except Exception:

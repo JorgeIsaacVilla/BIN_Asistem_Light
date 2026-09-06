@@ -290,6 +290,8 @@ Menos pasos significan menos puntos posibles de fallo.
 
 18. NO GRABES INICIOS DE SESIÓN, CONTRASEÑAS NI CÓDIGOS DE AUTENTICACIÓN. BIN Light registra acciones de teclado y no dispone actualmente de una bóveda segura de credenciales. Inicia sesión manualmente antes de grabar una rutina. Si una sesión expira, autentícate manualmente antes de volver a ejecutarla.
 
+19. Se recomienda que dentro del proceso si el archivo requiere guardar cambios, Dentro de la demostración, y la instrucción manual, Se haga el guardado de los archivos manipulados por BIN. De esta manera evitaremos coliciones con el cerrado de ventana automatico de archivos que requieren guardados. Ya que como medida de protección de sus datos he información tratada, el software no hace acciones automaticas para este caso.
+
 ============================================================
 CONSIDERACIONES PARA AUTOMATIZACIONES WEB
 ============================================================
