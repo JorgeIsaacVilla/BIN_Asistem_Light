@@ -187,7 +187,7 @@
         "ejecucion_real_fase": "inactiva",
         "elapsed_repeticion_real_ms": 0,
         "duracion_origen": "calculada_comandos",
-        "detalle_estado": "FINALIZADA\nÚltima ejecución: 06/09 15:34\nPróxima ejecución: Mañana · 05:40 · en 13 h 35 min",
+        "detalle_estado": "FINALIZADA\nÚltima ejecución: 06/09 15:34\nPróxima ejecución: Mañana · 05:40 · en 12 h 42 min",
         "last_skipped_run_key": "sched-20260906-0540",
         "supervisor_espera_acumulada_ms": 0,
         "supervisor_intentos": 0,
@@ -209,6 +209,2772 @@
         },
         "duracion_real_ultima_segundos": 36,
         "desfase_duracion_segundos": 9,
+        "contexto": ""
+    },
+    {
+        "id": 2,
+        "nombre": "dSasasd",
+        "hora": "05:13",
+        "veces": 1,
+        "intervalo_valor": 24,
+        "intervalo_unidad": "horas",
+        "dias": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+        ],
+        "duracion": "00:00:55",
+        "limpieza_ventanas": "Ninguna",
+        "estado": "ERROR",
+        "transcurrido": "00:00:27",
+        "progreso": 7,
+        "elapsed_seconds": 27,
+        "runtime_base_seconds": 0,
+        "runtime_started_at": null,
+        "current_run_key": "sched-20260906-0513",
+        "last_run_key": null,
+        "queued_at": null,
+        "completed_at": null,
+        "ultima_ejecucion": null,
+        "acciones": [
+            {
+                "id": 1,
+                "tipo": "abrir_aplicacion",
+                "origen": "compilacion_bin",
+                "descripcion": "Abrir aplicación · chrome",
+                "contexto_objetivo": null,
+                "contexto_despues": {
+                    "hwnd": 3279168,
+                    "pid": 23240,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 760,
+                        "y": 301,
+                        "ancho": 1040,
+                        "alto": 797,
+                        "maximizada": false,
+                        "minimizada": false,
+                        "adaptativa": {
+                            "area_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1400
+                            },
+                            "x_rel": 0.296875,
+                            "y_rel": 0.215,
+                            "ancho_rel": 0.40625,
+                            "alto_rel": 0.5692857142857143
+                        }
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "",
+                    "user_data_dir_navegador": "",
+                    "url_observable": false,
+                    "url_origen": ""
+                },
+                "capturado_en": "2026-09-06T16:49:28.367928",
+                "datos": {
+                    "consulta": "chrome",
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+                },
+                "compilada_por_bin": true,
+                "confianza": "alta",
+                "demostracion_original": {
+                    "id": 1,
+                    "tipo": "click",
+                    "origen": "grabacion_global",
+                    "descripcion": "Clic izquierdo · Barra de tareas\nX=161 · Y=1417",
+                    "contexto_objetivo": {
+                        "hwnd": 65800,
+                        "pid": 17652,
+                        "proceso": "explorer.exe",
+                        "ejecutable": "C:\\Windows\\explorer.exe",
+                        "titulo": "",
+                        "clase": "Shell_TrayWnd",
+                        "geometria": {
+                            "x": 0,
+                            "y": 1400,
+                            "ancho": 2560,
+                            "alto": 40,
+                            "maximizada": false,
+                            "minimizada": false,
+                            "adaptativa": {
+                                "area_origen": {
+                                    "x": 0,
+                                    "y": 0,
+                                    "ancho": 2560,
+                                    "alto": 1400
+                                },
+                                "x_rel": 0.0,
+                                "y_rel": 1.0,
+                                "ancho_rel": 1.0,
+                                "alto_rel": 0.02857142857142857
+                            }
+                        },
+                        "tipo_recurso": "windows",
+                        "localizador": "",
+                        "url": "",
+                        "ruta_recurso": "",
+                        "perfil_navegador": "",
+                        "cuenta_navegador": "",
+                        "cuenta_web_observada": "",
+                        "cuenta_navegador_origen": ""
+                    },
+                    "contexto_despues": {
+                        "hwnd": 3279168,
+                        "pid": 23240,
+                        "proceso": "chrome.exe",
+                        "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                        "titulo": "Google Chrome",
+                        "clase": "Chrome_WidgetWin_1",
+                        "geometria": {
+                            "x": 760,
+                            "y": 301,
+                            "ancho": 1040,
+                            "alto": 797,
+                            "maximizada": false,
+                            "minimizada": false,
+                            "adaptativa": {
+                                "area_origen": {
+                                    "x": 0,
+                                    "y": 0,
+                                    "ancho": 2560,
+                                    "alto": 1400
+                                },
+                                "x_rel": 0.296875,
+                                "y_rel": 0.215,
+                                "ancho_rel": 0.40625,
+                                "alto_rel": 0.5692857142857143
+                            }
+                        }
+                    },
+                    "capturado_en": "2026-09-06T16:49:28.367928",
+                    "boton": "izquierdo",
+                    "x": 161,
+                    "y": 1417,
+                    "coordenadas_portables": {
+                        "pantalla_origen": {
+                            "x": 0,
+                            "y": 0,
+                            "ancho": 2560,
+                            "alto": 1440
+                        },
+                        "puntos": {
+                            "principal": {
+                                "x_rel_pantalla": 0.062890625,
+                                "y_rel_pantalla": 0.9840277777777777,
+                                "ventana": {
+                                    "x_rel": 0.062890625,
+                                    "y_rel": 0.425
+                                }
+                            }
+                        }
+                    }
+                },
+                "fallback": {
+                    "id": 1,
+                    "tipo": "click",
+                    "origen": "grabacion_global",
+                    "descripcion": "Clic izquierdo · Barra de tareas\nX=161 · Y=1417",
+                    "contexto_objetivo": {
+                        "hwnd": 65800,
+                        "pid": 17652,
+                        "proceso": "explorer.exe",
+                        "ejecutable": "C:\\Windows\\explorer.exe",
+                        "titulo": "",
+                        "clase": "Shell_TrayWnd",
+                        "geometria": {
+                            "x": 0,
+                            "y": 1400,
+                            "ancho": 2560,
+                            "alto": 40,
+                            "maximizada": false,
+                            "minimizada": false,
+                            "adaptativa": {
+                                "area_origen": {
+                                    "x": 0,
+                                    "y": 0,
+                                    "ancho": 2560,
+                                    "alto": 1400
+                                },
+                                "x_rel": 0.0,
+                                "y_rel": 1.0,
+                                "ancho_rel": 1.0,
+                                "alto_rel": 0.02857142857142857
+                            }
+                        },
+                        "tipo_recurso": "windows",
+                        "localizador": "",
+                        "url": "",
+                        "ruta_recurso": "",
+                        "perfil_navegador": "",
+                        "cuenta_navegador": "",
+                        "cuenta_web_observada": "",
+                        "cuenta_navegador_origen": ""
+                    },
+                    "contexto_despues": {
+                        "hwnd": 3279168,
+                        "pid": 23240,
+                        "proceso": "chrome.exe",
+                        "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                        "titulo": "Google Chrome",
+                        "clase": "Chrome_WidgetWin_1",
+                        "geometria": {
+                            "x": 760,
+                            "y": 301,
+                            "ancho": 1040,
+                            "alto": 797,
+                            "maximizada": false,
+                            "minimizada": false,
+                            "adaptativa": {
+                                "area_origen": {
+                                    "x": 0,
+                                    "y": 0,
+                                    "ancho": 2560,
+                                    "alto": 1400
+                                },
+                                "x_rel": 0.296875,
+                                "y_rel": 0.215,
+                                "ancho_rel": 0.40625,
+                                "alto_rel": 0.5692857142857143
+                            }
+                        }
+                    },
+                    "capturado_en": "2026-09-06T16:49:28.367928",
+                    "boton": "izquierdo",
+                    "x": 161,
+                    "y": 1417,
+                    "coordenadas_portables": {
+                        "pantalla_origen": {
+                            "x": 0,
+                            "y": 0,
+                            "ancho": 2560,
+                            "alto": 1440
+                        },
+                        "puntos": {
+                            "principal": {
+                                "x_rel_pantalla": 0.062890625,
+                                "y_rel_pantalla": 0.9840277777777777,
+                                "ventana": {
+                                    "x_rel": 0.062890625,
+                                    "y_rel": 0.425
+                                }
+                            }
+                        }
+                    }
+                },
+                "ids_origen": [
+                    1
+                ]
+            },
+            {
+                "id": 2,
+                "tipo": "click",
+                "origen": "grabacion_global",
+                "descripcion": "Clic izquierdo · TextInputHost.exe · Microsoft Text Input Application\nX=183 · Y=887",
+                "contexto_objetivo": {
+                    "hwnd": 197478,
+                    "pid": 7212,
+                    "proceso": "TextInputHost.exe",
+                    "ejecutable": "C:\\Windows\\SystemApps\\MicrosoftWindows.Client.CBS_cw5n1h2txyewy\\TextInputHost.exe",
+                    "titulo": "Microsoft Text Input Application",
+                    "clase": "Windows.UI.Core.CoreWindow",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 2560,
+                        "alto": 1440,
+                        "maximizada": false,
+                        "minimizada": false,
+                        "adaptativa": {
+                            "area_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1400
+                            },
+                            "x_rel": 0.0,
+                            "y_rel": 0.0,
+                            "ancho_rel": 1.0,
+                            "alto_rel": 1.0285714285714285
+                        }
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Windows\\SystemApps\\MicrosoftWindows.Client.CBS_cw5n1h2txyewy\\TextInputHost.exe",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                },
+                "contexto_despues": {
+                    "hwnd": 2098978,
+                    "pid": 23240,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Nueva pestaña - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 520,
+                        "y": 46,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false,
+                        "adaptativa": {
+                            "area_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1400
+                            },
+                            "x_rel": 0.203125,
+                            "y_rel": 0.032857142857142856,
+                            "ancho_rel": 0.50546875,
+                            "alto_rel": 0.505
+                        }
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 35",
+                    "cuenta_navegador": "alfora.art@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": false,
+                    "url_origen": ""
+                },
+                "capturado_en": "2026-09-06T16:49:32.265145",
+                "boton": "izquierdo",
+                "x": 183,
+                "y": 887,
+                "coordenadas_portables": {
+                    "pantalla_origen": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 2560,
+                        "alto": 1440
+                    },
+                    "puntos": {
+                        "principal": {
+                            "x_rel_pantalla": 0.071484375,
+                            "y_rel_pantalla": 0.6159722222222223,
+                            "ventana": {
+                                "x_rel": 0.071484375,
+                                "y_rel": 0.6159722222222223
+                            }
+                        }
+                    }
+                },
+                "ids_origen": [
+                    2
+                ]
+            },
+            {
+                "id": 3,
+                "tipo": "click",
+                "origen": "grabacion_global",
+                "descripcion": "Clic izquierdo · Google Chrome · Nueva pestaña - Google Chrome\nX=1040 · Y=689",
+                "contexto_objetivo": {
+                    "hwnd": 2098978,
+                    "pid": 23240,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Nueva pestaña - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 520,
+                        "y": 46,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false,
+                        "adaptativa": {
+                            "area_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1400
+                            },
+                            "x_rel": 0.203125,
+                            "y_rel": 0.032857142857142856,
+                            "ancho_rel": 0.50546875,
+                            "alto_rel": 0.505
+                        }
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 35",
+                    "cuenta_navegador": "alfora.art@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": false,
+                    "url_origen": ""
+                },
+                "contexto_despues": {
+                    "hwnd": 2098978,
+                    "pid": 23240,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Nueva pestaña - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 520,
+                        "y": 46,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false,
+                        "adaptativa": {
+                            "area_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1400
+                            },
+                            "x_rel": 0.203125,
+                            "y_rel": 0.032857142857142856,
+                            "ancho_rel": 0.50546875,
+                            "alto_rel": 0.505
+                        }
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 35",
+                    "cuenta_navegador": "alfora.art@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": false,
+                    "url_origen": ""
+                },
+                "capturado_en": "2026-09-06T16:49:35.634897",
+                "boton": "izquierdo",
+                "x": 1040,
+                "y": 689,
+                "coordenadas_portables": {
+                    "pantalla_origen": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 2560,
+                        "alto": 1440
+                    },
+                    "puntos": {
+                        "principal": {
+                            "x_rel_pantalla": 0.40625,
+                            "y_rel_pantalla": 0.47847222222222224,
+                            "ventana": {
+                                "x_rel": 0.401854714064915,
+                                "y_rel": 0.9094766619519095
+                            }
+                        }
+                    }
+                },
+                "ids_origen": [
+                    3
+                ]
+            },
+            {
+                "id": 4,
+                "tipo": "click",
+                "origen": "grabacion_global",
+                "descripcion": "Clic izquierdo · Google Chrome · Alfora.art | Herramientas creativas online gratis - Google Chrome\nX=814 · Y=525",
+                "contexto_objetivo": {
+                    "hwnd": 2098978,
+                    "pid": 23240,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Alfora.art | Herramientas creativas online gratis - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 520,
+                        "y": 46,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false,
+                        "adaptativa": {
+                            "area_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1400
+                            },
+                            "x_rel": 0.203125,
+                            "y_rel": 0.032857142857142856,
+                            "ancho_rel": 0.50546875,
+                            "alto_rel": 0.505
+                        }
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 35",
+                    "cuenta_navegador": "alfora.art@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": false,
+                    "url_origen": ""
+                },
+                "contexto_despues": null,
+                "capturado_en": "2026-09-06T16:49:43.121615",
+                "boton": "izquierdo",
+                "x": 814,
+                "y": 525,
+                "coordenadas_portables": {
+                    "pantalla_origen": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 2560,
+                        "alto": 1440
+                    },
+                    "puntos": {
+                        "principal": {
+                            "x_rel_pantalla": 0.31796875,
+                            "y_rel_pantalla": 0.3645833333333333,
+                            "ventana": {
+                                "x_rel": 0.22720247295208656,
+                                "y_rel": 0.6775106082036775
+                            }
+                        }
+                    }
+                },
+                "ids_origen": [
+                    4
+                ]
+            },
+            {
+                "id": 5,
+                "tipo": "arrastrar",
+                "origen": "grabacion_global",
+                "descripcion": "Arrastrar y soltar\nDesde X=944 · Y=77\nHasta X=0 · Y=0",
+                "contexto_objetivo": {
+                    "hwnd": 2098978,
+                    "pid": 23240,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Nueva pestaña - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": -7,
+                        "y": 0,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false,
+                        "adaptativa": {
+                            "area_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1400
+                            },
+                            "x_rel": -0.002734375,
+                            "y_rel": 0.0,
+                            "ancho_rel": 0.50546875,
+                            "alto_rel": 0.505
+                        }
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 35",
+                    "cuenta_navegador": "alfora.art@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": false,
+                    "url_origen": ""
+                },
+                "contexto_despues": {
+                    "hwnd": 2098978,
+                    "pid": 23240,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Nueva pestaña - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": -7,
+                        "y": 0,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false,
+                        "adaptativa": {
+                            "area_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1400
+                            },
+                            "x_rel": -0.002734375,
+                            "y_rel": 0.0,
+                            "ancho_rel": 0.50546875,
+                            "alto_rel": 0.505
+                        }
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://linkedin.com/feed",
+                    "url": "https://linkedin.com/feed",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 35",
+                    "cuenta_navegador": "alfora.art@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "capturado_en": "2026-09-06T16:49:44.087005",
+                "boton": "izquierdo",
+                "x_inicio": 944,
+                "y_inicio": 77,
+                "x_fin": 0,
+                "y_fin": 0,
+                "duracion_ms": 875,
+                "coordenadas_portables": {
+                    "pantalla_origen": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 2560,
+                        "alto": 1440
+                    },
+                    "puntos": {
+                        "inicio": {
+                            "x_rel_pantalla": 0.36875,
+                            "y_rel_pantalla": 0.05347222222222222,
+                            "ventana": {
+                                "x_rel": 0.7349304482225657,
+                                "y_rel": 0.10891089108910891
+                            }
+                        },
+                        "fin": {
+                            "x_rel_pantalla": 0.0,
+                            "y_rel_pantalla": 0.0,
+                            "ventana": {
+                                "x_rel": 0.005409582689335394,
+                                "y_rel": 0.0
+                            }
+                        }
+                    }
+                },
+                "ids_origen": [
+                    5
+                ]
+            },
+            {
+                "id": 6,
+                "tipo": "click",
+                "origen": "grabacion_global",
+                "descripcion": "Clic izquierdo · Google Chrome · Nueva pestaña - Google Chrome\nX=279 · Y=18",
+                "contexto_objetivo": {
+                    "hwnd": 2098978,
+                    "pid": 23240,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Nueva pestaña - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": -7,
+                        "y": 0,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false,
+                        "adaptativa": {
+                            "area_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1400
+                            },
+                            "x_rel": -0.002734375,
+                            "y_rel": 0.0,
+                            "ancho_rel": 0.50546875,
+                            "alto_rel": 0.505
+                        }
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 35",
+                    "cuenta_navegador": "alfora.art@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": false,
+                    "url_origen": ""
+                },
+                "contexto_despues": {
+                    "hwnd": 2098978,
+                    "pid": 23240,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Feed | LinkedIn - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": -7,
+                        "y": 0,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false,
+                        "adaptativa": {
+                            "area_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1400
+                            },
+                            "x_rel": -0.002734375,
+                            "y_rel": 0.0,
+                            "ancho_rel": 0.50546875,
+                            "alto_rel": 0.505
+                        }
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://alfora.art",
+                    "url": "https://alfora.art",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 35",
+                    "cuenta_navegador": "alfora.art@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "capturado_en": "2026-09-06T16:49:46.533273",
+                "boton": "izquierdo",
+                "x": 279,
+                "y": 18,
+                "coordenadas_portables": {
+                    "pantalla_origen": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 2560,
+                        "alto": 1440
+                    },
+                    "puntos": {
+                        "principal": {
+                            "x_rel_pantalla": 0.108984375,
+                            "y_rel_pantalla": 0.0125,
+                            "ventana": {
+                                "x_rel": 0.22102009273570325,
+                                "y_rel": 0.02545968882602546
+                            }
+                        }
+                    }
+                },
+                "ids_origen": [
+                    6
+                ]
+            },
+            {
+                "id": 7,
+                "tipo": "click",
+                "origen": "grabacion_global",
+                "descripcion": "Clic izquierdo · Google Chrome · Nueva pestaña - Google Chrome\nX=517 · Y=476",
+                "contexto_objetivo": {
+                    "hwnd": 2098978,
+                    "pid": 23240,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Nueva pestaña - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": -7,
+                        "y": 0,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false,
+                        "adaptativa": {
+                            "area_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1400
+                            },
+                            "x_rel": -0.002734375,
+                            "y_rel": 0.0,
+                            "ancho_rel": 0.50546875,
+                            "alto_rel": 0.505
+                        }
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://linkedin.com/feed",
+                    "url": "https://linkedin.com/feed",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 35",
+                    "cuenta_navegador": "alfora.art@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": {
+                    "hwnd": 66082,
+                    "pid": 15440,
+                    "proceso": "SearchApp.exe",
+                    "ejecutable": "C:\\Windows\\SystemApps\\Microsoft.Windows.Search_cw5n1h2txyewy\\SearchApp.exe",
+                    "titulo": "Búsqueda",
+                    "clase": "Windows.UI.Core.CoreWindow",
+                    "geometria": {
+                        "x": 48,
+                        "y": 760,
+                        "ancho": 784,
+                        "alto": 680,
+                        "maximizada": false,
+                        "minimizada": false,
+                        "adaptativa": {
+                            "area_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1400
+                            },
+                            "x_rel": 0.01875,
+                            "y_rel": 0.5428571428571428,
+                            "ancho_rel": 0.30625,
+                            "alto_rel": 0.4857142857142857
+                        }
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Windows\\SystemApps\\Microsoft.Windows.Search_cw5n1h2txyewy\\SearchApp.exe",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                },
+                "capturado_en": "2026-09-06T16:49:48.711158",
+                "boton": "izquierdo",
+                "x": 517,
+                "y": 476,
+                "coordenadas_portables": {
+                    "pantalla_origen": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 2560,
+                        "alto": 1440
+                    },
+                    "puntos": {
+                        "principal": {
+                            "x_rel_pantalla": 0.201953125,
+                            "y_rel_pantalla": 0.33055555555555555,
+                            "ventana": {
+                                "x_rel": 0.40494590417310666,
+                                "y_rel": 0.6732673267326733
+                            }
+                        }
+                    }
+                },
+                "ids_origen": [
+                    7
+                ]
+            },
+            {
+                "id": 8,
+                "tipo": "arrastrar",
+                "origen": "grabacion_global",
+                "descripcion": "Arrastrar y soltar\nDesde X=374 · Y=27\nHasta X=0 · Y=1396",
+                "contexto_objetivo": {
+                    "hwnd": 2098978,
+                    "pid": 23240,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Alfora.art | Herramientas creativas online gratis - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": -7,
+                        "y": 0,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false,
+                        "adaptativa": {
+                            "area_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1400
+                            },
+                            "x_rel": -0.002734375,
+                            "y_rel": 0.0,
+                            "ancho_rel": 0.50546875,
+                            "alto_rel": 0.505
+                        }
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://alfora.art",
+                    "url": "https://alfora.art",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 35",
+                    "cuenta_navegador": "alfora.art@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": {
+                    "hwnd": 3409700,
+                    "pid": 23240,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Nueva pestaña - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 3,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false,
+                        "adaptativa": {
+                            "area_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1400
+                            },
+                            "x_rel": 0.001171875,
+                            "y_rel": 0.5071428571428571,
+                            "ancho_rel": 0.50546875,
+                            "alto_rel": 0.505
+                        }
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com?utm_source=google&utm_medium=paid_search&c_id=22619984056&c_agid=179769193386&c_crid=786677710529&c_kwid=kwd-1927227100722&c_ims=&c_pms=9212700&c_nw=g&c_dvc=c&gad_source=1&gad_campaignid=22619984056&gbraid=0AAAAA-I0E5eCL1f8s-6SEfbQrjGUsgQLF&gclid=Cj0KCQjwteTUBhD4ARIsAEYjs3qi5ARBJofs_7IZvwEIaHGhwYLzmLK_tM9ywPtneNM__MiV6lO4v0YaAujgEALw_wcB",
+                    "url": "https://chatgpt.com?utm_source=google&utm_medium=paid_search&c_id=22619984056&c_agid=179769193386&c_crid=786677710529&c_kwid=kwd-1927227100722&c_ims=&c_pms=9212700&c_nw=g&c_dvc=c&gad_source=1&gad_campaignid=22619984056&gbraid=0AAAAA-I0E5eCL1f8s-6SEfbQrjGUsgQLF&gclid=Cj0KCQjwteTUBhD4ARIsAEYjs3qi5ARBJofs_7IZvwEIaHGhwYLzmLK_tM9ywPtneNM__MiV6lO4v0YaAujgEALw_wcB",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 8",
+                    "cuenta_navegador": "enycosmic@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "capturado_en": "2026-09-06T16:49:58.454249",
+                "boton": "izquierdo",
+                "x_inicio": 374,
+                "y_inicio": 27,
+                "x_fin": 0,
+                "y_fin": 1396,
+                "duracion_ms": 2421,
+                "coordenadas_portables": {
+                    "pantalla_origen": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 2560,
+                        "alto": 1440
+                    },
+                    "puntos": {
+                        "inicio": {
+                            "x_rel_pantalla": 0.14609375,
+                            "y_rel_pantalla": 0.01875,
+                            "ventana": {
+                                "x_rel": 0.294435857805255,
+                                "y_rel": 0.03818953323903819
+                            }
+                        },
+                        "fin": {
+                            "x_rel_pantalla": 0.0,
+                            "y_rel_pantalla": 0.9694444444444444
+                        }
+                    }
+                },
+                "ids_origen": [
+                    8
+                ]
+            },
+            {
+                "id": 9,
+                "tipo": "click",
+                "origen": "grabacion_global",
+                "descripcion": "Clic izquierdo · Barra de tareas\nX=162 · Y=1426",
+                "contexto_objetivo": {
+                    "hwnd": 65800,
+                    "pid": 17652,
+                    "proceso": "explorer.exe",
+                    "ejecutable": "C:\\Windows\\explorer.exe",
+                    "titulo": "",
+                    "clase": "Shell_TrayWnd",
+                    "geometria": {
+                        "x": 0,
+                        "y": 1400,
+                        "ancho": 2560,
+                        "alto": 40,
+                        "maximizada": false,
+                        "minimizada": false,
+                        "adaptativa": {
+                            "area_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1400
+                            },
+                            "x_rel": 0.0,
+                            "y_rel": 1.0,
+                            "ancho_rel": 1.0,
+                            "alto_rel": 0.02857142857142857
+                        }
+                    },
+                    "tipo_recurso": "windows",
+                    "localizador": "",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                },
+                "contexto_despues": null,
+                "capturado_en": "2026-09-06T16:50:07.859143",
+                "boton": "izquierdo",
+                "x": 162,
+                "y": 1426,
+                "coordenadas_portables": {
+                    "pantalla_origen": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 2560,
+                        "alto": 1440
+                    },
+                    "puntos": {
+                        "principal": {
+                            "x_rel_pantalla": 0.06328125,
+                            "y_rel_pantalla": 0.9902777777777778,
+                            "ventana": {
+                                "x_rel": 0.06328125,
+                                "y_rel": 0.65
+                            }
+                        }
+                    }
+                },
+                "ids_origen": [
+                    9
+                ]
+            },
+            {
+                "id": 10,
+                "tipo": "click",
+                "origen": "grabacion_global",
+                "descripcion": "Clic izquierdo · ChatGPT · Google Chrome\nX=194 · Y=885",
+                "contexto_objetivo": {
+                    "hwnd": 3409700,
+                    "pid": 23240,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "ChatGPT: Chat, Work, Create & Code with AI - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 3,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false,
+                        "adaptativa": {
+                            "area_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1400
+                            },
+                            "x_rel": 0.001171875,
+                            "y_rel": 0.5071428571428571,
+                            "ancho_rel": 0.50546875,
+                            "alto_rel": 0.505
+                        }
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com?utm_source=google&utm_medium=paid_search&c_id=22619984056&c_agid=179769193386&c_crid=786677710529&c_kwid=kwd-1927227100722&c_ims=&c_pms=9212700&c_nw=g&c_dvc=c&gad_source=1&gad_campaignid=22619984056&gbraid=0AAAAA-I0E5eCL1f8s-6SEfbQrjGUsgQLF&gclid=Cj0KCQjwteTUBhD4ARIsAEYjs3qi5ARBJofs_7IZvwEIaHGhwYLzmLK_tM9ywPtneNM__MiV6lO4v0YaAujgEALw_wcB",
+                    "url": "https://chatgpt.com?utm_source=google&utm_medium=paid_search&c_id=22619984056&c_agid=179769193386&c_crid=786677710529&c_kwid=kwd-1927227100722&c_ims=&c_pms=9212700&c_nw=g&c_dvc=c&gad_source=1&gad_campaignid=22619984056&gbraid=0AAAAA-I0E5eCL1f8s-6SEfbQrjGUsgQLF&gclid=Cj0KCQjwteTUBhD4ARIsAEYjs3qi5ARBJofs_7IZvwEIaHGhwYLzmLK_tM9ywPtneNM__MiV6lO4v0YaAujgEALw_wcB",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": null,
+                "capturado_en": "2026-09-06T16:50:13.463758",
+                "boton": "izquierdo",
+                "x": 194,
+                "y": 885,
+                "coordenadas_portables": {
+                    "pantalla_origen": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 2560,
+                        "alto": 1440
+                    },
+                    "puntos": {
+                        "principal": {
+                            "x_rel_pantalla": 0.07578125,
+                            "y_rel_pantalla": 0.6145833333333334,
+                            "ventana": {
+                                "x_rel": 0.14760432766615147,
+                                "y_rel": 0.24752475247524752
+                            }
+                        }
+                    }
+                },
+                "ids_origen": [
+                    10
+                ]
+            },
+            {
+                "id": 11,
+                "tipo": "click",
+                "origen": "grabacion_global",
+                "descripcion": "Clic izquierdo · ChatGPT · Google Chrome\nX=1386 · Y=863",
+                "contexto_objetivo": {
+                    "hwnd": 3409700,
+                    "pid": 23240,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "ChatGPT - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1273,
+                        "y": 0,
+                        "ancho": 1294,
+                        "alto": 1407,
+                        "maximizada": false,
+                        "minimizada": false,
+                        "adaptativa": {
+                            "area_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1400
+                            },
+                            "x_rel": 0.497265625,
+                            "y_rel": 0.0,
+                            "ancho_rel": 0.50546875,
+                            "alto_rel": 1.005
+                        }
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com?utm_source=google&utm_medium=paid_search&c_id=22619984056&c_agid=179769193386&c_crid=786677710529&c_kwid=kwd-1927227100722&c_ims=&c_pms=9212700&c_nw=g&c_dvc=c&gad_source=1&gad_campaignid=22619984056&gbraid=0AAAAA-I0E5eCL1f8s-6SEfbQrjGUsgQLF&gclid=Cj0KCQjwteTUBhD4ARIsAEYjs3qi5ARBJofs_7IZvwEIaHGhwYLzmLK_tM9ywPtneNM__MiV6lO4v0YaAujgEALw_wcB",
+                    "url": "https://chatgpt.com?utm_source=google&utm_medium=paid_search&c_id=22619984056&c_agid=179769193386&c_crid=786677710529&c_kwid=kwd-1927227100722&c_ims=&c_pms=9212700&c_nw=g&c_dvc=c&gad_source=1&gad_campaignid=22619984056&gbraid=0AAAAA-I0E5eCL1f8s-6SEfbQrjGUsgQLF&gclid=Cj0KCQjwteTUBhD4ARIsAEYjs3qi5ARBJofs_7IZvwEIaHGhwYLzmLK_tM9ywPtneNM__MiV6lO4v0YaAujgEALw_wcB",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 8",
+                    "cuenta_navegador": "enycosmic@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": null,
+                "capturado_en": "2026-09-06T16:50:15.104824",
+                "boton": "izquierdo",
+                "x": 1386,
+                "y": 863,
+                "coordenadas_portables": {
+                    "pantalla_origen": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 2560,
+                        "alto": 1440
+                    },
+                    "puntos": {
+                        "principal": {
+                            "x_rel_pantalla": 0.54140625,
+                            "y_rel_pantalla": 0.5993055555555555,
+                            "ventana": {
+                                "x_rel": 0.08732612055641421,
+                                "y_rel": 0.6133617626154939
+                            }
+                        }
+                    }
+                },
+                "ids_origen": [
+                    11
+                ]
+            },
+            {
+                "id": 12,
+                "tipo": "click",
+                "origen": "grabacion_global",
+                "descripcion": "Clic izquierdo · Google Chrome · Feed | LinkedIn - Google Chrome\nX=420 · Y=1218",
+                "contexto_objetivo": {
+                    "hwnd": 5638068,
+                    "pid": 23240,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Feed | LinkedIn - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": -7,
+                        "y": 700,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false,
+                        "adaptativa": {
+                            "area_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1400
+                            },
+                            "x_rel": -0.002734375,
+                            "y_rel": 0.5,
+                            "ancho_rel": 0.50546875,
+                            "alto_rel": 0.505
+                        }
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://linkedin.com/feed",
+                    "url": "https://linkedin.com/feed",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 35",
+                    "cuenta_navegador": "alfora.art@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": null,
+                "capturado_en": "2026-09-06T16:50:18.965531",
+                "boton": "izquierdo",
+                "x": 420,
+                "y": 1218,
+                "coordenadas_portables": {
+                    "pantalla_origen": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 2560,
+                        "alto": 1440
+                    },
+                    "puntos": {
+                        "principal": {
+                            "x_rel_pantalla": 0.1640625,
+                            "y_rel_pantalla": 0.8458333333333333,
+                            "ventana": {
+                                "x_rel": 0.32998454404945904,
+                                "y_rel": 0.7326732673267327
+                            }
+                        }
+                    }
+                },
+                "ids_origen": [
+                    12
+                ]
+            },
+            {
+                "id": 13,
+                "tipo": "arrastrar",
+                "origen": "grabacion_global",
+                "descripcion": "Arrastrar y soltar\nDesde X=386 · Y=731\nHasta X=2559 · Y=766",
+                "contexto_objetivo": {
+                    "hwnd": 5638068,
+                    "pid": 23240,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Feed | LinkedIn - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": -7,
+                        "y": 700,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false,
+                        "adaptativa": {
+                            "area_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1400
+                            },
+                            "x_rel": -0.002734375,
+                            "y_rel": 0.5,
+                            "ancho_rel": 0.50546875,
+                            "alto_rel": 0.505
+                        }
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://linkedin.com/feed",
+                    "url": "https://linkedin.com/feed",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 35",
+                    "cuenta_navegador": "alfora.art@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": null,
+                "capturado_en": "2026-09-06T16:50:19.965027",
+                "boton": "izquierdo",
+                "x_inicio": 386,
+                "y_inicio": 731,
+                "x_fin": 2559,
+                "y_fin": 766,
+                "duracion_ms": 608,
+                "coordenadas_portables": {
+                    "pantalla_origen": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 2560,
+                        "alto": 1440
+                    },
+                    "puntos": {
+                        "inicio": {
+                            "x_rel_pantalla": 0.15078125,
+                            "y_rel_pantalla": 0.5076388888888889,
+                            "ventana": {
+                                "x_rel": 0.30370942812983,
+                                "y_rel": 0.04384724186704385
+                            }
+                        },
+                        "fin": {
+                            "x_rel_pantalla": 0.999609375,
+                            "y_rel_pantalla": 0.5319444444444444
+                        }
+                    }
+                },
+                "ids_origen": [
+                    13
+                ]
+            }
+        ],
+        "acciones_semanticas": [
+            {
+                "id": 1,
+                "tipo": "abrir_aplicacion",
+                "descripcion": "Abrir aplicación · chrome",
+                "acciones_origen": [
+                    1
+                ],
+                "confianza": "baja",
+                "datos": {
+                    "origen": "compilacion_bin",
+                    "capturado_en": "2026-09-06T16:49:28.367928",
+                    "datos": {
+                        "consulta": "chrome",
+                        "proceso": "chrome.exe",
+                        "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+                    },
+                    "compilada_por_bin": true,
+                    "confianza": "alta",
+                    "demostracion_original": {
+                        "id": 1,
+                        "tipo": "click",
+                        "origen": "grabacion_global",
+                        "descripcion": "Clic izquierdo · Barra de tareas\nX=161 · Y=1417",
+                        "contexto_objetivo": {
+                            "hwnd": 65800,
+                            "pid": 17652,
+                            "proceso": "explorer.exe",
+                            "ejecutable": "C:\\Windows\\explorer.exe",
+                            "titulo": "",
+                            "clase": "Shell_TrayWnd",
+                            "geometria": {
+                                "x": 0,
+                                "y": 1400,
+                                "ancho": 2560,
+                                "alto": 40,
+                                "maximizada": false,
+                                "minimizada": false,
+                                "adaptativa": {
+                                    "area_origen": {
+                                        "x": 0,
+                                        "y": 0,
+                                        "ancho": 2560,
+                                        "alto": 1400
+                                    },
+                                    "x_rel": 0.0,
+                                    "y_rel": 1.0,
+                                    "ancho_rel": 1.0,
+                                    "alto_rel": 0.02857142857142857
+                                }
+                            },
+                            "tipo_recurso": "windows",
+                            "localizador": "",
+                            "url": "",
+                            "ruta_recurso": "",
+                            "perfil_navegador": "",
+                            "cuenta_navegador": "",
+                            "cuenta_web_observada": "",
+                            "cuenta_navegador_origen": ""
+                        },
+                        "contexto_despues": {
+                            "hwnd": 3279168,
+                            "pid": 23240,
+                            "proceso": "chrome.exe",
+                            "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                            "titulo": "Google Chrome",
+                            "clase": "Chrome_WidgetWin_1",
+                            "geometria": {
+                                "x": 760,
+                                "y": 301,
+                                "ancho": 1040,
+                                "alto": 797,
+                                "maximizada": false,
+                                "minimizada": false,
+                                "adaptativa": {
+                                    "area_origen": {
+                                        "x": 0,
+                                        "y": 0,
+                                        "ancho": 2560,
+                                        "alto": 1400
+                                    },
+                                    "x_rel": 0.296875,
+                                    "y_rel": 0.215,
+                                    "ancho_rel": 0.40625,
+                                    "alto_rel": 0.5692857142857143
+                                }
+                            }
+                        },
+                        "capturado_en": "2026-09-06T16:49:28.367928",
+                        "boton": "izquierdo",
+                        "x": 161,
+                        "y": 1417,
+                        "coordenadas_portables": {
+                            "pantalla_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1440
+                            },
+                            "puntos": {
+                                "principal": {
+                                    "x_rel_pantalla": 0.062890625,
+                                    "y_rel_pantalla": 0.9840277777777777,
+                                    "ventana": {
+                                        "x_rel": 0.062890625,
+                                        "y_rel": 0.425
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "fallback": {
+                        "id": 1,
+                        "tipo": "click",
+                        "origen": "grabacion_global",
+                        "descripcion": "Clic izquierdo · Barra de tareas\nX=161 · Y=1417",
+                        "contexto_objetivo": {
+                            "hwnd": 65800,
+                            "pid": 17652,
+                            "proceso": "explorer.exe",
+                            "ejecutable": "C:\\Windows\\explorer.exe",
+                            "titulo": "",
+                            "clase": "Shell_TrayWnd",
+                            "geometria": {
+                                "x": 0,
+                                "y": 1400,
+                                "ancho": 2560,
+                                "alto": 40,
+                                "maximizada": false,
+                                "minimizada": false,
+                                "adaptativa": {
+                                    "area_origen": {
+                                        "x": 0,
+                                        "y": 0,
+                                        "ancho": 2560,
+                                        "alto": 1400
+                                    },
+                                    "x_rel": 0.0,
+                                    "y_rel": 1.0,
+                                    "ancho_rel": 1.0,
+                                    "alto_rel": 0.02857142857142857
+                                }
+                            },
+                            "tipo_recurso": "windows",
+                            "localizador": "",
+                            "url": "",
+                            "ruta_recurso": "",
+                            "perfil_navegador": "",
+                            "cuenta_navegador": "",
+                            "cuenta_web_observada": "",
+                            "cuenta_navegador_origen": ""
+                        },
+                        "contexto_despues": {
+                            "hwnd": 3279168,
+                            "pid": 23240,
+                            "proceso": "chrome.exe",
+                            "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                            "titulo": "Google Chrome",
+                            "clase": "Chrome_WidgetWin_1",
+                            "geometria": {
+                                "x": 760,
+                                "y": 301,
+                                "ancho": 1040,
+                                "alto": 797,
+                                "maximizada": false,
+                                "minimizada": false,
+                                "adaptativa": {
+                                    "area_origen": {
+                                        "x": 0,
+                                        "y": 0,
+                                        "ancho": 2560,
+                                        "alto": 1400
+                                    },
+                                    "x_rel": 0.296875,
+                                    "y_rel": 0.215,
+                                    "ancho_rel": 0.40625,
+                                    "alto_rel": 0.5692857142857143
+                                }
+                            }
+                        },
+                        "capturado_en": "2026-09-06T16:49:28.367928",
+                        "boton": "izquierdo",
+                        "x": 161,
+                        "y": 1417,
+                        "coordenadas_portables": {
+                            "pantalla_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1440
+                            },
+                            "puntos": {
+                                "principal": {
+                                    "x_rel_pantalla": 0.062890625,
+                                    "y_rel_pantalla": 0.9840277777777777,
+                                    "ventana": {
+                                        "x_rel": 0.062890625,
+                                        "y_rel": 0.425
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "ids_origen": [
+                        1
+                    ]
+                },
+                "contexto_objetivo": null,
+                "contexto_despues": {
+                    "hwnd": 3279168,
+                    "pid": 23240,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 760,
+                        "y": 301,
+                        "ancho": 1040,
+                        "alto": 797,
+                        "maximizada": false,
+                        "minimizada": false,
+                        "adaptativa": {
+                            "area_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1400
+                            },
+                            "x_rel": 0.296875,
+                            "y_rel": 0.215,
+                            "ancho_rel": 0.40625,
+                            "alto_rel": 0.5692857142857143
+                        }
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "",
+                    "user_data_dir_navegador": "",
+                    "url_observable": false,
+                    "url_origen": ""
+                }
+            },
+            {
+                "id": 2,
+                "tipo": "abrir_aplicacion",
+                "descripcion": "Abrir aplicación chrome.exe",
+                "acciones_origen": [
+                    2
+                ],
+                "confianza": "alta",
+                "datos": {
+                    "consulta": "chrome",
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "x_fallback": 183,
+                    "y_fallback": 887,
+                    "cambio_contexto": true,
+                    "proceso_antes": "TextInputHost.exe",
+                    "proceso_despues": "chrome.exe"
+                },
+                "contexto_objetivo": {
+                    "hwnd": 197478,
+                    "pid": 7212,
+                    "proceso": "TextInputHost.exe",
+                    "ejecutable": "C:\\Windows\\SystemApps\\MicrosoftWindows.Client.CBS_cw5n1h2txyewy\\TextInputHost.exe",
+                    "titulo": "Microsoft Text Input Application",
+                    "clase": "Windows.UI.Core.CoreWindow",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 2560,
+                        "alto": 1440,
+                        "maximizada": false,
+                        "minimizada": false,
+                        "adaptativa": {
+                            "area_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1400
+                            },
+                            "x_rel": 0.0,
+                            "y_rel": 0.0,
+                            "ancho_rel": 1.0,
+                            "alto_rel": 1.0285714285714285
+                        }
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Windows\\SystemApps\\MicrosoftWindows.Client.CBS_cw5n1h2txyewy\\TextInputHost.exe",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                },
+                "contexto_despues": {
+                    "hwnd": 2098978,
+                    "pid": 23240,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Nueva pestaña - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 520,
+                        "y": 46,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false,
+                        "adaptativa": {
+                            "area_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1400
+                            },
+                            "x_rel": 0.203125,
+                            "y_rel": 0.032857142857142856,
+                            "ancho_rel": 0.50546875,
+                            "alto_rel": 0.505
+                        }
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 35",
+                    "cuenta_navegador": "alfora.art@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": false,
+                    "url_origen": ""
+                }
+            },
+            {
+                "id": 3,
+                "tipo": "click",
+                "descripcion": "Clic izquierdo en Google Chrome · Nueva pestaña - Google Chrome",
+                "acciones_origen": [
+                    3
+                ],
+                "confianza": "alta",
+                "datos": {
+                    "x": 1040,
+                    "y": 689,
+                    "boton": "izquierdo"
+                },
+                "contexto_objetivo": {
+                    "hwnd": 2098978,
+                    "pid": 23240,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Nueva pestaña - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 520,
+                        "y": 46,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false,
+                        "adaptativa": {
+                            "area_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1400
+                            },
+                            "x_rel": 0.203125,
+                            "y_rel": 0.032857142857142856,
+                            "ancho_rel": 0.50546875,
+                            "alto_rel": 0.505
+                        }
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 35",
+                    "cuenta_navegador": "alfora.art@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": false,
+                    "url_origen": ""
+                },
+                "contexto_despues": {
+                    "hwnd": 2098978,
+                    "pid": 23240,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Nueva pestaña - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 520,
+                        "y": 46,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false,
+                        "adaptativa": {
+                            "area_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1400
+                            },
+                            "x_rel": 0.203125,
+                            "y_rel": 0.032857142857142856,
+                            "ancho_rel": 0.50546875,
+                            "alto_rel": 0.505
+                        }
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 35",
+                    "cuenta_navegador": "alfora.art@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": false,
+                    "url_origen": ""
+                }
+            },
+            {
+                "id": 4,
+                "tipo": "click",
+                "descripcion": "Clic izquierdo en Google Chrome · Alfora.art | Herramientas creativas online gratis - Google Chrome",
+                "acciones_origen": [
+                    4
+                ],
+                "confianza": "alta",
+                "datos": {
+                    "x": 814,
+                    "y": 525,
+                    "boton": "izquierdo"
+                },
+                "contexto_objetivo": {
+                    "hwnd": 2098978,
+                    "pid": 23240,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Alfora.art | Herramientas creativas online gratis - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 520,
+                        "y": 46,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false,
+                        "adaptativa": {
+                            "area_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1400
+                            },
+                            "x_rel": 0.203125,
+                            "y_rel": 0.032857142857142856,
+                            "ancho_rel": 0.50546875,
+                            "alto_rel": 0.505
+                        }
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 35",
+                    "cuenta_navegador": "alfora.art@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": false,
+                    "url_origen": ""
+                },
+                "contexto_despues": {
+                    "hwnd": 2098978,
+                    "pid": 23240,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Alfora.art | Herramientas creativas online gratis - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 520,
+                        "y": 46,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false,
+                        "adaptativa": {
+                            "area_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1400
+                            },
+                            "x_rel": 0.203125,
+                            "y_rel": 0.032857142857142856,
+                            "ancho_rel": 0.50546875,
+                            "alto_rel": 0.505
+                        }
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 35",
+                    "cuenta_navegador": "alfora.art@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": false,
+                    "url_origen": ""
+                }
+            },
+            {
+                "id": 5,
+                "tipo": "arrastrar",
+                "descripcion": "Arrastrar desde X=944 · Y=77 hasta X=0 · Y=0",
+                "acciones_origen": [
+                    5
+                ],
+                "confianza": "alta",
+                "datos": {
+                    "x_inicio": 944,
+                    "y_inicio": 77,
+                    "x_fin": 0,
+                    "y_fin": 0,
+                    "duracion_ms": 875,
+                    "boton": "izquierdo"
+                },
+                "contexto_objetivo": {
+                    "hwnd": 2098978,
+                    "pid": 23240,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Nueva pestaña - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": -7,
+                        "y": 0,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false,
+                        "adaptativa": {
+                            "area_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1400
+                            },
+                            "x_rel": -0.002734375,
+                            "y_rel": 0.0,
+                            "ancho_rel": 0.50546875,
+                            "alto_rel": 0.505
+                        }
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 35",
+                    "cuenta_navegador": "alfora.art@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": false,
+                    "url_origen": ""
+                },
+                "contexto_despues": {
+                    "hwnd": 2098978,
+                    "pid": 23240,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Nueva pestaña - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": -7,
+                        "y": 0,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false,
+                        "adaptativa": {
+                            "area_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1400
+                            },
+                            "x_rel": -0.002734375,
+                            "y_rel": 0.0,
+                            "ancho_rel": 0.50546875,
+                            "alto_rel": 0.505
+                        }
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://linkedin.com/feed",
+                    "url": "https://linkedin.com/feed",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 35",
+                    "cuenta_navegador": "alfora.art@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                }
+            },
+            {
+                "id": 6,
+                "tipo": "click",
+                "descripcion": "Clic izquierdo en Google Chrome · Nueva pestaña - Google Chrome",
+                "acciones_origen": [
+                    6
+                ],
+                "confianza": "alta",
+                "datos": {
+                    "x": 279,
+                    "y": 18,
+                    "boton": "izquierdo",
+                    "cambio_contexto": true,
+                    "proceso_antes": "chrome.exe",
+                    "proceso_despues": "chrome.exe"
+                },
+                "contexto_objetivo": {
+                    "hwnd": 2098978,
+                    "pid": 23240,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Nueva pestaña - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": -7,
+                        "y": 0,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false,
+                        "adaptativa": {
+                            "area_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1400
+                            },
+                            "x_rel": -0.002734375,
+                            "y_rel": 0.0,
+                            "ancho_rel": 0.50546875,
+                            "alto_rel": 0.505
+                        }
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 35",
+                    "cuenta_navegador": "alfora.art@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": false,
+                    "url_origen": ""
+                },
+                "contexto_despues": {
+                    "hwnd": 2098978,
+                    "pid": 23240,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Feed | LinkedIn - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": -7,
+                        "y": 0,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false,
+                        "adaptativa": {
+                            "area_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1400
+                            },
+                            "x_rel": -0.002734375,
+                            "y_rel": 0.0,
+                            "ancho_rel": 0.50546875,
+                            "alto_rel": 0.505
+                        }
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://alfora.art",
+                    "url": "https://alfora.art",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 35",
+                    "cuenta_navegador": "alfora.art@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                }
+            },
+            {
+                "id": 7,
+                "tipo": "abrir_aplicacion",
+                "descripcion": "Abrir aplicación searchapp.exe",
+                "acciones_origen": [
+                    7
+                ],
+                "confianza": "alta",
+                "datos": {
+                    "consulta": "searchapp",
+                    "proceso": "searchapp.exe",
+                    "ejecutable": "C:\\Windows\\SystemApps\\Microsoft.Windows.Search_cw5n1h2txyewy\\SearchApp.exe",
+                    "x_fallback": 517,
+                    "y_fallback": 476,
+                    "cambio_contexto": true,
+                    "proceso_antes": "chrome.exe",
+                    "proceso_despues": "SearchApp.exe"
+                },
+                "contexto_objetivo": {
+                    "hwnd": 2098978,
+                    "pid": 23240,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Nueva pestaña - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": -7,
+                        "y": 0,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false,
+                        "adaptativa": {
+                            "area_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1400
+                            },
+                            "x_rel": -0.002734375,
+                            "y_rel": 0.0,
+                            "ancho_rel": 0.50546875,
+                            "alto_rel": 0.505
+                        }
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://linkedin.com/feed",
+                    "url": "https://linkedin.com/feed",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 35",
+                    "cuenta_navegador": "alfora.art@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": {
+                    "hwnd": 66082,
+                    "pid": 15440,
+                    "proceso": "SearchApp.exe",
+                    "ejecutable": "C:\\Windows\\SystemApps\\Microsoft.Windows.Search_cw5n1h2txyewy\\SearchApp.exe",
+                    "titulo": "Búsqueda",
+                    "clase": "Windows.UI.Core.CoreWindow",
+                    "geometria": {
+                        "x": 48,
+                        "y": 760,
+                        "ancho": 784,
+                        "alto": 680,
+                        "maximizada": false,
+                        "minimizada": false,
+                        "adaptativa": {
+                            "area_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1400
+                            },
+                            "x_rel": 0.01875,
+                            "y_rel": 0.5428571428571428,
+                            "ancho_rel": 0.30625,
+                            "alto_rel": 0.4857142857142857
+                        }
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Windows\\SystemApps\\Microsoft.Windows.Search_cw5n1h2txyewy\\SearchApp.exe",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                }
+            },
+            {
+                "id": 8,
+                "tipo": "arrastrar",
+                "descripcion": "Arrastrar desde X=374 · Y=27 hasta X=0 · Y=1396",
+                "acciones_origen": [
+                    8
+                ],
+                "confianza": "alta",
+                "datos": {
+                    "x_inicio": 374,
+                    "y_inicio": 27,
+                    "x_fin": 0,
+                    "y_fin": 1396,
+                    "duracion_ms": 2421,
+                    "boton": "izquierdo",
+                    "cambio_contexto": true,
+                    "proceso_antes": "chrome.exe",
+                    "proceso_despues": "chrome.exe"
+                },
+                "contexto_objetivo": {
+                    "hwnd": 2098978,
+                    "pid": 23240,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Alfora.art | Herramientas creativas online gratis - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": -7,
+                        "y": 0,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false,
+                        "adaptativa": {
+                            "area_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1400
+                            },
+                            "x_rel": -0.002734375,
+                            "y_rel": 0.0,
+                            "ancho_rel": 0.50546875,
+                            "alto_rel": 0.505
+                        }
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://alfora.art",
+                    "url": "https://alfora.art",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 35",
+                    "cuenta_navegador": "alfora.art@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": {
+                    "hwnd": 3409700,
+                    "pid": 23240,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Nueva pestaña - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 3,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false,
+                        "adaptativa": {
+                            "area_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1400
+                            },
+                            "x_rel": 0.001171875,
+                            "y_rel": 0.5071428571428571,
+                            "ancho_rel": 0.50546875,
+                            "alto_rel": 0.505
+                        }
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com?utm_source=google&utm_medium=paid_search&c_id=22619984056&c_agid=179769193386&c_crid=786677710529&c_kwid=kwd-1927227100722&c_ims=&c_pms=9212700&c_nw=g&c_dvc=c&gad_source=1&gad_campaignid=22619984056&gbraid=0AAAAA-I0E5eCL1f8s-6SEfbQrjGUsgQLF&gclid=Cj0KCQjwteTUBhD4ARIsAEYjs3qi5ARBJofs_7IZvwEIaHGhwYLzmLK_tM9ywPtneNM__MiV6lO4v0YaAujgEALw_wcB",
+                    "url": "https://chatgpt.com?utm_source=google&utm_medium=paid_search&c_id=22619984056&c_agid=179769193386&c_crid=786677710529&c_kwid=kwd-1927227100722&c_ims=&c_pms=9212700&c_nw=g&c_dvc=c&gad_source=1&gad_campaignid=22619984056&gbraid=0AAAAA-I0E5eCL1f8s-6SEfbQrjGUsgQLF&gclid=Cj0KCQjwteTUBhD4ARIsAEYjs3qi5ARBJofs_7IZvwEIaHGhwYLzmLK_tM9ywPtneNM__MiV6lO4v0YaAujgEALw_wcB",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 8",
+                    "cuenta_navegador": "enycosmic@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                }
+            },
+            {
+                "id": 9,
+                "tipo": "click",
+                "descripcion": "Clic izquierdo en Barra de tareas",
+                "acciones_origen": [
+                    9
+                ],
+                "confianza": "alta",
+                "datos": {
+                    "x": 162,
+                    "y": 1426,
+                    "boton": "izquierdo"
+                },
+                "contexto_objetivo": {
+                    "hwnd": 65800,
+                    "pid": 17652,
+                    "proceso": "explorer.exe",
+                    "ejecutable": "C:\\Windows\\explorer.exe",
+                    "titulo": "",
+                    "clase": "Shell_TrayWnd",
+                    "geometria": {
+                        "x": 0,
+                        "y": 1400,
+                        "ancho": 2560,
+                        "alto": 40,
+                        "maximizada": false,
+                        "minimizada": false,
+                        "adaptativa": {
+                            "area_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1400
+                            },
+                            "x_rel": 0.0,
+                            "y_rel": 1.0,
+                            "ancho_rel": 1.0,
+                            "alto_rel": 0.02857142857142857
+                        }
+                    },
+                    "tipo_recurso": "windows",
+                    "localizador": "",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                },
+                "contexto_despues": {
+                    "hwnd": 65800,
+                    "pid": 17652,
+                    "proceso": "explorer.exe",
+                    "ejecutable": "C:\\Windows\\explorer.exe",
+                    "titulo": "",
+                    "clase": "Shell_TrayWnd",
+                    "geometria": {
+                        "x": 0,
+                        "y": 1400,
+                        "ancho": 2560,
+                        "alto": 40,
+                        "maximizada": false,
+                        "minimizada": false,
+                        "adaptativa": {
+                            "area_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1400
+                            },
+                            "x_rel": 0.0,
+                            "y_rel": 1.0,
+                            "ancho_rel": 1.0,
+                            "alto_rel": 0.02857142857142857
+                        }
+                    },
+                    "tipo_recurso": "windows",
+                    "localizador": "",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                }
+            },
+            {
+                "id": 10,
+                "tipo": "click",
+                "descripcion": "Clic izquierdo en ChatGPT · Google Chrome",
+                "acciones_origen": [
+                    10
+                ],
+                "confianza": "alta",
+                "datos": {
+                    "x": 194,
+                    "y": 885,
+                    "boton": "izquierdo"
+                },
+                "contexto_objetivo": {
+                    "hwnd": 3409700,
+                    "pid": 23240,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "ChatGPT: Chat, Work, Create & Code with AI - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 3,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false,
+                        "adaptativa": {
+                            "area_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1400
+                            },
+                            "x_rel": 0.001171875,
+                            "y_rel": 0.5071428571428571,
+                            "ancho_rel": 0.50546875,
+                            "alto_rel": 0.505
+                        }
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com?utm_source=google&utm_medium=paid_search&c_id=22619984056&c_agid=179769193386&c_crid=786677710529&c_kwid=kwd-1927227100722&c_ims=&c_pms=9212700&c_nw=g&c_dvc=c&gad_source=1&gad_campaignid=22619984056&gbraid=0AAAAA-I0E5eCL1f8s-6SEfbQrjGUsgQLF&gclid=Cj0KCQjwteTUBhD4ARIsAEYjs3qi5ARBJofs_7IZvwEIaHGhwYLzmLK_tM9ywPtneNM__MiV6lO4v0YaAujgEALw_wcB",
+                    "url": "https://chatgpt.com?utm_source=google&utm_medium=paid_search&c_id=22619984056&c_agid=179769193386&c_crid=786677710529&c_kwid=kwd-1927227100722&c_ims=&c_pms=9212700&c_nw=g&c_dvc=c&gad_source=1&gad_campaignid=22619984056&gbraid=0AAAAA-I0E5eCL1f8s-6SEfbQrjGUsgQLF&gclid=Cj0KCQjwteTUBhD4ARIsAEYjs3qi5ARBJofs_7IZvwEIaHGhwYLzmLK_tM9ywPtneNM__MiV6lO4v0YaAujgEALw_wcB",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": {
+                    "hwnd": 3409700,
+                    "pid": 23240,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "ChatGPT: Chat, Work, Create & Code with AI - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 3,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false,
+                        "adaptativa": {
+                            "area_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1400
+                            },
+                            "x_rel": 0.001171875,
+                            "y_rel": 0.5071428571428571,
+                            "ancho_rel": 0.50546875,
+                            "alto_rel": 0.505
+                        }
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com?utm_source=google&utm_medium=paid_search&c_id=22619984056&c_agid=179769193386&c_crid=786677710529&c_kwid=kwd-1927227100722&c_ims=&c_pms=9212700&c_nw=g&c_dvc=c&gad_source=1&gad_campaignid=22619984056&gbraid=0AAAAA-I0E5eCL1f8s-6SEfbQrjGUsgQLF&gclid=Cj0KCQjwteTUBhD4ARIsAEYjs3qi5ARBJofs_7IZvwEIaHGhwYLzmLK_tM9ywPtneNM__MiV6lO4v0YaAujgEALw_wcB",
+                    "url": "https://chatgpt.com?utm_source=google&utm_medium=paid_search&c_id=22619984056&c_agid=179769193386&c_crid=786677710529&c_kwid=kwd-1927227100722&c_ims=&c_pms=9212700&c_nw=g&c_dvc=c&gad_source=1&gad_campaignid=22619984056&gbraid=0AAAAA-I0E5eCL1f8s-6SEfbQrjGUsgQLF&gclid=Cj0KCQjwteTUBhD4ARIsAEYjs3qi5ARBJofs_7IZvwEIaHGhwYLzmLK_tM9ywPtneNM__MiV6lO4v0YaAujgEALw_wcB",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                }
+            },
+            {
+                "id": 11,
+                "tipo": "click",
+                "descripcion": "Clic izquierdo en ChatGPT · Google Chrome",
+                "acciones_origen": [
+                    11
+                ],
+                "confianza": "alta",
+                "datos": {
+                    "x": 1386,
+                    "y": 863,
+                    "boton": "izquierdo"
+                },
+                "contexto_objetivo": {
+                    "hwnd": 3409700,
+                    "pid": 23240,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "ChatGPT - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1273,
+                        "y": 0,
+                        "ancho": 1294,
+                        "alto": 1407,
+                        "maximizada": false,
+                        "minimizada": false,
+                        "adaptativa": {
+                            "area_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1400
+                            },
+                            "x_rel": 0.497265625,
+                            "y_rel": 0.0,
+                            "ancho_rel": 0.50546875,
+                            "alto_rel": 1.005
+                        }
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com?utm_source=google&utm_medium=paid_search&c_id=22619984056&c_agid=179769193386&c_crid=786677710529&c_kwid=kwd-1927227100722&c_ims=&c_pms=9212700&c_nw=g&c_dvc=c&gad_source=1&gad_campaignid=22619984056&gbraid=0AAAAA-I0E5eCL1f8s-6SEfbQrjGUsgQLF&gclid=Cj0KCQjwteTUBhD4ARIsAEYjs3qi5ARBJofs_7IZvwEIaHGhwYLzmLK_tM9ywPtneNM__MiV6lO4v0YaAujgEALw_wcB",
+                    "url": "https://chatgpt.com?utm_source=google&utm_medium=paid_search&c_id=22619984056&c_agid=179769193386&c_crid=786677710529&c_kwid=kwd-1927227100722&c_ims=&c_pms=9212700&c_nw=g&c_dvc=c&gad_source=1&gad_campaignid=22619984056&gbraid=0AAAAA-I0E5eCL1f8s-6SEfbQrjGUsgQLF&gclid=Cj0KCQjwteTUBhD4ARIsAEYjs3qi5ARBJofs_7IZvwEIaHGhwYLzmLK_tM9ywPtneNM__MiV6lO4v0YaAujgEALw_wcB",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 8",
+                    "cuenta_navegador": "enycosmic@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": {
+                    "hwnd": 3409700,
+                    "pid": 23240,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "ChatGPT - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1273,
+                        "y": 0,
+                        "ancho": 1294,
+                        "alto": 1407,
+                        "maximizada": false,
+                        "minimizada": false,
+                        "adaptativa": {
+                            "area_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1400
+                            },
+                            "x_rel": 0.497265625,
+                            "y_rel": 0.0,
+                            "ancho_rel": 0.50546875,
+                            "alto_rel": 1.005
+                        }
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com?utm_source=google&utm_medium=paid_search&c_id=22619984056&c_agid=179769193386&c_crid=786677710529&c_kwid=kwd-1927227100722&c_ims=&c_pms=9212700&c_nw=g&c_dvc=c&gad_source=1&gad_campaignid=22619984056&gbraid=0AAAAA-I0E5eCL1f8s-6SEfbQrjGUsgQLF&gclid=Cj0KCQjwteTUBhD4ARIsAEYjs3qi5ARBJofs_7IZvwEIaHGhwYLzmLK_tM9ywPtneNM__MiV6lO4v0YaAujgEALw_wcB",
+                    "url": "https://chatgpt.com?utm_source=google&utm_medium=paid_search&c_id=22619984056&c_agid=179769193386&c_crid=786677710529&c_kwid=kwd-1927227100722&c_ims=&c_pms=9212700&c_nw=g&c_dvc=c&gad_source=1&gad_campaignid=22619984056&gbraid=0AAAAA-I0E5eCL1f8s-6SEfbQrjGUsgQLF&gclid=Cj0KCQjwteTUBhD4ARIsAEYjs3qi5ARBJofs_7IZvwEIaHGhwYLzmLK_tM9ywPtneNM__MiV6lO4v0YaAujgEALw_wcB",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 8",
+                    "cuenta_navegador": "enycosmic@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                }
+            },
+            {
+                "id": 12,
+                "tipo": "click",
+                "descripcion": "Clic izquierdo en Google Chrome · Feed | LinkedIn - Google Chrome",
+                "acciones_origen": [
+                    12
+                ],
+                "confianza": "alta",
+                "datos": {
+                    "x": 420,
+                    "y": 1218,
+                    "boton": "izquierdo"
+                },
+                "contexto_objetivo": {
+                    "hwnd": 5638068,
+                    "pid": 23240,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Feed | LinkedIn - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": -7,
+                        "y": 700,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false,
+                        "adaptativa": {
+                            "area_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1400
+                            },
+                            "x_rel": -0.002734375,
+                            "y_rel": 0.5,
+                            "ancho_rel": 0.50546875,
+                            "alto_rel": 0.505
+                        }
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://linkedin.com/feed",
+                    "url": "https://linkedin.com/feed",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 35",
+                    "cuenta_navegador": "alfora.art@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": {
+                    "hwnd": 5638068,
+                    "pid": 23240,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Feed | LinkedIn - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": -7,
+                        "y": 700,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false,
+                        "adaptativa": {
+                            "area_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1400
+                            },
+                            "x_rel": -0.002734375,
+                            "y_rel": 0.5,
+                            "ancho_rel": 0.50546875,
+                            "alto_rel": 0.505
+                        }
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://linkedin.com/feed",
+                    "url": "https://linkedin.com/feed",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 35",
+                    "cuenta_navegador": "alfora.art@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                }
+            },
+            {
+                "id": 13,
+                "tipo": "arrastrar",
+                "descripcion": "Arrastrar desde X=386 · Y=731 hasta X=2559 · Y=766",
+                "acciones_origen": [
+                    13
+                ],
+                "confianza": "alta",
+                "datos": {
+                    "x_inicio": 386,
+                    "y_inicio": 731,
+                    "x_fin": 2559,
+                    "y_fin": 766,
+                    "duracion_ms": 608,
+                    "boton": "izquierdo"
+                },
+                "contexto_objetivo": {
+                    "hwnd": 5638068,
+                    "pid": 23240,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Feed | LinkedIn - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": -7,
+                        "y": 700,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false,
+                        "adaptativa": {
+                            "area_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1400
+                            },
+                            "x_rel": -0.002734375,
+                            "y_rel": 0.5,
+                            "ancho_rel": 0.50546875,
+                            "alto_rel": 0.505
+                        }
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://linkedin.com/feed",
+                    "url": "https://linkedin.com/feed",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 35",
+                    "cuenta_navegador": "alfora.art@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": {
+                    "hwnd": 5638068,
+                    "pid": 23240,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Feed | LinkedIn - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": -7,
+                        "y": 700,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false,
+                        "adaptativa": {
+                            "area_origen": {
+                                "x": 0,
+                                "y": 0,
+                                "ancho": 2560,
+                                "alto": 1400
+                            },
+                            "x_rel": -0.002734375,
+                            "y_rel": 0.5,
+                            "ancho_rel": 0.50546875,
+                            "alto_rel": 0.505
+                        }
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://linkedin.com/feed",
+                    "url": "https://linkedin.com/feed",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 35",
+                    "cuenta_navegador": "alfora.art@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                }
+            }
+        ],
+        "accion_actual_indice": null,
+        "repeticion_actual": 1,
+        "repeticiones_totales": 1,
+        "ejecucion_real_indice": 1,
+        "ejecucion_real_repeticion": 1,
+        "ejecuciones_reales_completadas": 1,
+        "delay_ejecucion_restante_ms": 0,
+        "ejecucion_real_fase": "inactiva",
+        "elapsed_repeticion_real_ms": 21968,
+        "duracion_origen": "grabacion",
+        "detalle_estado": "ERROR DE EJECUCIÓN\n\nTarea: dSasasd\nRepetición: 1/1\nAcción: 2/13\nAcción esperada: Clic izquierdo · TextInputHost.exe · Microsoft Text Input Application\nX=183 · Y=887\nEstado: FAILED\nEsperó: 19.8 s\nContexto esperado: TextInputHost.exe\nContexto actual: chrome.exe\nÚltima decisión: FAILED\nMotivo: Tras Alt+F4 y la reapertura final no apareció ninguna ventana con la cuenta esperada.\n\nREVISIÓN FINAL DE VENTANAS\nLa auditoría de ventanas agotó sus intentos.\n\nVentana esperada:\nProceso: chrome.exe\nVentana: Nueva pestaña - Google Chrome\nTipo: web\nURL: no observable\nPerfil navegador: Profile 35\nCuenta asociada: alfora.art@gmail.com\nPosición: X=520 Y=46\nTamaño: 1294×707\nEstado ventana: normal\n\nÚltima generación evaluada: 75\n\nÚltimo resultado:\nEl rescate web final no consiguió una ventana con la cuenta y URL esperadas.",
+        "last_skipped_run_key": "manual-20260906-165058",
+        "supervisor_espera_acumulada_ms": 17781,
+        "supervisor_intentos": 13,
+        "supervisor_ultima_decision": "WAIT",
+        "supervisor_ultimo_motivo": "Reapertura final enviada. Espero a que Chrome exponga la cuenta antes de la última decisión.",
+        "ultimo_checkpoint": {
+            "decision": "FAILED",
+            "motivo": "Tras Alt+F4 y la reapertura final no apareció ninguna ventana con la cuenta esperada.",
+            "timestamp": "2026-09-06T16:56:59.706144",
+            "accion_indice": 1,
+            "repeticion": 1,
+            "contexto_actual": {
+                "pid": 23240,
+                "proceso": "chrome.exe",
+                "titulo": "Jorge Isaac - BIN Light Etapa 2 Part 3 - Google Chrome",
+                "clase": "Chrome_WidgetWin_1",
+                "hwnd": 197802
+            }
+        },
         "contexto": ""
     }
 ]

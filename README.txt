@@ -294,6 +294,14 @@ Menos pasos significan menos puntos posibles de fallo.
 
 19. Se recomienda que dentro del proceso si el archivo requiere guardar cambios, Dentro de la demostración, y la instrucción manual, Se haga el guardado de los archivos manipulados por BIN. De esta manera evitaremos coliciones con el cerrado de ventana automatico de archivos que requieren guardados. Ya que como medida de protección de sus datos he información tratada, el software no hace acciones automaticas para este caso.
 
+20. Si el uso de software es con el fin de desarrollar entrenamientos, o se ejerce algúna actividad donde se requiere compartir entrenamiento, Se recomienda el siguiente procedimiento para hacerlo más directo, Presiso, y reduciendo el margen de error de ejecución de la tarea:
+    
+    20.1. Realiza la demostración sin realizar apertura de software.
+    
+    20.2. Despues de guardada la demostración, inserta manualmente la apertura del sotware, y da el tiempo suficiente para cargar el software, y realización de la tarea prendida por el metodo de carga de entrenamiento.
+    
+    20.3. Inserta los pasos adicionales que se requieran, despues de la apertura manual.
+
 ============================================================
 CONSIDERACIONES PARA AUTOMATIZACIONES WEB
 ============================================================

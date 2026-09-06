@@ -19,7 +19,7 @@
 #9) Esta versión de código, a partir de aquí, permite introducir texto en el entrenamiento en modo Manual-> desde "+Añadir acción".
 
 #Eso son todos los errores que encontré en la prueba
-#En este push se preparó el codigo para el modo entrenamiento - Iniciando por la adaptación a pantallas. El algoritmo trabaja con dos memorias de pantalla. Posición apsoluta y la adaptable. para que por ejemplo; si se entrena la IA para realizar unt rabajo en softwre, y se pasa ese entrenamiento para un equipo de resolución diferente, la IA pueda adaptarse a la nueva resolución. Esto es muy importante para que la IA pueda trabajar en diferentes equipos, y no se limite a un solo equipo. (CORREGIDO)
+#En este push se preparó el codigo para el modo entrenamiento - Iniciando por la adaptación a pantallas. El algoritmo trabaja con dos memorias de pantalla. Posición apsoluta y la adaptable. para que por ejemplo; si se entrena la IA para realizar unt rabajo en softwre, y se pasa ese entrenamiento para un equipo de resolución diferente, la IA pueda adaptarse a la nueva resolución. Esto es muy importante para que la IA pueda trabajar en diferentes equipos, y no se limite a un solo equipo. (Falta comprovación -- Esta es la preparación previa para descargar y cargar entrenamientos)
 #============================================================================================
 
 import sys
@@ -489,6 +489,16 @@ BIN no debe utilizarse como almacenamiento de contraseñas.
 
 18. NO GRABES INICIOS DE SESIÓN, CONTRASEÑAS NI CÓDIGOS
     DE AUTENTICACIÓN
+
+19. Se recomienda que dentro del proceso si el archivo requiere guardar cambios, Dentro de la demostración, y la instrucción manual, Se haga el guardado de los archivos manipulados por BIN. De esta manera evitaremos coliciones con el cerrado de ventana automatico de archivos que requieren guardados. Ya que como medida de protección de sus datos he información tratada, el software no hace acciones automaticas para este caso.
+
+20. Si el uso de software es con el fin de desarrollar entrenamientos, o se ejerce algúna actividad donde se requiere compartir entrenamiento, Se recomienda el siguiente procedimiento para hacerlo más directo, Presiso, y reduciendo el margen de error de ejecución de la tarea:
+    
+    20.1. Realiza la demostración sin realizar apertura de software.
+    
+    20.2. Despues de guardada la demostración, inserta manualmente la apertura del sotware, y da el tiempo suficiente para cargar el software, y realización de la tarea prendida por el metodo de carga de entrenamiento.
+    
+    20.3. Inserta los pasos adicionales que se requieran, despues de la apertura manual.
 
 No incluyas dentro de una demostración de rutina pasos donde
 escribas:
@@ -19967,6 +19977,223 @@ class BIN(QMainWindow):
             ok
         )
 
+    def clave_materializacion_web_demostracion(self, esperado):
+        esperado = esperado or {}
+
+        proceso = str(esperado.get("proceso", "") or "").strip().lower()
+        cuenta = str(esperado.get("cuenta_navegador", "") or "").strip().lower()
+        perfil = str(esperado.get("perfil_navegador", "") or "").strip().lower()
+
+        if not proceso:
+            return ""
+
+        if cuenta:
+            identidad = "cuenta:" + cuenta
+        elif perfil:
+            identidad = "perfil:" + perfil
+        else:
+            return ""
+
+        return proceso + "|" + identidad
+
+    def preparar_materializacion_web_demostracion(
+        self,
+        esperado,
+        busqueda,
+    ):
+        esperado = esperado or {}
+        busqueda = busqueda or {}
+
+        if bool(esperado.get("contexto_manual")):
+            return None
+
+        tipo = str(esperado.get("tipo_recurso", "") or "").strip().lower()
+        proceso = str(esperado.get("proceso", "") or "").strip().lower()
+        url = str(esperado.get("url", "") or "").strip()
+        cuenta = str(esperado.get("cuenta_navegador", "") or "").strip()
+        perfil = str(esperado.get("perfil_navegador", "") or "").strip()
+
+        if (
+            tipo != "web"
+            or proceso not in {
+                "chrome.exe",
+                "msedge.exe",
+                "brave.exe",
+                "opera.exe",
+            }
+            or not url
+            or not (cuenta or perfil)
+        ):
+            return None
+
+        clave = self.clave_materializacion_web_demostracion(esperado)
+
+        if not clave:
+            return None
+
+        cache = self._cache_operativo_bin(
+            "demo_direct_launch"
+        )
+
+        registro = cache.get(
+            clave
+        )
+
+        # Si la ventana exacta ya existe, no creamos otra.
+        if busqueda.get("ok"):
+            cache[clave] = {
+                "estado": "confirmado",
+                "lanzado_en": 0.0,
+            }
+
+            return None
+
+        # Esta identidad ya fue tratada durante este mismo run.
+        # No volver a abrir una ventana por cada clic o URL.
+        if isinstance(registro, dict):
+            estado = str(
+                registro.get(
+                    "estado",
+                    "",
+                )
+                or ""
+            ).strip().lower()
+
+            if estado in {
+                "confirmado",
+                "gracia_agotada",
+                "fallo",
+            }:
+                return None
+
+            try:
+                lanzamiento_en = float(
+                    registro.get(
+                        "lanzado_en",
+                        0.0,
+                    )
+                    or 0.0
+                )
+            except Exception:
+                lanzamiento_en = 0.0
+
+            if (
+                estado == "lanzado"
+                and lanzamiento_en
+            ):
+                transcurrido = (
+                    time.monotonic()
+                    - lanzamiento_en
+                )
+
+                if transcurrido < 12.0:
+                    return {
+                        "ok": False,
+                        "decision": "WAIT",
+                        "motivo": (
+                            "La ventana web demostrada ya fue lanzada "
+                            "directamente. Espero su perfil/cuenta antes "
+                            "de iniciar correcciones."
+                        ),
+                        "contexto_actual": busqueda.get(
+                            "contexto"
+                        ),
+                    }
+
+                registro[
+                    "estado"
+                ] = "gracia_agotada"
+
+                self.intentos_supervisor = 0
+                self.espera_supervisor_acumulada_ms = 0
+                self.inicio_espera_supervisor_monotonic = (
+                    time.monotonic()
+                )
+
+                return None
+
+        contexto_apertura = json.loads(
+            json.dumps(
+                esperado,
+                ensure_ascii=False,
+            )
+        )
+
+        contexto_apertura[
+            "_materializacion_demostracion"
+        ] = True
+
+        apertura = self.abrir_contexto_directamente(
+            contexto_apertura
+        )
+
+        if not apertura.get("ok"):
+            # Si falla esta vía nueva, dejamos actuar
+            # al supervisor antiguo.
+            cache[clave] = {
+                "estado": "fallo",
+                "lanzado_en": 0.0,
+            }
+
+            return None
+
+        perfil_resuelto = str(
+            contexto_apertura.get(
+                "perfil_navegador",
+                "",
+            )
+            or ""
+        ).strip()
+
+        if (
+            perfil_resuelto
+            and not perfil
+        ):
+            esperado[
+                "perfil_navegador"
+            ] = perfil_resuelto
+
+        momento = time.monotonic()
+
+        cache[clave] = {
+            "estado": "lanzado",
+            "lanzado_en": momento,
+        }
+
+        self._cache_operativo_bin(
+            "web_rescue_state"
+        ).clear()
+
+        self._cache_operativo_bin(
+            "correction_launch"
+        )[
+            self.clave_correccion_contexto(
+                esperado
+            )
+        ] = momento
+
+        self.registrar_evento_bin(
+            "PREPARA",
+            "Materialización web directa desde demostración.",
+            apertura.get(
+                "detalle",
+                "",
+            ),
+        )
+
+        return {
+            "ok": False,
+            "decision": "WAIT",
+            "motivo": (
+                "Abrí directamente la ventana web demostrada con su perfil. "
+                "Espero a que el navegador exponga esa misma identidad "
+                "antes de validar."
+            ),
+            "contexto_actual": busqueda.get(
+                "contexto"
+            ),
+        }
+
     def abrir_contexto_directamente(self, esperado):
         proceso = str(
             esperado.get(
@@ -20040,8 +20267,29 @@ class BIN(QMainWindow):
             }
         )
 
-        if (
+        es_web_demostracion_chromium = (
+            tipo == "web"
+            and bool(
+                esperado.get(
+                    "_materializacion_demostracion"
+                )
+            )
+            and proceso.strip().lower()
+            in {
+                "chrome.exe",
+                "msedge.exe",
+                "brave.exe",
+                "opera.exe",
+            }
+        )
+
+        es_web_directo_chromium = (
             es_web_manual_chromium
+            or es_web_demostracion_chromium
+        )
+
+        if (
+            es_web_directo_chromium
             and not url
         ):
             return {
@@ -20182,7 +20430,7 @@ class BIN(QMainWindow):
                     ),
                 )
 
-            elif es_web_manual_chromium:
+            elif es_web_directo_chromium:
                 self.registrar_evento_bin(
                     "ERROR",
                     (
@@ -20222,7 +20470,7 @@ class BIN(QMainWindow):
                 )
 
         if (
-            es_web_manual_chromium
+            es_web_directo_chromium
             and perfil
         ):
             esperado[
@@ -20246,7 +20494,7 @@ class BIN(QMainWindow):
                     + perfil
                 )
 
-            if es_web_manual_chromium:
+            if es_web_directo_chromium:
                 geometria = (
                     esperado.get(
                         "geometria"
@@ -20712,6 +20960,16 @@ class BIN(QMainWindow):
         busqueda = self.buscar_ventana_estado_operativo(
             esperado
         )
+
+        materializacion_demo = (
+            self.preparar_materializacion_web_demostracion(
+                esperado,
+                busqueda,
+            )
+        )
+
+        if materializacion_demo is not None:
+            return materializacion_demo
 
         # ====================================================
         # GRACIA DE APERTURA DIRECTA WEB MANUAL
@@ -29163,6 +29421,10 @@ class BIN(QMainWindow):
 
         self._cache_operativo_bin(
             "manual_direct_launch"
+        ).clear()
+
+        self._cache_operativo_bin(
+            "demo_direct_launch"
         ).clear()
 
         repeticiones = self.obtener_repeticiones_tarea(tarea)
