@@ -10,7 +10,7 @@
 
 #5) Organicé mi mesa de trabajo en modo manual (Escribiendo comando por comando), Una ventana a la izquierda 50% width 100% height, y otras 2 a la derecha, 50% width y height, una arriba y otra abajo. Al momento de ejecutar, las organizó inicialmente Bien, pero dejó un espacio entre la ventana de la izquierda, y las ventanas de la derecha, Luego intentó corregirlo, anexando más ventanas, he intentnado acomodarla segun la memoria. PEro al final dió error. No me molesta los protocolos de corrección, Lo que me molesta son los espacios del centro, ya que en otras acciónes y otras ejecuciónes tambien deja espacios. Yo creo que es por lo del margen de error de 8px, evaluemoslo u corrijamoslo. 
 
-#6) En las pruebas, probé un comando de imprimir pantalla, Pero no lo ejecutó. yo estoy seguro que comandos similares, tampoco están funcionando. Evalualo y corrijamoslo. 
+#6) En las pruebas, probé un comando de imprimir pantalla, Pero no lo ejecutó. yo estoy seguro que comandos similares, tampoco están funcionando. Evalualo y corrijamoslo. (CORREGIDO)
 
 #7) Al finalizar las tareas por error, o por finalización exitosa, Si abre whatsapp y escribe el mensaje; pero, no lo envia, y en correo, sale se configuró el panel local. y no se pudo mandar por correo. Yo creo que es porque no tenía la opción de que si nó está instalado, abrirlo en web y una cuenta asociada donde esté abierta. // Me preocupa que mi correo es outlook, no gemail. así que tenemos que dar la opción para diferentes proveedores de correos.
 
