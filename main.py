@@ -14,7 +14,7 @@
 
 #7) Al finalizar las tareas por error, o por finalización exitosa, Si abre whatsapp y escribe el mensaje; pero, no lo envia, y en correo, sale se configuró el panel local. y no se pudo mandar por correo. Yo creo que es porque no tenía la opción de que si nó está instalado, abrirlo en web y una cuenta asociada donde esté abierta. // Me preocupa que mi correo es outlook, no gemail. así que tenemos que dar la opción para diferentes proveedores de correos.
 
-#8) al finalizar antes y despues, si cierra las ventanas. PEro en el caso de los documentos que requieren validación para guardar, o no guardar, frena el proceso de cerrado de ventanas. además hay que darle por defaul 5 segundos despues de cerrar las ventanas, y luego empezar a ejecutar la tarea. y me gustaria que ese tiempo de espera sea configurable en configuración. Así si el PC es más lento, entonces el usuario podrá estimar el tiempo, y aplicar el cambio. (En este punto no se me ocurre una solución para los guardados. Solo que los archivos sean guardados automaticamente en escritorio con el nombre y la hora de la tarea, pero no se me ocurre como.)
+#8) al finalizar antes y despues, si cierra las ventanas. Pero en el caso de los documentos que requieren validación para guardar, o no guardar, frena el proceso de cerrado de ventanas. además hay que darle por defaul 5 segundos despues de cerrar las ventanas, y luego empezar a ejecutar la tarea. y me gustaria que ese tiempo de espera sea configurable en configuración. Así si el PC es más lento, entonces el usuario podrá estimar el tiempo, y aplicar el cambio. (En este punto no se me ocurre una solución para los guardados. Solo que los archivos sean guardados automaticamente en escritorio con el nombre y la hora de la tarea, pero no se me ocurre como.) (CORREGIDO - Pendiente por probar despues de compilación)
 
 #Eso son todos los errores que encontré en la prueba
 #============================================================================================
@@ -6412,6 +6412,10 @@ class BIN(QMainWindow):
             "notificar_falla_en": "Ninguna",
             "notificar_exito_en": "Ninguna",
 
+            # Tiempo de estabilización después de solicitar
+            # el cierre de ventanas antes de continuar.
+            "espera_limpieza_ventanas_segundos": 5,
+
             # Preparación previa de tareas programadas.
             # Sólo suspensión/hibernación. BIN no almacena
             # ni intenta reproducir contraseñas de Windows.
@@ -6514,6 +6518,31 @@ class BIN(QMainWindow):
             )
 
             return False
+
+    def obtener_espera_limpieza_ventanas_ms(
+        self,
+    ):
+        try:
+            segundos = int(
+                self.configuracion.get(
+                    "espera_limpieza_ventanas_segundos",
+                    5,
+                )
+                or 0
+            )
+
+        except Exception:
+            segundos = 5
+
+        segundos = max(
+            0,
+            min(
+                120,
+                segundos,
+            ),
+        )
+
+        return segundos * 1000
 
     def aplicar_visibilidad_interfaz(
         self,
@@ -9056,6 +9085,54 @@ class BIN(QMainWindow):
         )
 
         # ----------------------------------------------------
+        # ESPERA DESPUÉS DE LIMPIAR VENTANAS
+        # ----------------------------------------------------
+
+        espera_limpieza_ventanas = QSpinBox()
+
+        espera_limpieza_ventanas.setRange(
+            0,
+            120,
+        )
+
+        espera_limpieza_ventanas.setValue(
+            int(
+                self.configuracion.get(
+                    "espera_limpieza_ventanas_segundos",
+                    5,
+                )
+            )
+        )
+
+        espera_limpieza_ventanas.setSuffix(
+            " s"
+        )
+
+        formulario.addRow(
+            "Esperar después de cerrar ventanas:",
+            espera_limpieza_ventanas,
+        )
+
+        nota_espera_limpieza = QLabel(
+            "Tiempo que BIN espera para que Windows termine "
+            "de cerrar y estabilizar las aplicaciones antes "
+            "de comenzar la siguiente ejecución."
+        )
+
+        nota_espera_limpieza.setWordWrap(
+            True
+        )
+
+        nota_espera_limpieza.setObjectName(
+            "textoSecundario"
+        )
+
+        formulario.addRow(
+            "",
+            nota_espera_limpieza,
+        )
+
+        # ----------------------------------------------------
         # DATOS DE CONTACTO
         # ----------------------------------------------------
 
@@ -9492,6 +9569,10 @@ class BIN(QMainWindow):
         self.configuracion[
             "notificar_exito_en"
         ] = notificar_exito_en.currentText()
+
+        self.configuracion[
+            "espera_limpieza_ventanas_segundos"
+        ] = espera_limpieza_ventanas.value()
 
         self.configuracion[
             "despertar_pc_automaticamente"
@@ -24267,11 +24348,24 @@ class BIN(QMainWindow):
         self,
         tarea,
         reanudar=False,
+        espera_inicial_ms=0,
     ):
         plan = self.obtener_plan_ejecucion(tarea)
 
         if not plan:
             return False
+
+        try:
+            espera_inicial_ms = max(
+                0,
+                int(
+                    espera_inicial_ms
+                    or 0
+                ),
+            )
+
+        except Exception:
+            espera_inicial_ms = 0       
 
         # ====================================================
         # BIN LIGHT
@@ -24356,7 +24450,16 @@ class BIN(QMainWindow):
             self.repeticion_ejecucion_real = 1
             self.ejecuciones_reales_completadas = 0
             self.delay_ejecucion_restante_ms = 0
-            self.fase_ejecucion_real = "espera_accion"
+
+            if espera_inicial_ms > 0:
+                self.fase_ejecucion_real = (
+                    "espera_limpieza_inicial"
+                )
+            else:
+                self.fase_ejecucion_real = (
+                    "espera_accion"
+                )
+
             self.elapsed_repeticion_base_ms = 0
             self.espera_supervisor_acumulada_ms = 0
             self.intentos_supervisor = 0
@@ -24380,7 +24483,16 @@ class BIN(QMainWindow):
         else:
             self.inicio_espera_supervisor_monotonic = None
 
-        self.inicio_repeticion_real_monotonic = time.monotonic()
+        if (
+            self.fase_ejecucion_real
+            == "espera_limpieza_inicial"
+        ):
+            self.inicio_repeticion_real_monotonic = None
+
+        else:
+            self.inicio_repeticion_real_monotonic = (
+                time.monotonic()
+            )
 
         tarea["ejecucion_real_indice"] = self.indice_ejecucion_real
         tarea["ejecucion_real_repeticion"] = self.repeticion_ejecucion_real
@@ -24390,6 +24502,19 @@ class BIN(QMainWindow):
 
         if reanudar:
             delay = self.delay_ejecucion_restante_ms
+
+        elif (
+            self.fase_ejecucion_real
+            == "espera_limpieza_inicial"
+        ):
+            delay = espera_inicial_ms
+
+            tarea["detalle_estado"] = (
+                "Mesa de trabajo limpiada · "
+                f"esperando {delay / 1000:g}s "
+                "antes de comenzar"
+            )
+
         else:
             delay = (
                 self.offsets_ejecucion_actual_ms[0]
@@ -24489,6 +24614,61 @@ class BIN(QMainWindow):
 
     def procesar_timer_ejecucion_real(self):
         if not self.ejecucion_fisica_activa:
+            return
+
+        # ====================================================
+        # ESPERA DESPUÉS DE LIMPIAR LA MESA
+        # ====================================================
+
+        if (
+            self.fase_ejecucion_real
+            == "espera_limpieza_inicial"
+        ):
+            tarea = self.obtener_tarea_ejecutando()
+
+            if not tarea:
+                return
+
+            self.fase_ejecucion_real = (
+                "espera_accion"
+            )
+
+            self.delay_ejecucion_restante_ms = 0
+
+            self.inicio_repeticion_real_monotonic = (
+                time.monotonic()
+            )
+
+            tarea["detalle_estado"] = (
+                "Mesa estabilizada · "
+                "preparando primera acción"
+            )
+
+            self.guardar_estado_ejecutor_real_en_tarea(
+                tarea
+            )
+
+            delay_primera_accion = (
+                self.offsets_ejecucion_actual_ms[0]
+                if self.offsets_ejecucion_actual_ms
+                else 0
+            )
+
+            self.delay_ejecucion_restante_ms = max(
+                0,
+                int(
+                    delay_primera_accion
+                ),
+            )
+
+            self.guardar_estado_ejecutor_real_en_tarea(
+                tarea
+            )
+
+            self.timer_ejecucion_accion.start(
+                self.delay_ejecucion_restante_ms
+            )
+
             return
 
         # ====================================================
@@ -27438,10 +27618,20 @@ class BIN(QMainWindow):
             silencioso=True,
         )
 
-        self.aplicar_limpieza_ventanas_configurada(
-            tarea,
-            "después",
+        ventanas_cerradas_despues = (
+            self.aplicar_limpieza_ventanas_configurada(
+                tarea,
+                "después",
+            )
         )
+
+        espera_despues_limpieza_ms = 100
+
+        if ventanas_cerradas_despues > 0:
+            espera_despues_limpieza_ms = max(
+                100,
+                self.obtener_espera_limpieza_ventanas_ms(),
+            )
 
         hay_tareas_en_cola = any(
             item.get(
@@ -27483,7 +27673,7 @@ class BIN(QMainWindow):
         )
 
         QTimer.singleShot(
-            100,
+            espera_despues_limpieza_ms,
             self.iniciar_siguiente_en_cola,
         )
 
@@ -27508,10 +27698,20 @@ class BIN(QMainWindow):
         self.mantener_bin_visible_replay(False)
         self.ocultar_barra_ejecucion()
 
-        self.aplicar_limpieza_ventanas_configurada(
-            tarea,
-            "después",
+        ventanas_cerradas_despues = (
+            self.aplicar_limpieza_ventanas_configurada(
+                tarea,
+                "después",
+            )
         )
+
+        espera_despues_limpieza_ms = 100
+
+        if ventanas_cerradas_despues > 0:
+            espera_despues_limpieza_ms = max(
+                100,
+                self.obtener_espera_limpieza_ventanas_ms(),
+            )
 
         QTimer.singleShot(
             50,
@@ -27587,7 +27787,7 @@ class BIN(QMainWindow):
         )
 
         QTimer.singleShot(
-            100,
+            espera_despues_limpieza_ms,
             self.iniciar_siguiente_en_cola,
         )
 
@@ -27618,10 +27818,19 @@ class BIN(QMainWindow):
             self.actualizar_tarjeta_tarea(tarea["id"])
             return False
 
-        self.aplicar_limpieza_ventanas_configurada(
-            tarea,
-            "antes",
+        ventanas_cerradas_antes = (
+            self.aplicar_limpieza_ventanas_configurada(
+                tarea,
+                "antes",
+            )
         )
+
+        espera_limpieza_antes_ms = 0
+
+        if ventanas_cerradas_antes > 0:
+            espera_limpieza_antes_ms = (
+                self.obtener_espera_limpieza_ventanas_ms()
+            )
 
         ahora = datetime.now()
 
@@ -27698,6 +27907,7 @@ class BIN(QMainWindow):
         if not self.iniciar_ejecutor_real(
             tarea,
             reanudar=False,
+            espera_inicial_ms=espera_limpieza_antes_ms,
         ):
             self.finalizar_ejecucion_con_error(
                 tarea,
