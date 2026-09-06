@@ -13622,6 +13622,18 @@ class BIN(QMainWindow):
             ),
         }
 
+        run_key_vencida = (
+            self.clave_programada_para_ahora(
+                nueva,
+                datetime.now(),
+            )
+        )
+
+        if run_key_vencida:
+            nueva[
+                "last_skipped_run_key"
+            ] = run_key_vencida
+
         self.tareas.append(nueva)
 
         self.rutina_borrador = []
@@ -14449,6 +14461,141 @@ class BIN(QMainWindow):
 
             return False
 
+    def vk_tecla_especial_windows(
+        self,
+        nombre,
+    ):
+        texto = str(
+            nombre or ""
+        ).strip().lower()
+
+        alias = {
+            "print screen": "print_screen",
+            "printscreen": "print_screen",
+            "prtsc": "print_screen",
+            "prtscn": "print_screen",
+            "pause": "pause",
+            "break": "pause",
+            "menu": "menu",
+            "menú": "menu",
+            "apps": "menu",
+            "application": "menu",
+            "caps lock": "caps_lock",
+            "capslock": "caps_lock",
+            "num lock": "num_lock",
+            "numlock": "num_lock",
+            "insert": "insert",
+            "ins": "insert",
+        }
+
+        normalizada = alias.get(
+            texto,
+            texto,
+        )
+
+        mapa_vk = {
+            "print_screen": 0x2C,
+            "pause": 0x13,
+            "menu": 0x5D,
+            "caps_lock": 0x14,
+            "num_lock": 0x90,
+            "insert": 0x2D,
+        }
+
+        return (
+            normalizada,
+            mapa_vk.get(
+                normalizada
+            ),
+        )
+
+    def ejecutar_tecla_especial_windows(
+        self,
+        nombre,
+        repeticiones=1,
+    ):
+        if sys.platform != "win32":
+            return None
+
+        normalizada, vk = (
+            self.vk_tecla_especial_windows(
+                nombre
+            )
+        )
+
+        if vk is None:
+            return None
+
+        try:
+            repeticiones = max(
+                1,
+                int(
+                    repeticiones
+                    or 1
+                ),
+            )
+
+        except Exception:
+            repeticiones = 1
+
+        KEYEVENTF_EXTENDEDKEY = 0x0001
+        KEYEVENTF_KEYUP = 0x0002
+
+        teclas_extendidas = {
+            "print_screen",
+            "menu",
+            "num_lock",
+            "insert",
+        }
+
+        flags_base = (
+            KEYEVENTF_EXTENDEDKEY
+            if normalizada in teclas_extendidas
+            else 0
+        )
+
+        try:
+            user32 = ctypes.windll.user32
+            kernel32 = ctypes.windll.kernel32
+
+            for _ in range(
+                repeticiones
+            ):
+                user32.keybd_event(
+                    vk,
+                    0,
+                    flags_base,
+                    0,
+                )
+
+                kernel32.Sleep(
+                    45
+                )
+
+                user32.keybd_event(
+                    vk,
+                    0,
+                    flags_base
+                    | KEYEVENTF_KEYUP,
+                    0,
+                )
+
+                kernel32.Sleep(
+                    70
+                )
+
+            return True
+
+        except Exception as error:
+            self.actualizar_chat_bin(
+                "No pude ejecutar una tecla especial "
+                "de Windows.\n\n"
+                f"{nombre}\n"
+                f"{error}"
+            )
+
+            return False
+
     def ejecutar_atajo_replay(
         self,
         modificadores,
@@ -14515,13 +14662,27 @@ class BIN(QMainWindow):
         if not self.asegurar_controladores_replay():
             return False
 
-        tecla_objetivo = self.tecla_replay_desde_nombre(
-            tecla,
-            caracter,
+        normalizada_especial, vk_especial = (
+            self.vk_tecla_especial_windows(
+                tecla_normalizada
+            )
         )
 
-        if tecla_objetivo is None:
-            return False
+        usar_tecla_especial_windows = (
+            sys.platform == "win32"
+            and vk_especial is not None
+        )
+
+        tecla_objetivo = None
+
+        if not usar_tecla_especial_windows:
+            tecla_objetivo = self.tecla_replay_desde_nombre(
+                tecla,
+                caracter,
+            )
+
+            if tecla_objetivo is None:
+                return False
 
         teclas_modificadoras = []
 
@@ -14535,13 +14696,28 @@ class BIN(QMainWindow):
             for modificador in teclas_modificadoras:
                 self.keyboard_replay.press(modificador)
 
-            self.keyboard_replay.press(tecla_objetivo)
-            self.keyboard_replay.release(tecla_objetivo)
+            if usar_tecla_especial_windows:
+                ok_tecla = (
+                    self.ejecutar_tecla_especial_windows(
+                        normalizada_especial,
+                        1,
+                    )
+                )
+            else:
+                self.keyboard_replay.press(
+                    tecla_objetivo
+                )
+                self.keyboard_replay.release(
+                    tecla_objetivo
+                )
+                ok_tecla = True
 
             for modificador in reversed(teclas_modificadoras):
                 self.keyboard_replay.release(modificador)
 
-            return True
+            return bool(
+                ok_tecla
+            )
 
         except Exception:
             for modificador in reversed(teclas_modificadoras):
@@ -14749,6 +14925,31 @@ class BIN(QMainWindow):
 
                         modificadores_presionados.append(
                             modificador
+                        )
+
+                    continue
+
+                normalizada_especial, vk_especial = (
+                    self.vk_tecla_especial_windows(
+                        nombre
+                    )
+                )
+
+                if (
+                    sys.platform == "win32"
+                    and vk_especial is not None
+                ):
+                    ok_especial = (
+                        self.ejecutar_tecla_especial_windows(
+                            normalizada_especial,
+                            repeticiones,
+                        )
+                    )
+
+                    if not ok_especial:
+                        raise RuntimeError(
+                            "No se pudo ejecutar la tecla especial: "
+                            f"{nombre}"
                         )
 
                     continue
@@ -28755,12 +28956,38 @@ class BIN(QMainWindow):
                         nombre_vk = "/"
 
             # =================================================
+            # DESCARTAR CARACTERES DE CONTROL
+            # =================================================
+            #
+            # Con Ctrl presionado, pynput puede entregar letras
+            # como caracteres ASCII de control:
+            #
+            # Ctrl + A -> \x01
+            # Ctrl + C -> \x03
+            # Ctrl + V -> \x16
+            #
+            # Para esos casos conservamos el VK físico, que ya
+            # fue normalizado arriba a la letra real.
+            # =================================================
+
+            caracter_serializado = caracter
+
+            if caracter_serializado is not None:
+
+                texto_caracter = str(
+                    caracter_serializado
+                )
+
+                if not texto_caracter.isprintable():
+                    caracter_serializado = None
+
+            # =================================================
             # ELEGIR NOMBRE REAL
             # =================================================
 
-            if caracter is not None:
+            if caracter_serializado is not None:
 
-                nombre = caracter
+                nombre = caracter_serializado
 
             elif nombre_vk is not None:
 
@@ -28798,7 +29025,7 @@ class BIN(QMainWindow):
             return {
                 "id": identificador,
                 "nombre": nombre,
-                "caracter": caracter,
+                "caracter": caracter_serializado,
                 "vk": vk,
                 "especial": False,
             }

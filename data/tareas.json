@@ -432,7 +432,7 @@
         "ejecucion_real_fase": "inactiva",
         "elapsed_repeticion_real_ms": 0,
         "duracion_origen": "calculada_comandos",
-        "detalle_estado": "Próxima ejecución: Mañana · 01:08 · en 1 h 40 min",
+        "detalle_estado": "Próxima ejecución: Mañana · 01:08 · en 1 h 11 min",
         "supervisor_espera_acumulada_ms": 0,
         "supervisor_intentos": 0,
         "supervisor_ultima_decision": null,
@@ -2964,7 +2964,7 @@
         "ejecucion_real_fase": "inactiva",
         "elapsed_repeticion_real_ms": 0,
         "duracion_origen": "grabacion",
-        "detalle_estado": "Próxima ejecución: Mañana · 01:09 · en 1 h 41 min",
+        "detalle_estado": "Próxima ejecución: Mañana · 01:09 · en 1 h 12 min",
         "supervisor_espera_acumulada_ms": 0,
         "supervisor_intentos": 0,
         "supervisor_ultima_decision": null,
@@ -3404,7 +3404,7 @@
         "ejecucion_real_fase": "inactiva",
         "elapsed_repeticion_real_ms": 0,
         "duracion_origen": "grabacion",
-        "detalle_estado": "Próxima ejecución: Mañana · 05:40 · en 6 h 12 min",
+        "detalle_estado": "Próxima ejecución: Mañana · 05:40 · en 5 h 43 min",
         "supervisor_espera_acumulada_ms": 0,
         "supervisor_intentos": 0,
         "supervisor_ultima_decision": null,
@@ -3518,7 +3518,7 @@
         "ejecucion_real_fase": "inactiva",
         "elapsed_repeticion_real_ms": 0,
         "duracion_origen": "calculada_comandos",
-        "detalle_estado": "FINALIZADA\nÚltima ejecución: 05/09 23:03\nPróxima ejecución: Mañana · 05:40 · en 6 h 12 min",
+        "detalle_estado": "FINALIZADA\nÚltima ejecución: 05/09 23:03\nPróxima ejecución: Mañana · 05:40 · en 5 h 43 min",
         "contexto": "",
         "supervisor_espera_acumulada_ms": 0,
         "supervisor_intentos": 0,
@@ -3541,5 +3541,2214 @@
         "last_skipped_run_key": "sched-20260905-0540",
         "duracion_real_ultima_segundos": 15,
         "desfase_duracion_segundos": 6
+    },
+    {
+        "id": 5,
+        "nombre": "Comprobación de comandos",
+        "hora": "05:26",
+        "veces": 1,
+        "intervalo_valor": 24,
+        "intervalo_unidad": "horas",
+        "dias": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+        ],
+        "duracion": "00:00:10",
+        "limpieza_ventanas": "Ninguna",
+        "estado": "FINALIZADA",
+        "transcurrido": "00:00:25",
+        "progreso": 100,
+        "elapsed_seconds": 25,
+        "runtime_base_seconds": 0,
+        "runtime_started_at": null,
+        "current_run_key": null,
+        "last_run_key": "manual-20260905-234511",
+        "queued_at": null,
+        "completed_at": "2026-09-05T23:45:37.088781",
+        "ultima_ejecucion": "2026-09-05T23:45:37.088781",
+        "acciones": [
+            {
+                "id": 1,
+                "tipo": "tecla",
+                "origen": "grabacion_global",
+                "descripcion": "Tecla · Print Screen",
+                "contexto_objetivo": {
+                    "hwnd": 854220,
+                    "pid": 9780,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "BIN Light Etapa 2 Part 3 - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1272,
+                        "y": -8,
+                        "ancho": 1296,
+                        "alto": 1416,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com/c/6a9ce0b3-a9d8-83e9-bd87-8184a28954d9",
+                    "url": "https://chatgpt.com/c/6a9ce0b3-a9d8-83e9-bd87-8184a28954d9",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 2",
+                    "cuenta_navegador": "villaglabor@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                },
+                "capturado_en": "2026-09-05T23:42:12.778889",
+                "tecla": "print_screen",
+                "caracter": null,
+                "vk": null,
+                "modificadores": [],
+                "duracion_ms": 296,
+                "ids_origen": [
+                    1
+                ]
+            },
+            {
+                "id": 2,
+                "tipo": "click",
+                "origen": "grabacion_global",
+                "descripcion": "Clic izquierdo · Microsoft Word · Documento1 - Word\nX=541 · Y=517",
+                "contexto_objetivo": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                },
+                "contexto_despues": null,
+                "capturado_en": "2026-09-05T23:42:14.489228",
+                "boton": "izquierdo",
+                "x": 541,
+                "y": 517,
+                "ids_origen": [
+                    2
+                ]
+            },
+            {
+                "tipo": "comando_teclado",
+                "origen": "manual_comando",
+                "descripcion": "Comando · Pegar · Ctrl + V",
+                "comando_id": "ctrl_v",
+                "nombre_comando": "Pegar",
+                "parametros": [
+                    {
+                        "tecla": "Ctrl",
+                        "repeticiones": 1
+                    },
+                    {
+                        "tecla": "V",
+                        "repeticiones": 1
+                    }
+                ],
+                "espera_antes_ms": 0,
+                "espera_despues_ms": 0,
+                "contexto_objetivo": null,
+                "contexto_despues": null,
+                "id": 3
+            }
+        ],
+        "acciones_semanticas": [
+            {
+                "id": 1,
+                "tipo": "tecla",
+                "descripcion": "Tecla · Print Screen",
+                "acciones_origen": [
+                    1
+                ],
+                "confianza": "alta",
+                "datos": {
+                    "tecla": "print_screen",
+                    "caracter": null,
+                    "vk": null,
+                    "modificadores": [],
+                    "cambio_contexto": true,
+                    "proceso_antes": "chrome.exe",
+                    "proceso_despues": "WINWORD.EXE"
+                },
+                "contexto_objetivo": {
+                    "hwnd": 854220,
+                    "pid": 9780,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "BIN Light Etapa 2 Part 3 - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1272,
+                        "y": -8,
+                        "ancho": 1296,
+                        "alto": 1416,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com/c/6a9ce0b3-a9d8-83e9-bd87-8184a28954d9",
+                    "url": "https://chatgpt.com/c/6a9ce0b3-a9d8-83e9-bd87-8184a28954d9",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 2",
+                    "cuenta_navegador": "villaglabor@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                }
+            },
+            {
+                "id": 2,
+                "tipo": "click",
+                "descripcion": "Clic izquierdo en Microsoft Word · Documento1 - Word",
+                "acciones_origen": [
+                    2
+                ],
+                "confianza": "alta",
+                "datos": {
+                    "x": 541,
+                    "y": 517,
+                    "boton": "izquierdo"
+                },
+                "contexto_objetivo": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                },
+                "contexto_despues": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                }
+            },
+            {
+                "id": 3,
+                "tipo": "comando_teclado",
+                "descripcion": "Comando · Pegar · Ctrl + V",
+                "acciones_origen": [
+                    3
+                ],
+                "confianza": "baja",
+                "datos": {
+                    "origen": "manual_comando",
+                    "comando_id": "ctrl_v",
+                    "nombre_comando": "Pegar",
+                    "parametros": [
+                        {
+                            "tecla": "Ctrl",
+                            "repeticiones": 1
+                        },
+                        {
+                            "tecla": "V",
+                            "repeticiones": 1
+                        }
+                    ],
+                    "espera_antes_ms": 0,
+                    "espera_despues_ms": 0
+                },
+                "contexto_objetivo": null,
+                "contexto_despues": null
+            }
+        ],
+        "accion_actual_indice": null,
+        "repeticion_actual": 1,
+        "repeticiones_totales": 1,
+        "ejecucion_real_indice": 0,
+        "ejecucion_real_repeticion": 1,
+        "ejecuciones_reales_completadas": 3,
+        "delay_ejecucion_restante_ms": 0,
+        "ejecucion_real_fase": "inactiva",
+        "elapsed_repeticion_real_ms": 0,
+        "duracion_origen": "grabacion",
+        "detalle_estado": "FINALIZADA\nÚltima ejecución: 05/09 23:45\nPróxima ejecución: Mañana · 05:26 · en 5 h 29 min",
+        "supervisor_espera_acumulada_ms": 0,
+        "supervisor_intentos": 0,
+        "supervisor_ultima_decision": "READY",
+        "supervisor_ultimo_motivo": "La acción no exige una transición de contexto antes de continuar.",
+        "ultimo_checkpoint": {
+            "decision": "READY",
+            "motivo": "La acción no exige una transición de contexto antes de continuar.",
+            "timestamp": "2026-09-05T23:45:25.419672",
+            "accion_indice": 2,
+            "repeticion": 1,
+            "contexto_actual": {
+                "pid": 12448,
+                "proceso": "WINWORD.EXE",
+                "titulo": "Documento1 - Word",
+                "clase": "OpusApp",
+                "hwnd": 5441744
+            }
+        },
+        "duracion_real_ultima_segundos": 25,
+        "desfase_duracion_segundos": 15,
+        "last_skipped_run_key": "sched-20260905-0526",
+        "contexto": ""
+    },
+    {
+        "id": 6,
+        "nombre": "Demostración de comandos",
+        "hora": "05:25",
+        "veces": 1,
+        "intervalo_valor": 24,
+        "intervalo_unidad": "horas",
+        "dias": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+        ],
+        "duracion": "00:00:42",
+        "limpieza_ventanas": "Ninguna",
+        "estado": "FINALIZADA",
+        "transcurrido": "00:00:46",
+        "progreso": 100,
+        "elapsed_seconds": 46,
+        "runtime_base_seconds": 0,
+        "runtime_started_at": null,
+        "current_run_key": null,
+        "last_run_key": "sched-20260905-0525",
+        "queued_at": null,
+        "completed_at": "2026-09-05T23:53:02.786747",
+        "ultima_ejecucion": "2026-09-05T23:53:02.786747",
+        "acciones": [
+            {
+                "id": 1,
+                "tipo": "click",
+                "origen": "grabacion_global",
+                "descripcion": "Clic izquierdo · Microsoft Word · Documento1 - Word\nX=532 · Y=372",
+                "contexto_objetivo": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                },
+                "contexto_despues": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                },
+                "capturado_en": "2026-09-05T23:51:19.278366",
+                "boton": "izquierdo",
+                "x": 532,
+                "y": 372,
+                "ids_origen": [
+                    1
+                ]
+            },
+            {
+                "id": 2,
+                "tipo": "comando_teclado",
+                "origen": "grabacion_global",
+                "descripcion": "Comando · Atajo automático · Ctrl + v · Ctrl + v",
+                "contexto_objetivo": null,
+                "contexto_despues": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                },
+                "capturado_en": "2026-09-05T23:51:20.669256",
+                "comando_id": "auto_atajo_ctrl_v",
+                "nombre_comando": "Atajo automático · Ctrl + v",
+                "parametros": [
+                    {
+                        "tecla": "Ctrl",
+                        "repeticiones": 1
+                    },
+                    {
+                        "tecla": "v",
+                        "repeticiones": 1
+                    }
+                ],
+                "espera_antes_ms": 0,
+                "espera_despues_ms": 0,
+                "duracion_ms": 92,
+                "ids_origen": [
+                    2
+                ]
+            },
+            {
+                "id": 3,
+                "tipo": "click",
+                "origen": "grabacion_global",
+                "descripcion": "Clic izquierdo · Microsoft Word · Documento1 - Word\nX=567 · Y=378",
+                "contexto_objetivo": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                },
+                "contexto_despues": null,
+                "capturado_en": "2026-09-05T23:51:23.137922",
+                "boton": "izquierdo",
+                "x": 567,
+                "y": 378,
+                "ids_origen": [
+                    3
+                ]
+            },
+            {
+                "id": 4,
+                "tipo": "comando_teclado",
+                "origen": "grabacion_global",
+                "descripcion": "Comando · Atajo automático · Ctrl + c · Ctrl + c",
+                "contexto_objetivo": null,
+                "contexto_despues": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                },
+                "capturado_en": "2026-09-05T23:51:23.778295",
+                "comando_id": "auto_atajo_ctrl_c",
+                "nombre_comando": "Atajo automático · Ctrl + c",
+                "parametros": [
+                    {
+                        "tecla": "Ctrl",
+                        "repeticiones": 1
+                    },
+                    {
+                        "tecla": "c",
+                        "repeticiones": 1
+                    }
+                ],
+                "espera_antes_ms": 0,
+                "espera_despues_ms": 0,
+                "duracion_ms": 235,
+                "ids_origen": [
+                    4
+                ]
+            },
+            {
+                "id": 5,
+                "tipo": "comando_teclado",
+                "origen": "grabacion_global",
+                "descripcion": "Comando · Atajo automático · Ctrl + v · Ctrl + v",
+                "contexto_objetivo": null,
+                "contexto_despues": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                },
+                "capturado_en": "2026-09-05T23:51:25.951607",
+                "comando_id": "auto_atajo_ctrl_v",
+                "nombre_comando": "Atajo automático · Ctrl + v",
+                "parametros": [
+                    {
+                        "tecla": "Ctrl",
+                        "repeticiones": 1
+                    },
+                    {
+                        "tecla": "v",
+                        "repeticiones": 1
+                    }
+                ],
+                "espera_antes_ms": 0,
+                "espera_despues_ms": 0,
+                "duracion_ms": 250,
+                "ids_origen": [
+                    5
+                ]
+            },
+            {
+                "id": 6,
+                "tipo": "click",
+                "origen": "grabacion_global",
+                "descripcion": "Clic izquierdo · Microsoft Word · Documento1 - Word\nX=620 · Y=425",
+                "contexto_objetivo": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                },
+                "contexto_despues": null,
+                "capturado_en": "2026-09-05T23:51:32.460858",
+                "boton": "izquierdo",
+                "x": 620,
+                "y": 425,
+                "ids_origen": [
+                    6
+                ]
+            },
+            {
+                "id": 7,
+                "tipo": "comando_teclado",
+                "origen": "grabacion_global",
+                "descripcion": "Comando · Atajo automático · Ctrl + x · Ctrl + x",
+                "contexto_objetivo": null,
+                "contexto_despues": null,
+                "capturado_en": "2026-09-05T23:51:33.091038",
+                "comando_id": "auto_atajo_ctrl_x",
+                "nombre_comando": "Atajo automático · Ctrl + x",
+                "parametros": [
+                    {
+                        "tecla": "Ctrl",
+                        "repeticiones": 1
+                    },
+                    {
+                        "tecla": "x",
+                        "repeticiones": 1
+                    }
+                ],
+                "espera_antes_ms": 0,
+                "espera_despues_ms": 0,
+                "duracion_ms": 250,
+                "ids_origen": [
+                    7
+                ]
+            },
+            {
+                "id": 8,
+                "tipo": "click",
+                "origen": "grabacion_global",
+                "descripcion": "Clic izquierdo · Microsoft Word · Documento1 - Word\nX=617 · Y=446",
+                "contexto_objetivo": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                },
+                "contexto_despues": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                },
+                "capturado_en": "2026-09-05T23:51:33.092071",
+                "boton": "izquierdo",
+                "x": 617,
+                "y": 446,
+                "ids_origen": [
+                    8
+                ]
+            },
+            {
+                "id": 9,
+                "tipo": "click",
+                "origen": "grabacion_global",
+                "descripcion": "Clic izquierdo · Microsoft Word · Documento1 - Word\nX=965 · Y=601",
+                "contexto_objetivo": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                },
+                "contexto_despues": null,
+                "capturado_en": "2026-09-05T23:51:35.247562",
+                "boton": "izquierdo",
+                "x": 965,
+                "y": 601,
+                "ids_origen": [
+                    9
+                ]
+            },
+            {
+                "id": 10,
+                "tipo": "comando_teclado",
+                "origen": "grabacion_global",
+                "descripcion": "Comando · Atajo automático · Ctrl + v · Ctrl + v",
+                "contexto_objetivo": null,
+                "contexto_despues": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                },
+                "capturado_en": "2026-09-05T23:51:35.778986",
+                "comando_id": "auto_atajo_ctrl_v",
+                "nombre_comando": "Atajo automático · Ctrl + v",
+                "parametros": [
+                    {
+                        "tecla": "Ctrl",
+                        "repeticiones": 1
+                    },
+                    {
+                        "tecla": "v",
+                        "repeticiones": 1
+                    }
+                ],
+                "espera_antes_ms": 0,
+                "espera_despues_ms": 0,
+                "duracion_ms": 250,
+                "ids_origen": [
+                    10
+                ]
+            },
+            {
+                "id": 11,
+                "tipo": "comando_teclado",
+                "origen": "grabacion_global",
+                "descripcion": "Comando · Atajo automático · Ctrl + z · Ctrl + z",
+                "contexto_objetivo": null,
+                "contexto_despues": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                },
+                "capturado_en": "2026-09-05T23:51:37.512864",
+                "comando_id": "auto_atajo_ctrl_z",
+                "nombre_comando": "Atajo automático · Ctrl + z",
+                "parametros": [
+                    {
+                        "tecla": "Ctrl",
+                        "repeticiones": 1
+                    },
+                    {
+                        "tecla": "z",
+                        "repeticiones": 1
+                    }
+                ],
+                "espera_antes_ms": 0,
+                "espera_despues_ms": 0,
+                "duracion_ms": 234,
+                "ids_origen": [
+                    11
+                ]
+            },
+            {
+                "id": 12,
+                "tipo": "comando_teclado",
+                "origen": "grabacion_global",
+                "descripcion": "Comando · Atajo automático · Ctrl + z · Ctrl + z",
+                "contexto_objetivo": null,
+                "contexto_despues": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                },
+                "capturado_en": "2026-09-05T23:51:39.356758",
+                "comando_id": "auto_atajo_ctrl_z",
+                "nombre_comando": "Atajo automático · Ctrl + z",
+                "parametros": [
+                    {
+                        "tecla": "Ctrl",
+                        "repeticiones": 1
+                    },
+                    {
+                        "tecla": "z",
+                        "repeticiones": 1
+                    }
+                ],
+                "espera_antes_ms": 0,
+                "espera_despues_ms": 0,
+                "duracion_ms": 171,
+                "ids_origen": [
+                    12
+                ]
+            },
+            {
+                "id": 13,
+                "tipo": "comando_teclado",
+                "origen": "grabacion_global",
+                "descripcion": "Comando · Atajo automático · Ctrl + z · Ctrl + z",
+                "contexto_objetivo": null,
+                "contexto_despues": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                },
+                "capturado_en": "2026-09-05T23:51:41.717165",
+                "comando_id": "auto_atajo_ctrl_z",
+                "nombre_comando": "Atajo automático · Ctrl + z",
+                "parametros": [
+                    {
+                        "tecla": "Ctrl",
+                        "repeticiones": 1
+                    },
+                    {
+                        "tecla": "z",
+                        "repeticiones": 1
+                    }
+                ],
+                "espera_antes_ms": 0,
+                "espera_despues_ms": 0,
+                "duracion_ms": 313,
+                "ids_origen": [
+                    13
+                ]
+            },
+            {
+                "id": 14,
+                "tipo": "comando_teclado",
+                "origen": "grabacion_global",
+                "descripcion": "Comando · Atajo automático · Ctrl + z · Ctrl + z",
+                "contexto_objetivo": null,
+                "contexto_despues": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                },
+                "capturado_en": "2026-09-05T23:51:42.802227",
+                "comando_id": "auto_atajo_ctrl_z",
+                "nombre_comando": "Atajo automático · Ctrl + z",
+                "parametros": [
+                    {
+                        "tecla": "Ctrl",
+                        "repeticiones": 1
+                    },
+                    {
+                        "tecla": "z",
+                        "repeticiones": 1
+                    }
+                ],
+                "espera_antes_ms": 0,
+                "espera_despues_ms": 0,
+                "duracion_ms": 328,
+                "ids_origen": [
+                    14
+                ]
+            },
+            {
+                "id": 15,
+                "tipo": "comando_teclado",
+                "origen": "grabacion_global",
+                "descripcion": "Comando · Atajo automático · Ctrl + y · Ctrl + y",
+                "contexto_objetivo": null,
+                "contexto_despues": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                },
+                "capturado_en": "2026-09-05T23:51:44.736891",
+                "comando_id": "auto_atajo_ctrl_y",
+                "nombre_comando": "Atajo automático · Ctrl + y",
+                "parametros": [
+                    {
+                        "tecla": "Ctrl",
+                        "repeticiones": 1
+                    },
+                    {
+                        "tecla": "y",
+                        "repeticiones": 1
+                    }
+                ],
+                "espera_antes_ms": 0,
+                "espera_despues_ms": 0,
+                "duracion_ms": 109,
+                "ids_origen": [
+                    15
+                ]
+            },
+            {
+                "id": 16,
+                "tipo": "comando_teclado",
+                "origen": "grabacion_global",
+                "descripcion": "Comando · Atajo automático · Ctrl + a · Ctrl + a",
+                "contexto_objetivo": null,
+                "contexto_despues": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                },
+                "capturado_en": "2026-09-05T23:51:46.784970",
+                "comando_id": "auto_atajo_ctrl_a",
+                "nombre_comando": "Atajo automático · Ctrl + a",
+                "parametros": [
+                    {
+                        "tecla": "Ctrl",
+                        "repeticiones": 1
+                    },
+                    {
+                        "tecla": "a",
+                        "repeticiones": 1
+                    }
+                ],
+                "espera_antes_ms": 0,
+                "espera_despues_ms": 0,
+                "duracion_ms": 235,
+                "ids_origen": [
+                    16
+                ]
+            },
+            {
+                "id": 17,
+                "tipo": "tecla",
+                "origen": "grabacion_global",
+                "descripcion": "Tecla · Esc",
+                "contexto_objetivo": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                },
+                "contexto_despues": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                },
+                "capturado_en": "2026-09-05T23:51:49.556256",
+                "tecla": "esc",
+                "caracter": null,
+                "vk": null,
+                "modificadores": [],
+                "duracion_ms": 280,
+                "ids_origen": [
+                    17
+                ]
+            }
+        ],
+        "acciones_semanticas": [
+            {
+                "id": 1,
+                "tipo": "click",
+                "descripcion": "Clic izquierdo en Microsoft Word · Documento1 - Word",
+                "acciones_origen": [
+                    1
+                ],
+                "confianza": "alta",
+                "datos": {
+                    "x": 532,
+                    "y": 372,
+                    "boton": "izquierdo"
+                },
+                "contexto_objetivo": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                },
+                "contexto_despues": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                }
+            },
+            {
+                "id": 2,
+                "tipo": "comando_teclado",
+                "descripcion": "Comando · Atajo automático · Ctrl + v · Ctrl + v",
+                "acciones_origen": [
+                    2
+                ],
+                "confianza": "baja",
+                "datos": {
+                    "origen": "grabacion_global",
+                    "capturado_en": "2026-09-05T23:51:20.669256",
+                    "comando_id": "auto_atajo_ctrl_v",
+                    "nombre_comando": "Atajo automático · Ctrl + v",
+                    "parametros": [
+                        {
+                            "tecla": "Ctrl",
+                            "repeticiones": 1
+                        },
+                        {
+                            "tecla": "v",
+                            "repeticiones": 1
+                        }
+                    ],
+                    "espera_antes_ms": 0,
+                    "espera_despues_ms": 0,
+                    "duracion_ms": 92,
+                    "ids_origen": [
+                        2
+                    ]
+                },
+                "contexto_objetivo": null,
+                "contexto_despues": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                }
+            },
+            {
+                "id": 3,
+                "tipo": "click",
+                "descripcion": "Clic izquierdo en Microsoft Word · Documento1 - Word",
+                "acciones_origen": [
+                    3
+                ],
+                "confianza": "alta",
+                "datos": {
+                    "x": 567,
+                    "y": 378,
+                    "boton": "izquierdo"
+                },
+                "contexto_objetivo": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                },
+                "contexto_despues": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                }
+            },
+            {
+                "id": 4,
+                "tipo": "comando_teclado",
+                "descripcion": "Comando · Atajo automático · Ctrl + c · Ctrl + c",
+                "acciones_origen": [
+                    4
+                ],
+                "confianza": "baja",
+                "datos": {
+                    "origen": "grabacion_global",
+                    "capturado_en": "2026-09-05T23:51:23.778295",
+                    "comando_id": "auto_atajo_ctrl_c",
+                    "nombre_comando": "Atajo automático · Ctrl + c",
+                    "parametros": [
+                        {
+                            "tecla": "Ctrl",
+                            "repeticiones": 1
+                        },
+                        {
+                            "tecla": "c",
+                            "repeticiones": 1
+                        }
+                    ],
+                    "espera_antes_ms": 0,
+                    "espera_despues_ms": 0,
+                    "duracion_ms": 235,
+                    "ids_origen": [
+                        4
+                    ]
+                },
+                "contexto_objetivo": null,
+                "contexto_despues": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                }
+            },
+            {
+                "id": 5,
+                "tipo": "comando_teclado",
+                "descripcion": "Comando · Atajo automático · Ctrl + v · Ctrl + v",
+                "acciones_origen": [
+                    5
+                ],
+                "confianza": "baja",
+                "datos": {
+                    "origen": "grabacion_global",
+                    "capturado_en": "2026-09-05T23:51:25.951607",
+                    "comando_id": "auto_atajo_ctrl_v",
+                    "nombre_comando": "Atajo automático · Ctrl + v",
+                    "parametros": [
+                        {
+                            "tecla": "Ctrl",
+                            "repeticiones": 1
+                        },
+                        {
+                            "tecla": "v",
+                            "repeticiones": 1
+                        }
+                    ],
+                    "espera_antes_ms": 0,
+                    "espera_despues_ms": 0,
+                    "duracion_ms": 250,
+                    "ids_origen": [
+                        5
+                    ]
+                },
+                "contexto_objetivo": null,
+                "contexto_despues": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                }
+            },
+            {
+                "id": 6,
+                "tipo": "click",
+                "descripcion": "Clic izquierdo en Microsoft Word · Documento1 - Word",
+                "acciones_origen": [
+                    6
+                ],
+                "confianza": "alta",
+                "datos": {
+                    "x": 620,
+                    "y": 425,
+                    "boton": "izquierdo"
+                },
+                "contexto_objetivo": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                },
+                "contexto_despues": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                }
+            },
+            {
+                "id": 7,
+                "tipo": "comando_teclado",
+                "descripcion": "Comando · Atajo automático · Ctrl + x · Ctrl + x",
+                "acciones_origen": [
+                    7
+                ],
+                "confianza": "baja",
+                "datos": {
+                    "origen": "grabacion_global",
+                    "capturado_en": "2026-09-05T23:51:33.091038",
+                    "comando_id": "auto_atajo_ctrl_x",
+                    "nombre_comando": "Atajo automático · Ctrl + x",
+                    "parametros": [
+                        {
+                            "tecla": "Ctrl",
+                            "repeticiones": 1
+                        },
+                        {
+                            "tecla": "x",
+                            "repeticiones": 1
+                        }
+                    ],
+                    "espera_antes_ms": 0,
+                    "espera_despues_ms": 0,
+                    "duracion_ms": 250,
+                    "ids_origen": [
+                        7
+                    ]
+                },
+                "contexto_objetivo": null,
+                "contexto_despues": null
+            },
+            {
+                "id": 8,
+                "tipo": "click",
+                "descripcion": "Clic izquierdo en Microsoft Word · Documento1 - Word",
+                "acciones_origen": [
+                    8
+                ],
+                "confianza": "alta",
+                "datos": {
+                    "x": 617,
+                    "y": 446,
+                    "boton": "izquierdo"
+                },
+                "contexto_objetivo": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                },
+                "contexto_despues": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                }
+            },
+            {
+                "id": 9,
+                "tipo": "click",
+                "descripcion": "Clic izquierdo en Microsoft Word · Documento1 - Word",
+                "acciones_origen": [
+                    9
+                ],
+                "confianza": "alta",
+                "datos": {
+                    "x": 965,
+                    "y": 601,
+                    "boton": "izquierdo"
+                },
+                "contexto_objetivo": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                },
+                "contexto_despues": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                }
+            },
+            {
+                "id": 10,
+                "tipo": "comando_teclado",
+                "descripcion": "Comando · Atajo automático · Ctrl + v · Ctrl + v",
+                "acciones_origen": [
+                    10
+                ],
+                "confianza": "baja",
+                "datos": {
+                    "origen": "grabacion_global",
+                    "capturado_en": "2026-09-05T23:51:35.778986",
+                    "comando_id": "auto_atajo_ctrl_v",
+                    "nombre_comando": "Atajo automático · Ctrl + v",
+                    "parametros": [
+                        {
+                            "tecla": "Ctrl",
+                            "repeticiones": 1
+                        },
+                        {
+                            "tecla": "v",
+                            "repeticiones": 1
+                        }
+                    ],
+                    "espera_antes_ms": 0,
+                    "espera_despues_ms": 0,
+                    "duracion_ms": 250,
+                    "ids_origen": [
+                        10
+                    ]
+                },
+                "contexto_objetivo": null,
+                "contexto_despues": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                }
+            },
+            {
+                "id": 11,
+                "tipo": "comando_teclado",
+                "descripcion": "Comando · Atajo automático · Ctrl + z · Ctrl + z",
+                "acciones_origen": [
+                    11
+                ],
+                "confianza": "baja",
+                "datos": {
+                    "origen": "grabacion_global",
+                    "capturado_en": "2026-09-05T23:51:37.512864",
+                    "comando_id": "auto_atajo_ctrl_z",
+                    "nombre_comando": "Atajo automático · Ctrl + z",
+                    "parametros": [
+                        {
+                            "tecla": "Ctrl",
+                            "repeticiones": 1
+                        },
+                        {
+                            "tecla": "z",
+                            "repeticiones": 1
+                        }
+                    ],
+                    "espera_antes_ms": 0,
+                    "espera_despues_ms": 0,
+                    "duracion_ms": 234,
+                    "ids_origen": [
+                        11
+                    ]
+                },
+                "contexto_objetivo": null,
+                "contexto_despues": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                }
+            },
+            {
+                "id": 12,
+                "tipo": "comando_teclado",
+                "descripcion": "Comando · Atajo automático · Ctrl + z · Ctrl + z",
+                "acciones_origen": [
+                    12
+                ],
+                "confianza": "baja",
+                "datos": {
+                    "origen": "grabacion_global",
+                    "capturado_en": "2026-09-05T23:51:39.356758",
+                    "comando_id": "auto_atajo_ctrl_z",
+                    "nombre_comando": "Atajo automático · Ctrl + z",
+                    "parametros": [
+                        {
+                            "tecla": "Ctrl",
+                            "repeticiones": 1
+                        },
+                        {
+                            "tecla": "z",
+                            "repeticiones": 1
+                        }
+                    ],
+                    "espera_antes_ms": 0,
+                    "espera_despues_ms": 0,
+                    "duracion_ms": 171,
+                    "ids_origen": [
+                        12
+                    ]
+                },
+                "contexto_objetivo": null,
+                "contexto_despues": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                }
+            },
+            {
+                "id": 13,
+                "tipo": "comando_teclado",
+                "descripcion": "Comando · Atajo automático · Ctrl + z · Ctrl + z",
+                "acciones_origen": [
+                    13
+                ],
+                "confianza": "baja",
+                "datos": {
+                    "origen": "grabacion_global",
+                    "capturado_en": "2026-09-05T23:51:41.717165",
+                    "comando_id": "auto_atajo_ctrl_z",
+                    "nombre_comando": "Atajo automático · Ctrl + z",
+                    "parametros": [
+                        {
+                            "tecla": "Ctrl",
+                            "repeticiones": 1
+                        },
+                        {
+                            "tecla": "z",
+                            "repeticiones": 1
+                        }
+                    ],
+                    "espera_antes_ms": 0,
+                    "espera_despues_ms": 0,
+                    "duracion_ms": 313,
+                    "ids_origen": [
+                        13
+                    ]
+                },
+                "contexto_objetivo": null,
+                "contexto_despues": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                }
+            },
+            {
+                "id": 14,
+                "tipo": "comando_teclado",
+                "descripcion": "Comando · Atajo automático · Ctrl + z · Ctrl + z",
+                "acciones_origen": [
+                    14
+                ],
+                "confianza": "baja",
+                "datos": {
+                    "origen": "grabacion_global",
+                    "capturado_en": "2026-09-05T23:51:42.802227",
+                    "comando_id": "auto_atajo_ctrl_z",
+                    "nombre_comando": "Atajo automático · Ctrl + z",
+                    "parametros": [
+                        {
+                            "tecla": "Ctrl",
+                            "repeticiones": 1
+                        },
+                        {
+                            "tecla": "z",
+                            "repeticiones": 1
+                        }
+                    ],
+                    "espera_antes_ms": 0,
+                    "espera_despues_ms": 0,
+                    "duracion_ms": 328,
+                    "ids_origen": [
+                        14
+                    ]
+                },
+                "contexto_objetivo": null,
+                "contexto_despues": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                }
+            },
+            {
+                "id": 15,
+                "tipo": "comando_teclado",
+                "descripcion": "Comando · Atajo automático · Ctrl + y · Ctrl + y",
+                "acciones_origen": [
+                    15
+                ],
+                "confianza": "baja",
+                "datos": {
+                    "origen": "grabacion_global",
+                    "capturado_en": "2026-09-05T23:51:44.736891",
+                    "comando_id": "auto_atajo_ctrl_y",
+                    "nombre_comando": "Atajo automático · Ctrl + y",
+                    "parametros": [
+                        {
+                            "tecla": "Ctrl",
+                            "repeticiones": 1
+                        },
+                        {
+                            "tecla": "y",
+                            "repeticiones": 1
+                        }
+                    ],
+                    "espera_antes_ms": 0,
+                    "espera_despues_ms": 0,
+                    "duracion_ms": 109,
+                    "ids_origen": [
+                        15
+                    ]
+                },
+                "contexto_objetivo": null,
+                "contexto_despues": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                }
+            },
+            {
+                "id": 16,
+                "tipo": "comando_teclado",
+                "descripcion": "Comando · Atajo automático · Ctrl + a · Ctrl + a",
+                "acciones_origen": [
+                    16
+                ],
+                "confianza": "baja",
+                "datos": {
+                    "origen": "grabacion_global",
+                    "capturado_en": "2026-09-05T23:51:46.784970",
+                    "comando_id": "auto_atajo_ctrl_a",
+                    "nombre_comando": "Atajo automático · Ctrl + a",
+                    "parametros": [
+                        {
+                            "tecla": "Ctrl",
+                            "repeticiones": 1
+                        },
+                        {
+                            "tecla": "a",
+                            "repeticiones": 1
+                        }
+                    ],
+                    "espera_antes_ms": 0,
+                    "espera_despues_ms": 0,
+                    "duracion_ms": 235,
+                    "ids_origen": [
+                        16
+                    ]
+                },
+                "contexto_objetivo": null,
+                "contexto_despues": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                }
+            },
+            {
+                "id": 17,
+                "tipo": "tecla",
+                "descripcion": "Tecla · Esc",
+                "acciones_origen": [
+                    17
+                ],
+                "confianza": "alta",
+                "datos": {
+                    "tecla": "esc",
+                    "caracter": null,
+                    "vk": null,
+                    "modificadores": []
+                },
+                "contexto_objetivo": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                },
+                "contexto_despues": {
+                    "hwnd": 5441744,
+                    "pid": 12448,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": 0,
+                        "y": 0,
+                        "ancho": 1280,
+                        "alto": 1400,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                }
+            }
+        ],
+        "accion_actual_indice": null,
+        "repeticion_actual": 1,
+        "repeticiones_totales": 1,
+        "ejecucion_real_indice": 0,
+        "ejecucion_real_repeticion": 1,
+        "ejecuciones_reales_completadas": 17,
+        "delay_ejecucion_restante_ms": 0,
+        "ejecucion_real_fase": "inactiva",
+        "elapsed_repeticion_real_ms": 0,
+        "duracion_origen": "grabacion",
+        "detalle_estado": "FINALIZADA\nÚltima ejecución: 05/09 23:53\nPróxima ejecución: Mañana · 05:25 · en 5 h 28 min",
+        "supervisor_espera_acumulada_ms": 0,
+        "supervisor_intentos": 0,
+        "supervisor_ultima_decision": "READY",
+        "supervisor_ultimo_motivo": "Recurso, ventana y geometría coinciden con la demostración.",
+        "ultimo_checkpoint": {
+            "decision": "READY",
+            "motivo": "Recurso, ventana y geometría coinciden con la demostración.",
+            "timestamp": "2026-09-05T23:52:55.014358",
+            "accion_indice": 16,
+            "repeticion": 1,
+            "contexto_actual": {
+                "pid": 12448,
+                "proceso": "WINWORD.EXE",
+                "titulo": "Documento1 - Word",
+                "clase": "OpusApp",
+                "hwnd": 5441744
+            }
+        },
+        "duracion_real_ultima_segundos": 46,
+        "desfase_duracion_segundos": 4
     }
 ]
