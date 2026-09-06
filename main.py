@@ -1,13 +1,12 @@
 #v1.6.15
 #============================================================================================
-#1) En el boton "+Añadir acción" en el modulo de Agregar comando clic, primero: simulo el clic. Cuando segundo: cuando preciono el boton de Crear comando ó Agregar acción, Me sale el popUp para decidir el tiempo que debe durar antes y despues del clic. Doy agregar, Y no lo agrega...
+#1) En el boton "+Añadir acción" en el modulo de Agregar comando clic, primero: simulo el clic. Cuando segundo: cuando preciono el boton de Crear comando ó Agregar acción, Me sale el popUp para decidir el tiempo que debe durar antes y despues del clic. Doy agregar, Y no lo agrega... (CORREGIDO)
 
-#2) Cuando agrego una nueva vemtama a la biblioteca de comandos, Funciona perfectamente. Pero me gustaria que salga un popUp que diga -- comando Ventana agregada exitosamente a la Biblioteca de comandos
+#2) Cuando agrego una nueva vemtama a la biblioteca de comandos, Funciona perfectamente. Pero me gustaria que salga un popUp que diga -- comando Ventana agregada exitosamente a la Biblioteca de comandos (CORREGIDO)
 
-#3) En mostrar las horas de inicio en los contenedores de tareas de la lista de tareas dentro del boton Ver, Me gustaria seleccionar las horas como una linea temporal, y no digitandolas, ya que es muy dificil actualmente digitar la hora, es incomodo. Imagino como una línea vertical en la que salen las horas, y puedo escrolear las horas, por un lado, y luego los minutos por otro. (DESARROLLADO)
+#3) En mostrar las horas de inicio en los contenedores de tareas de la lista de tareas dentro del boton Ver, Me gustaria seleccionar las horas como una linea temporal, y no digitandolas, ya que es muy dificil actualmente digitar la hora, es incomodo. Imagino como una línea vertical en la que salen las horas, y puedo escrolear las horas, por un lado, y luego los minutos por otro. (CORREGIDO)
 
 #4) Evalua la opción para hacer los clics he interacciónes (Como cambios de ventana, entre otros) invisibles ante la ejecución de tareas, ya que tengo el precentimiendo, que las acciónes guardadas, tambien se están haciendo sobre la interfaz de BIN. Evalua si esto tambien afectaria el clic del usuario, y de ser así, entonces haremos invisible los clics, menos el boton de frenar acción. (ESTA NO SE HARÁ)
-
 
 #5) Organicé mi mesa de trabajo en modo manual (Escribiendo comando por comando), Una ventana a la izquierda 50% width 100% height, y otras 2 a la derecha, 50% width y height, una arriba y otra abajo. Al momento de ejecutar, las organizó inicialmente Bien, pero dejó un espacio entre la ventana de la izquierda, y las ventanas de la derecha, Luego intentó corregirlo, anexando más ventanas, he intentnado acomodarla segun la memoria. PEro al final dió error. No me molesta los protocolos de corrección, Lo que me molesta son los espacios del centro, ya que en otras acciónes y otras ejecuciónes tambien deja espacios. Yo creo que es por lo del margen de error de 8px, evaluemoslo u corrijamoslo. 
 
@@ -3052,6 +3051,10 @@ class CommandLibraryDialog(QDialog):
 
         padre = self.parent()
 
+        es_comando_nuevo = not bool(
+            self.comando_editando_id
+        )
+
         if self.comando_editando_id:
             comando = next(
                 (
@@ -3109,6 +3112,14 @@ class CommandLibraryDialog(QDialog):
             f"{comando.get('nombre', 'Comando')}\n{self.texto_comando(comando)}"
         )
         self.boton_agregar_accion.setEnabled(True)
+
+        if es_comando_nuevo:
+            QMessageBox.information(
+                self,
+                "Comando de ventana",
+                "Comando Ventana agregado exitosamente "
+                "a la Biblioteca de comandos.",
+            )
 
     def configuracion_ventana_desde_accion(self, accion):
         accion = accion or {}
@@ -4170,9 +4181,10 @@ class CommandLibraryDialog(QDialog):
             "HAZ CLIC EN LA POSICIÓN DESEADA..."
         )
 
-        # Apartamos BIN para poder escoger cualquier
-        # punto real de Windows.
-        self.hide()
+        # Apartamos el diálogo sin destruir ni interrumpir
+        # su ciclo modal. Debe seguir vivo mientras se
+        # capturan las coordenadas.
+        self.showMinimized()
 
         padre = self.parent()
 
@@ -4268,7 +4280,7 @@ class CommandLibraryDialog(QDialog):
             except Exception:
                 pass
 
-        self.show()
+        self.showNormal()
 
         self.raise_()
 

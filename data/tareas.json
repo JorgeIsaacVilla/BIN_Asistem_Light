@@ -432,7 +432,7 @@
         "ejecucion_real_fase": "inactiva",
         "elapsed_repeticion_real_ms": 0,
         "duracion_origen": "calculada_comandos",
-        "detalle_estado": "Próxima ejecución: Mañana · 01:08 · en 2 h 16 min",
+        "detalle_estado": "Próxima ejecución: Mañana · 01:08 · en 1 h 56 min",
         "supervisor_espera_acumulada_ms": 0,
         "supervisor_intentos": 0,
         "supervisor_ultima_decision": null,
@@ -2964,7 +2964,7 @@
         "ejecucion_real_fase": "inactiva",
         "elapsed_repeticion_real_ms": 0,
         "duracion_origen": "grabacion",
-        "detalle_estado": "Próxima ejecución: Mañana · 01:09 · en 2 h 17 min",
+        "detalle_estado": "Próxima ejecución: Mañana · 01:09 · en 1 h 57 min",
         "supervisor_espera_acumulada_ms": 0,
         "supervisor_intentos": 0,
         "supervisor_ultima_decision": null,
@@ -3404,7 +3404,7 @@
         "ejecucion_real_fase": "inactiva",
         "elapsed_repeticion_real_ms": 0,
         "duracion_origen": "grabacion",
-        "detalle_estado": "Próxima ejecución: Mañana · 05:40 · en 6 h 48 min",
+        "detalle_estado": "Próxima ejecución: Mañana · 05:40 · en 6 h 28 min",
         "supervisor_espera_acumulada_ms": 0,
         "supervisor_intentos": 0,
         "supervisor_ultima_decision": null,
@@ -3431,37 +3431,115 @@
             5,
             6
         ],
-        "duracion": "00:00:00",
+        "duracion": "00:00:09",
         "limpieza_ventanas": "Ninguna",
-        "estado": "REQUIERE CONFIGURACIÓN",
-        "transcurrido": "00:00:00",
-        "progreso": 0,
-        "elapsed_seconds": 0,
+        "estado": "FINALIZADA",
+        "transcurrido": "00:00:15",
+        "progreso": 100,
+        "elapsed_seconds": 15,
         "runtime_base_seconds": 0,
         "runtime_started_at": null,
         "current_run_key": null,
-        "last_run_key": null,
+        "last_run_key": "manual-20260905-230306",
         "queued_at": null,
-        "completed_at": null,
-        "ultima_ejecucion": null,
-        "acciones": [],
-        "acciones_semanticas": [],
+        "completed_at": "2026-09-05T23:03:21.311251",
+        "ultima_ejecucion": "2026-09-05T23:03:21.311251",
+        "acciones": [
+            {
+                "tipo": "doble_click",
+                "origen": "manual_mouse",
+                "descripcion": "abrir netflix · Doble clic izquierdo en X=140, Y=888 · 2 clics · antes 1s · después 5s",
+                "nombre_accion": "abrir netflix",
+                "x": 140,
+                "y": 888,
+                "cantidad_clicks": 2,
+                "espera_antes_ms": 1000,
+                "espera_despues_ms": 5000,
+                "contexto_objetivo": null,
+                "contexto_despues": null,
+                "id": 1
+            },
+            {
+                "tipo": "click",
+                "origen": "manual_mouse",
+                "descripcion": "seleccionar usuario · Clic izquierdo en X=957, Y=614 · antes 2s",
+                "nombre_accion": "seleccionar usuario",
+                "x": 957,
+                "y": 614,
+                "cantidad_clicks": 1,
+                "espera_antes_ms": 2000,
+                "espera_despues_ms": 0,
+                "contexto_objetivo": null,
+                "contexto_despues": null,
+                "id": 2
+            }
+        ],
+        "acciones_semanticas": [
+            {
+                "id": 1,
+                "tipo": "doble_click",
+                "descripcion": "Doble clic en Ventana no identificada",
+                "acciones_origen": [
+                    1
+                ],
+                "confianza": "alta",
+                "datos": {
+                    "x": 140,
+                    "y": 888,
+                    "boton": "izquierdo"
+                },
+                "contexto_objetivo": null,
+                "contexto_despues": null
+            },
+            {
+                "id": 2,
+                "tipo": "click",
+                "descripcion": "Clic izquierdo en Ventana no identificada",
+                "acciones_origen": [
+                    2
+                ],
+                "confianza": "alta",
+                "datos": {
+                    "x": 957,
+                    "y": 614,
+                    "boton": "izquierdo"
+                },
+                "contexto_objetivo": null,
+                "contexto_despues": null
+            }
+        ],
         "accion_actual_indice": null,
-        "repeticion_actual": 0,
+        "repeticion_actual": 1,
         "repeticiones_totales": 1,
         "ejecucion_real_indice": 0,
         "ejecucion_real_repeticion": 1,
-        "ejecuciones_reales_completadas": 0,
+        "ejecuciones_reales_completadas": 2,
         "delay_ejecucion_restante_ms": 0,
         "ejecucion_real_fase": "inactiva",
         "elapsed_repeticion_real_ms": 0,
-        "duracion_origen": "sin_calcular",
-        "detalle_estado": "Llegó la hora, pero no hay acciones configuradas.",
+        "duracion_origen": "calculada_comandos",
+        "detalle_estado": "FINALIZADA\nÚltima ejecución: 05/09 23:03\nPróxima ejecución: Mañana · 05:40 · en 6 h 28 min",
         "contexto": "",
         "supervisor_espera_acumulada_ms": 0,
         "supervisor_intentos": 0,
-        "supervisor_ultima_decision": null,
-        "supervisor_ultimo_motivo": "",
-        "ultimo_checkpoint": {}
+        "supervisor_ultima_decision": "READY",
+        "supervisor_ultimo_motivo": "La acción no exige una transición de contexto antes de continuar.",
+        "ultimo_checkpoint": {
+            "decision": "READY",
+            "motivo": "La acción no exige una transición de contexto antes de continuar.",
+            "timestamp": "2026-09-05T23:03:21.156332",
+            "accion_indice": 1,
+            "repeticion": 1,
+            "contexto_actual": {
+                "pid": 6544,
+                "proceso": "msedge.exe",
+                "titulo": "Netflix - Página de inicio — Netflix",
+                "clase": "Chrome_WidgetWin_1",
+                "hwnd": 1247466
+            }
+        },
+        "last_skipped_run_key": "sched-20260905-0540",
+        "duracion_real_ultima_segundos": 15,
+        "desfase_duracion_segundos": 6
     }
 ]

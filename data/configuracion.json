@@ -7,8 +7,8 @@
     "correo": "jvilla10@outlook.es",
     "whatsapp": "3218828546",
     "whatsapp_web_cuenta_chrome": "jvilla10@outlook.es",
-    "notificar_falla_en": "WhatsApp y Correo",
-    "notificar_exito_en": "WhatsApp y Correo",
+    "notificar_falla_en": "Ninguna",
+    "notificar_exito_en": "Ninguna",
     "despertar_pc_automaticamente": false,
     "anticipacion_despertar_minutos": 15,
     "sesion_sin_contrasena_confirmada": false
