@@ -187,7 +187,7 @@
         "ejecucion_real_fase": "inactiva",
         "elapsed_repeticion_real_ms": 0,
         "duracion_origen": "calculada_comandos",
-        "detalle_estado": "FINALIZADA\nÚltima ejecución: 06/09 15:34\nPróxima ejecución: Mañana · 05:40 · en 14 h 2 min",
+        "detalle_estado": "FINALIZADA\nÚltima ejecución: 06/09 15:34\nPróxima ejecución: Mañana · 05:40 · en 13 h 35 min",
         "last_skipped_run_key": "sched-20260906-0540",
         "supervisor_espera_acumulada_ms": 0,
         "supervisor_intentos": 0,
@@ -208,6 +208,7 @@
             }
         },
         "duracion_real_ultima_segundos": 36,
-        "desfase_duracion_segundos": 9
+        "desfase_duracion_segundos": 9,
+        "contexto": ""
     }
 ]

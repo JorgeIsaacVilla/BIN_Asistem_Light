@@ -2745,9 +2745,12 @@ class CommandLibraryDialog(QDialog):
 
         elif tipo == "office":
             self.label_software_ventana.setText("Office / aplicación:")
-            self.label_direccion_ventana.setText("Archivo / plantilla:")
+            self.label_direccion_ventana.setText(
+                "Archivo / plantilla (opcional):"
+            )
+
             self.direccion_ventana_editor.setPlaceholderText(
-                "C:\\...\\documento.docx / plantilla.xltx / presentación.pptx"
+                "Déjalo vacío para crear un archivo nuevo"
             )
             self.boton_examinar_ventana.setEnabled(True)
             self.cuenta_asociada_editor.setEnabled(False)
@@ -2958,13 +2961,41 @@ class CommandLibraryDialog(QDialog):
 
         elif tipo == "office":
             ruta_recurso = destino
+
             if validar and not ruta_recurso:
-                QMessageBox.warning(
-                    self,
-                    "Archivo requerido",
-                    "Indica el documento o plantilla de Office que BIN debe abrir.",
+                if not (ejecutable or proceso):
+                    QMessageBox.warning(
+                        self,
+                        "Office requerido",
+                        "Selecciona primero la aplicación de Office que BIN debe abrir.",
+                    )
+                    return None
+
+                nombre_office = (
+                    software_nombre
+                    or Path(ejecutable).stem
+                    if ejecutable
+                    else proceso
+                    or "Office"
                 )
-                return None
+
+                respuesta = QMessageBox.question(
+                    self,
+                    "Abrir Office en blanco",
+                    (
+                        "No has indicado el archivo o plantilla "
+                        "que deseas trabajar.\n\n"
+                        "Si continúas, BIN abrirá "
+                        f"{nombre_office} en blanco para crear "
+                        "un archivo nuevo.\n\n"
+                        "¿Deseas continuar?"
+                    ),
+                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.No,
+                )
+
+                if respuesta != QMessageBox.Yes:
+                    return None
 
         elif tipo == "software":
             if destino and not ejecutable:
