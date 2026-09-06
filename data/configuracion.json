@@ -6,11 +6,10 @@
     "interfaz": "Invisible",
     "correo": "jvilla10@outlook.es",
     "whatsapp": "3218828546",
-    "whatsapp_web_cuenta_chrome": "",
-    "notificar_falla_en": "Ninguna",
-    "notificar_exito_en": "Ninguna",
+    "whatsapp_web_cuenta_chrome": "jvilla10@outlook.es",
+    "notificar_falla_en": "WhatsApp y Correo",
+    "notificar_exito_en": "WhatsApp y Correo",
     "despertar_pc_automaticamente": false,
     "anticipacion_despertar_minutos": 15,
-    "sesion_sin_contrasena_confirmada": false,
-    "limpieza_ventanas": "Ninguna"
+    "sesion_sin_contrasena_confirmada": false
 }

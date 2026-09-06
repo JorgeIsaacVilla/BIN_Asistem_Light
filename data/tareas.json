@@ -1,8 +1,8 @@
 [
     {
         "id": 1,
-        "nombre": "Prueba manual",
-        "hora": "05:40",
+        "nombre": "Organizar mesa de trabajo analicis estadistico (Manual)",
+        "hora": "01:08",
         "veces": 1,
         "intervalo_valor": 24,
         "intervalo_unidad": "horas",
@@ -15,23 +15,24 @@
             5,
             6
         ],
-        "duracion": "00:00:05",
-        "estado": "FINALIZADA",
-        "transcurrido": "00:00:27",
-        "progreso": 100,
-        "elapsed_seconds": 27,
+        "duracion": "00:00:15",
+        "limpieza_ventanas": "Ninguna",
+        "estado": "EN ESPERA",
+        "transcurrido": "00:00:00",
+        "progreso": 0,
+        "elapsed_seconds": 0,
         "runtime_base_seconds": 0,
         "runtime_started_at": null,
         "current_run_key": null,
-        "last_run_key": "sched-20260904-0540",
+        "last_run_key": null,
         "queued_at": null,
-        "completed_at": "2026-09-04T16:26:11.316147",
-        "ultima_ejecucion": "2026-09-04T16:26:11.316147",
+        "completed_at": null,
+        "ultima_ejecucion": null,
         "acciones": [
             {
                 "tipo": "comando_ventana",
                 "origen": "manual_ventana",
-                "descripcion": "Ventana · WEB · https://alfora.art · antes 1s · después 2s",
+                "descripcion": "Ventana · WEB · https://analytics.google.com/analytics/web/?utm_source=OGB&utm_medium=app&authuser=0#/a401614461p546201702/reports/intelligenthome · antes 2s · después 3s",
                 "comando_id": null,
                 "nombre_comando": "Ventana manual",
                 "ventana": {
@@ -40,9 +41,9 @@
                     "software_nombre": "chrome",
                     "proceso": "chrome.exe",
                     "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-                    "cuenta_asociada": "alfora.art@gmail.com",
+                    "cuenta_asociada": "jvilla10.hack@gmail.com",
                     "cuenta_web": "",
-                    "url": "https://alfora.art",
+                    "url": "https://analytics.google.com/analytics/web/?utm_source=OGB&utm_medium=app&authuser=0#/a401614461p546201702/reports/intelligenthome",
                     "ruta_recurso": "",
                     "geometria": {
                         "x": 1,
@@ -55,8 +56,8 @@
                     "contexto_manual": true,
                     "bloquear_actualizacion_automatica": true
                 },
-                "espera_antes_ms": 1000,
-                "espera_despues_ms": 2000,
+                "espera_antes_ms": 2000,
+                "espera_despues_ms": 3000,
                 "contexto_objetivo": null,
                 "contexto_despues": {
                     "pid": 0,
@@ -66,12 +67,12 @@
                     "hwnd": 0,
                     "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
                     "tipo_recurso": "web",
-                    "url": "https://alfora.art",
+                    "url": "https://analytics.google.com/analytics/web/?utm_source=OGB&utm_medium=app&authuser=0#/a401614461p546201702/reports/intelligenthome",
                     "ruta_recurso": "",
-                    "localizador": "https://alfora.art",
+                    "localizador": "https://analytics.google.com/analytics/web/?utm_source=OGB&utm_medium=app&authuser=0#/a401614461p546201702/reports/intelligenthome",
                     "perfil_navegador": "",
-                    "cuenta_navegador": "alfora.art@gmail.com",
-                    "cuenta_asociada_manual": "alfora.art@gmail.com",
+                    "cuenta_navegador": "jvilla10.hack@gmail.com",
+                    "cuenta_asociada_manual": "jvilla10.hack@gmail.com",
                     "cuenta_web_manual": "",
                     "tipo_ventana_manual": "web",
                     "software_nombre_manual": "chrome",
@@ -89,13 +90,137 @@
                 "contexto_manual": true,
                 "bloquear_actualizacion_automatica": true,
                 "id": 1
+            },
+            {
+                "tipo": "comando_ventana",
+                "origen": "manual_ventana",
+                "descripcion": "Ventana · WEB · https://adsense.google.com/adsense/u/0/pub-7025188829601947/home · antes 2s · después 3s",
+                "comando_id": null,
+                "nombre_comando": "Ventana manual",
+                "ventana": {
+                    "tipo_ventana": "web",
+                    "tipo_recurso": "web",
+                    "software_nombre": "chrome",
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "cuenta_asociada": "jvilla10.hack@gmail.com",
+                    "cuenta_web": "",
+                    "url": "https://adsense.google.com/adsense/u/0/pub-7025188829601947/home",
+                    "ruta_recurso": "",
+                    "geometria": {
+                        "x": 1281,
+                        "y": 0,
+                        "ancho": 1278,
+                        "alto": 699,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "contexto_manual": true,
+                    "bloquear_actualizacion_automatica": true
+                },
+                "espera_antes_ms": 2000,
+                "espera_despues_ms": 3000,
+                "contexto_objetivo": null,
+                "contexto_despues": {
+                    "pid": 0,
+                    "proceso": "chrome.exe",
+                    "titulo": "",
+                    "clase": "",
+                    "hwnd": 0,
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "tipo_recurso": "web",
+                    "url": "https://adsense.google.com/adsense/u/0/pub-7025188829601947/home",
+                    "ruta_recurso": "",
+                    "localizador": "https://adsense.google.com/adsense/u/0/pub-7025188829601947/home",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "jvilla10.hack@gmail.com",
+                    "cuenta_asociada_manual": "jvilla10.hack@gmail.com",
+                    "cuenta_web_manual": "",
+                    "tipo_ventana_manual": "web",
+                    "software_nombre_manual": "chrome",
+                    "contexto_manual": true,
+                    "bloquear_actualizacion_automatica": true,
+                    "geometria": {
+                        "x": 1281,
+                        "y": 0,
+                        "ancho": 1278,
+                        "alto": 699,
+                        "maximizada": false,
+                        "minimizada": false
+                    }
+                },
+                "contexto_manual": true,
+                "bloquear_actualizacion_automatica": true,
+                "id": 2
+            },
+            {
+                "tipo": "comando_ventana",
+                "origen": "manual_ventana",
+                "descripcion": "Ventana · WEB · https://chatgpt.com/c/6a9643f4-2404-83e9-b7c3-b0d98727a0b8 · antes 2s · después 3s",
+                "comando_id": null,
+                "nombre_comando": "Ventana manual",
+                "ventana": {
+                    "tipo_ventana": "web",
+                    "tipo_recurso": "web",
+                    "software_nombre": "chrome",
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "cuenta_asociada": "alfora.art@gmail.com",
+                    "cuenta_web": "",
+                    "url": "https://chatgpt.com/c/6a9643f4-2404-83e9-b7c3-b0d98727a0b8",
+                    "ruta_recurso": "",
+                    "geometria": {
+                        "x": 1281,
+                        "y": 700,
+                        "ancho": 1278,
+                        "alto": 699,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "contexto_manual": true,
+                    "bloquear_actualizacion_automatica": true
+                },
+                "espera_antes_ms": 2000,
+                "espera_despues_ms": 3000,
+                "contexto_objetivo": null,
+                "contexto_despues": {
+                    "pid": 0,
+                    "proceso": "chrome.exe",
+                    "titulo": "",
+                    "clase": "",
+                    "hwnd": 0,
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "tipo_recurso": "web",
+                    "url": "https://chatgpt.com/c/6a9643f4-2404-83e9-b7c3-b0d98727a0b8",
+                    "ruta_recurso": "",
+                    "localizador": "https://chatgpt.com/c/6a9643f4-2404-83e9-b7c3-b0d98727a0b8",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "alfora.art@gmail.com",
+                    "cuenta_asociada_manual": "alfora.art@gmail.com",
+                    "cuenta_web_manual": "",
+                    "tipo_ventana_manual": "web",
+                    "software_nombre_manual": "chrome",
+                    "contexto_manual": true,
+                    "bloquear_actualizacion_automatica": true,
+                    "geometria": {
+                        "x": 1281,
+                        "y": 700,
+                        "ancho": 1278,
+                        "alto": 699,
+                        "maximizada": false,
+                        "minimizada": false
+                    }
+                },
+                "contexto_manual": true,
+                "bloquear_actualizacion_automatica": true,
+                "id": 3
             }
         ],
         "acciones_semanticas": [
             {
                 "id": 1,
                 "tipo": "comando_ventana",
-                "descripcion": "Ventana · WEB · https://alfora.art · antes 1s · después 2s",
+                "descripcion": "Ventana · WEB · https://analytics.google.com/analytics/web/?utm_source=OGB&utm_medium=app&authuser=0#/a401614461p546201702/reports/intelligenthome · antes 2s · después 3s",
                 "acciones_origen": [
                     1
                 ],
@@ -110,9 +235,9 @@
                         "software_nombre": "chrome",
                         "proceso": "chrome.exe",
                         "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-                        "cuenta_asociada": "alfora.art@gmail.com",
+                        "cuenta_asociada": "jvilla10.hack@gmail.com",
                         "cuenta_web": "",
-                        "url": "https://alfora.art",
+                        "url": "https://analytics.google.com/analytics/web/?utm_source=OGB&utm_medium=app&authuser=0#/a401614461p546201702/reports/intelligenthome",
                         "ruta_recurso": "",
                         "geometria": {
                             "x": 1,
@@ -125,8 +250,8 @@
                         "contexto_manual": true,
                         "bloquear_actualizacion_automatica": true
                     },
-                    "espera_antes_ms": 1000,
-                    "espera_despues_ms": 2000,
+                    "espera_antes_ms": 2000,
+                    "espera_despues_ms": 3000,
                     "contexto_manual": true,
                     "bloquear_actualizacion_automatica": true
                 },
@@ -139,12 +264,12 @@
                     "hwnd": 0,
                     "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
                     "tipo_recurso": "web",
-                    "url": "https://alfora.art",
+                    "url": "https://analytics.google.com/analytics/web/?utm_source=OGB&utm_medium=app&authuser=0#/a401614461p546201702/reports/intelligenthome",
                     "ruta_recurso": "",
-                    "localizador": "https://alfora.art",
+                    "localizador": "https://analytics.google.com/analytics/web/?utm_source=OGB&utm_medium=app&authuser=0#/a401614461p546201702/reports/intelligenthome",
                     "perfil_navegador": "",
-                    "cuenta_navegador": "alfora.art@gmail.com",
-                    "cuenta_asociada_manual": "alfora.art@gmail.com",
+                    "cuenta_navegador": "jvilla10.hack@gmail.com",
+                    "cuenta_asociada_manual": "jvilla10.hack@gmail.com",
                     "cuenta_web_manual": "",
                     "tipo_ventana_manual": "web",
                     "software_nombre_manual": "chrome",
@@ -159,40 +284,3184 @@
                         "minimizada": false
                     }
                 }
+            },
+            {
+                "id": 2,
+                "tipo": "comando_ventana",
+                "descripcion": "Ventana · WEB · https://adsense.google.com/adsense/u/0/pub-7025188829601947/home · antes 2s · después 3s",
+                "acciones_origen": [
+                    2
+                ],
+                "confianza": "baja",
+                "datos": {
+                    "origen": "manual_ventana",
+                    "comando_id": null,
+                    "nombre_comando": "Ventana manual",
+                    "ventana": {
+                        "tipo_ventana": "web",
+                        "tipo_recurso": "web",
+                        "software_nombre": "chrome",
+                        "proceso": "chrome.exe",
+                        "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                        "cuenta_asociada": "jvilla10.hack@gmail.com",
+                        "cuenta_web": "",
+                        "url": "https://adsense.google.com/adsense/u/0/pub-7025188829601947/home",
+                        "ruta_recurso": "",
+                        "geometria": {
+                            "x": 1281,
+                            "y": 0,
+                            "ancho": 1278,
+                            "alto": 699,
+                            "maximizada": false,
+                            "minimizada": false
+                        },
+                        "contexto_manual": true,
+                        "bloquear_actualizacion_automatica": true
+                    },
+                    "espera_antes_ms": 2000,
+                    "espera_despues_ms": 3000,
+                    "contexto_manual": true,
+                    "bloquear_actualizacion_automatica": true
+                },
+                "contexto_objetivo": null,
+                "contexto_despues": {
+                    "pid": 0,
+                    "proceso": "chrome.exe",
+                    "titulo": "",
+                    "clase": "",
+                    "hwnd": 0,
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "tipo_recurso": "web",
+                    "url": "https://adsense.google.com/adsense/u/0/pub-7025188829601947/home",
+                    "ruta_recurso": "",
+                    "localizador": "https://adsense.google.com/adsense/u/0/pub-7025188829601947/home",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "jvilla10.hack@gmail.com",
+                    "cuenta_asociada_manual": "jvilla10.hack@gmail.com",
+                    "cuenta_web_manual": "",
+                    "tipo_ventana_manual": "web",
+                    "software_nombre_manual": "chrome",
+                    "contexto_manual": true,
+                    "bloquear_actualizacion_automatica": true,
+                    "geometria": {
+                        "x": 1281,
+                        "y": 0,
+                        "ancho": 1278,
+                        "alto": 699,
+                        "maximizada": false,
+                        "minimizada": false
+                    }
+                }
+            },
+            {
+                "id": 3,
+                "tipo": "comando_ventana",
+                "descripcion": "Ventana · WEB · https://chatgpt.com/c/6a9643f4-2404-83e9-b7c3-b0d98727a0b8 · antes 2s · después 3s",
+                "acciones_origen": [
+                    3
+                ],
+                "confianza": "baja",
+                "datos": {
+                    "origen": "manual_ventana",
+                    "comando_id": null,
+                    "nombre_comando": "Ventana manual",
+                    "ventana": {
+                        "tipo_ventana": "web",
+                        "tipo_recurso": "web",
+                        "software_nombre": "chrome",
+                        "proceso": "chrome.exe",
+                        "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                        "cuenta_asociada": "alfora.art@gmail.com",
+                        "cuenta_web": "",
+                        "url": "https://chatgpt.com/c/6a9643f4-2404-83e9-b7c3-b0d98727a0b8",
+                        "ruta_recurso": "",
+                        "geometria": {
+                            "x": 1281,
+                            "y": 700,
+                            "ancho": 1278,
+                            "alto": 699,
+                            "maximizada": false,
+                            "minimizada": false
+                        },
+                        "contexto_manual": true,
+                        "bloquear_actualizacion_automatica": true
+                    },
+                    "espera_antes_ms": 2000,
+                    "espera_despues_ms": 3000,
+                    "contexto_manual": true,
+                    "bloquear_actualizacion_automatica": true
+                },
+                "contexto_objetivo": null,
+                "contexto_despues": {
+                    "pid": 0,
+                    "proceso": "chrome.exe",
+                    "titulo": "",
+                    "clase": "",
+                    "hwnd": 0,
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "tipo_recurso": "web",
+                    "url": "https://chatgpt.com/c/6a9643f4-2404-83e9-b7c3-b0d98727a0b8",
+                    "ruta_recurso": "",
+                    "localizador": "https://chatgpt.com/c/6a9643f4-2404-83e9-b7c3-b0d98727a0b8",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "alfora.art@gmail.com",
+                    "cuenta_asociada_manual": "alfora.art@gmail.com",
+                    "cuenta_web_manual": "",
+                    "tipo_ventana_manual": "web",
+                    "software_nombre_manual": "chrome",
+                    "contexto_manual": true,
+                    "bloquear_actualizacion_automatica": true,
+                    "geometria": {
+                        "x": 1281,
+                        "y": 700,
+                        "ancho": 1278,
+                        "alto": 699,
+                        "maximizada": false,
+                        "minimizada": false
+                    }
+                }
             }
         ],
         "accion_actual_indice": null,
-        "repeticion_actual": 1,
+        "repeticion_actual": 0,
         "repeticiones_totales": 1,
         "ejecucion_real_indice": 0,
         "ejecucion_real_repeticion": 1,
-        "ejecuciones_reales_completadas": 1,
+        "ejecuciones_reales_completadas": 0,
         "delay_ejecucion_restante_ms": 0,
         "ejecucion_real_fase": "inactiva",
         "elapsed_repeticion_real_ms": 0,
         "duracion_origen": "calculada_comandos",
-        "detalle_estado": "FINALIZADA\nÚltima ejecución: 04/09 16:26\nPróxima ejecución: Mañana · 05:40 · en 12 h 58 min",
+        "detalle_estado": "Próxima ejecución: Mañana · 01:08 · en 2 h 16 min",
         "supervisor_espera_acumulada_ms": 0,
         "supervisor_intentos": 0,
-        "supervisor_ultima_decision": "READY",
-        "supervisor_ultimo_motivo": "Recurso, ventana y geometría coinciden con la demostración.",
-        "ultimo_checkpoint": {
-            "decision": "READY",
-            "motivo": "Recurso, ventana y geometría coinciden con la demostración.",
-            "timestamp": "2026-09-04T16:25:57.084576",
-            "accion_indice": 0,
-            "repeticion": 1,
-            "contexto_actual": {
-                "pid": 11680,
-                "proceso": "chrome.exe",
-                "titulo": "Alfora.art | Herramientas creativas online gratis - Google Chrome",
-                "clase": "Chrome_WidgetWin_1",
-                "hwnd": 9439422
-            }
-        },
+        "supervisor_ultima_decision": null,
+        "supervisor_ultimo_motivo": "",
+        "ultimo_checkpoint": {},
         "contexto": "",
-        "last_skipped_run_key": "manual-20260904-154320",
-        "duracion_real_ultima_segundos": 27,
-        "desfase_duracion_segundos": 22
+        "last_skipped_run_key": "sched-20260905-0108"
+    },
+    {
+        "id": 2,
+        "nombre": "Analicis estadistico Alfora.art (Manual)",
+        "hora": "01:09",
+        "veces": 1,
+        "intervalo_valor": 24,
+        "intervalo_unidad": "horas",
+        "dias": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+        ],
+        "duracion": "00:01:42",
+        "limpieza_ventanas": "Antes",
+        "estado": "EN ESPERA",
+        "transcurrido": "00:00:00",
+        "progreso": 0,
+        "elapsed_seconds": 0,
+        "runtime_base_seconds": 0,
+        "runtime_started_at": null,
+        "current_run_key": null,
+        "last_run_key": "sched-20260905-0109",
+        "queued_at": null,
+        "completed_at": null,
+        "ultima_ejecucion": "2026-09-05T01:19:52.307337",
+        "acciones": [
+            {
+                "id": 1,
+                "tipo": "tecla",
+                "origen": "grabacion_global",
+                "descripcion": "Tecla · Print Screen",
+                "contexto_objetivo": {
+                    "hwnd": 329584,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1283,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "url": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 2",
+                    "cuenta_navegador": "villaglabor@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": {
+                    "hwnd": 329584,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1283,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "url": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 2",
+                    "cuenta_navegador": "villaglabor@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "capturado_en": "2026-09-05T01:03:38.134862",
+                "tecla": "print_screen",
+                "caracter": null,
+                "vk": null,
+                "modificadores": [],
+                "duracion_ms": 110,
+                "ids_origen": [
+                    1
+                ]
+            },
+            {
+                "id": 2,
+                "tipo": "click",
+                "origen": "grabacion_global",
+                "descripcion": "Clic izquierdo · Google Chrome · Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome\nX=1883 · Y=1356",
+                "contexto_objetivo": {
+                    "hwnd": 329584,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1283,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "url": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 2",
+                    "cuenta_navegador": "villaglabor@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": null,
+                "capturado_en": "2026-09-05T01:03:41.870051",
+                "boton": "izquierdo",
+                "x": 1883,
+                "y": 1356,
+                "ids_origen": [
+                    2
+                ]
+            },
+            {
+                "id": 3,
+                "tipo": "comando_teclado",
+                "origen": "grabacion_global",
+                "descripcion": "Comando · Atajo automático · Ctrl + \u0016 · Ctrl + \u0016",
+                "contexto_objetivo": null,
+                "contexto_despues": {
+                    "hwnd": 329584,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1283,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "url": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 2",
+                    "cuenta_navegador": "villaglabor@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "capturado_en": "2026-09-05T01:03:42.106667",
+                "comando_id": "auto_atajo_ctrl_\u0016",
+                "nombre_comando": "Atajo automático · Ctrl + \u0016",
+                "parametros": [
+                    {
+                        "tecla": "Ctrl",
+                        "repeticiones": 1
+                    },
+                    {
+                        "tecla": "\u0016",
+                        "repeticiones": 1
+                    }
+                ],
+                "espera_antes_ms": 0,
+                "espera_despues_ms": 0,
+                "duracion_ms": 93,
+                "ids_origen": [
+                    3
+                ]
+            },
+            {
+                "id": 4,
+                "tipo": "tecla",
+                "origen": "grabacion_global",
+                "descripcion": "Tecla · Shift + H",
+                "contexto_objetivo": {
+                    "hwnd": 329584,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1283,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "url": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 2",
+                    "cuenta_navegador": "villaglabor@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": null,
+                "capturado_en": "2026-09-05T01:03:45.611996",
+                "tecla": "H",
+                "caracter": "H",
+                "vk": 72,
+                "modificadores": [
+                    "Shift"
+                ],
+                "duracion_ms": 108,
+                "ids_origen": [
+                    4
+                ]
+            },
+            {
+                "id": 5,
+                "tipo": "tecla",
+                "origen": "grabacion_global",
+                "descripcion": "Tecla · Shift + A",
+                "contexto_objetivo": {
+                    "hwnd": 329584,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1283,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "url": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 2",
+                    "cuenta_navegador": "villaglabor@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": {
+                    "hwnd": 329584,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1283,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "url": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 2",
+                    "cuenta_navegador": "villaglabor@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "capturado_en": "2026-09-05T01:03:45.612995",
+                "tecla": "A",
+                "caracter": "A",
+                "vk": 65,
+                "modificadores": [
+                    "Shift"
+                ],
+                "duracion_ms": 93,
+                "ids_origen": [
+                    5
+                ]
+            },
+            {
+                "id": 6,
+                "tipo": "escribir_texto",
+                "origen": "grabacion_global_agrupada",
+                "descripcion": "Escribir texto · \"z un analicis estadistico y entregame un excel\"",
+                "contexto_objetivo": {
+                    "hwnd": 329584,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1283,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "url": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 2",
+                    "cuenta_navegador": "villaglabor@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": {
+                    "hwnd": 329584,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1283,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "url": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 2",
+                    "cuenta_navegador": "villaglabor@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "capturado_en": "2026-09-05T01:03:48.514263",
+                "ids_origen": [
+                    6,
+                    7,
+                    8,
+                    9,
+                    10,
+                    11,
+                    12,
+                    13,
+                    14,
+                    15,
+                    16,
+                    17,
+                    18,
+                    19,
+                    20,
+                    21,
+                    22,
+                    23,
+                    24,
+                    25,
+                    26,
+                    27,
+                    28,
+                    29,
+                    30,
+                    31,
+                    32,
+                    33,
+                    34,
+                    35,
+                    36,
+                    37,
+                    38,
+                    39,
+                    40,
+                    41,
+                    42,
+                    43,
+                    44,
+                    45,
+                    46,
+                    47,
+                    48,
+                    49,
+                    50,
+                    51
+                ],
+                "texto": "z un analicis estadistico y entregame un excel",
+                "eventos_agrupados": 46
+            },
+            {
+                "id": 7,
+                "tipo": "click",
+                "origen": "grabacion_global",
+                "descripcion": "Clic izquierdo · Google Chrome · Analytics | Inicio - Google Chrome\nX=888 · Y=486",
+                "contexto_objetivo": {
+                    "hwnd": 3803120,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Analytics | Inicio - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": -7,
+                        "y": 0,
+                        "ancho": 1294,
+                        "alto": 1407,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://analytics.google.com/analytics/web/?utm_source=OGB&utm_medium=app&authuser=0#/a401614461p546201702/reports/intelligenthome",
+                    "url": "https://analytics.google.com/analytics/web/?utm_source=OGB&utm_medium=app&authuser=0#/a401614461p546201702/reports/intelligenthome",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Default",
+                    "cuenta_navegador": "jvilla10.ing@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": null,
+                "capturado_en": "2026-09-05T01:04:15.325542",
+                "boton": "izquierdo",
+                "x": 888,
+                "y": 486,
+                "ids_origen": [
+                    52
+                ]
+            },
+            {
+                "id": 8,
+                "tipo": "scroll_agrupado",
+                "origen": "grabacion_global_agrupada",
+                "descripcion": "Scroll abajo · 5 paso(s) · Google Chrome · Analytics | Inicio - Google Chrome",
+                "contexto_objetivo": {
+                    "hwnd": 3803120,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Analytics | Inicio - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": -7,
+                        "y": 0,
+                        "ancho": 1294,
+                        "alto": 1407,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://analytics.google.com/analytics/web/?utm_source=OGB&utm_medium=app&authuser=0#/a401614461p546201702/reports/intelligenthome",
+                    "url": "https://analytics.google.com/analytics/web/?utm_source=OGB&utm_medium=app&authuser=0#/a401614461p546201702/reports/intelligenthome",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Default",
+                    "cuenta_navegador": "jvilla10.ing@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": null,
+                "capturado_en": "2026-09-05T01:04:16.289429",
+                "x": 888,
+                "y": 486,
+                "dx": 0,
+                "dy": -5,
+                "ids_origen": [
+                    53,
+                    54,
+                    55,
+                    56,
+                    57
+                ],
+                "pasos": 5,
+                "eventos_agrupados": 5
+            },
+            {
+                "id": 9,
+                "tipo": "tecla",
+                "origen": "grabacion_global",
+                "descripcion": "Tecla · Print Screen",
+                "contexto_objetivo": {
+                    "hwnd": 3803120,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Analytics | Inicio - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": -7,
+                        "y": 0,
+                        "ancho": 1294,
+                        "alto": 1407,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://analytics.google.com/analytics/web/?utm_source=OGB&utm_medium=app&authuser=0#/a401614461p546201702/reports/intelligenthome",
+                    "url": "https://analytics.google.com/analytics/web/?utm_source=OGB&utm_medium=app&authuser=0#/a401614461p546201702/reports/intelligenthome",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Default",
+                    "cuenta_navegador": "jvilla10.ing@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": {
+                    "hwnd": 329584,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1283,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "url": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 2",
+                    "cuenta_navegador": "villaglabor@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "capturado_en": "2026-09-05T01:04:19.701750",
+                "tecla": "print_screen",
+                "caracter": null,
+                "vk": null,
+                "modificadores": [],
+                "duracion_ms": 171,
+                "ids_origen": [
+                    58
+                ]
+            },
+            {
+                "id": 10,
+                "tipo": "click",
+                "origen": "grabacion_global",
+                "descripcion": "Clic izquierdo · Google Chrome · Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome\nX=2142 · Y=1358",
+                "contexto_objetivo": {
+                    "hwnd": 329584,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1283,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "url": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 2",
+                    "cuenta_navegador": "villaglabor@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": null,
+                "capturado_en": "2026-09-05T01:04:24.835555",
+                "boton": "izquierdo",
+                "x": 2142,
+                "y": 1358,
+                "ids_origen": [
+                    59
+                ]
+            },
+            {
+                "id": 11,
+                "tipo": "comando_teclado",
+                "origen": "grabacion_global",
+                "descripcion": "Comando · Atajo automático · Ctrl + \u0016 · Ctrl + \u0016",
+                "contexto_objetivo": null,
+                "contexto_despues": {
+                    "hwnd": 329584,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1283,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "url": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 2",
+                    "cuenta_navegador": "villaglabor@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "capturado_en": "2026-09-05T01:04:25.352817",
+                "comando_id": "auto_atajo_ctrl_\u0016",
+                "nombre_comando": "Atajo automático · Ctrl + \u0016",
+                "parametros": [
+                    {
+                        "tecla": "Ctrl",
+                        "repeticiones": 1
+                    },
+                    {
+                        "tecla": "\u0016",
+                        "repeticiones": 1
+                    }
+                ],
+                "espera_antes_ms": 0,
+                "espera_despues_ms": 0,
+                "duracion_ms": 125,
+                "ids_origen": [
+                    60
+                ]
+            },
+            {
+                "id": 12,
+                "tipo": "click",
+                "origen": "grabacion_global",
+                "descripcion": "Clic izquierdo · Google Chrome · Página principal – Google AdSense - Google Chrome\nX=1979 · Y=476",
+                "contexto_objetivo": {
+                    "hwnd": 263972,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Página principal – Google AdSense - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1273,
+                        "y": 0,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://adsense.google.com/adsense/u/0/pub-7025188829601947/home",
+                    "url": "https://adsense.google.com/adsense/u/0/pub-7025188829601947/home",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Default",
+                    "cuenta_navegador": "jvilla10.ing@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": null,
+                "capturado_en": "2026-09-05T01:04:30.913403",
+                "boton": "izquierdo",
+                "x": 1979,
+                "y": 476,
+                "ids_origen": [
+                    61
+                ]
+            },
+            {
+                "id": 13,
+                "tipo": "scroll_agrupado",
+                "origen": "grabacion_global_agrupada",
+                "descripcion": "Scroll abajo · 7 paso(s) · Google Chrome · Página principal – Google AdSense - Google Chrome",
+                "contexto_objetivo": {
+                    "hwnd": 263972,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Página principal – Google AdSense - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1273,
+                        "y": 0,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://adsense.google.com/adsense/u/0/pub-7025188829601947/home",
+                    "url": "https://adsense.google.com/adsense/u/0/pub-7025188829601947/home",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Default",
+                    "cuenta_navegador": "jvilla10.ing@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": null,
+                "capturado_en": "2026-09-05T01:04:31.789439",
+                "x": 1979,
+                "y": 476,
+                "dx": 0,
+                "dy": -7,
+                "ids_origen": [
+                    62,
+                    63,
+                    64,
+                    65,
+                    66,
+                    67,
+                    68
+                ],
+                "pasos": 7,
+                "eventos_agrupados": 7
+            },
+            {
+                "id": 14,
+                "tipo": "click",
+                "origen": "grabacion_global",
+                "descripcion": "Clic izquierdo · Google Chrome · Página principal – Google AdSense - Google Chrome\nX=1917 · Y=238",
+                "contexto_objetivo": {
+                    "hwnd": 263972,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Página principal – Google AdSense - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1273,
+                        "y": 0,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://adsense.google.com/adsense/u/0/pub-7025188829601947/home",
+                    "url": "https://adsense.google.com/adsense/u/0/pub-7025188829601947/home",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Default",
+                    "cuenta_navegador": "jvilla10.ing@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": {
+                    "hwnd": 263972,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Página principal – Google AdSense - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1273,
+                        "y": 0,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://adsense.google.com/adsense/u/0/pub-7025188829601947/home",
+                    "url": "https://adsense.google.com/adsense/u/0/pub-7025188829601947/home",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Default",
+                    "cuenta_navegador": "jvilla10.ing@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "capturado_en": "2026-09-05T01:04:36.916903",
+                "boton": "izquierdo",
+                "x": 1917,
+                "y": 238,
+                "ids_origen": [
+                    69
+                ]
+            },
+            {
+                "id": 15,
+                "tipo": "scroll_agrupado",
+                "origen": "grabacion_global_agrupada",
+                "descripcion": "Scroll abajo · 3 paso(s) · Google Chrome · Página principal – Google AdSense - Google Chrome",
+                "contexto_objetivo": {
+                    "hwnd": 263972,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Página principal – Google AdSense - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1273,
+                        "y": 0,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://adsense.google.com/adsense/u/0/pub-7025188829601947/home",
+                    "url": "https://adsense.google.com/adsense/u/0/pub-7025188829601947/home",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Default",
+                    "cuenta_navegador": "jvilla10.ing@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": null,
+                "capturado_en": "2026-09-05T01:04:41.186207",
+                "x": 1917,
+                "y": 238,
+                "dx": 0,
+                "dy": -3,
+                "ids_origen": [
+                    70,
+                    71,
+                    72
+                ],
+                "pasos": 3,
+                "eventos_agrupados": 3
+            },
+            {
+                "id": 16,
+                "tipo": "scroll_agrupado",
+                "origen": "grabacion_global_agrupada",
+                "descripcion": "Scroll arriba · 7 paso(s) · Google Chrome · Página principal – Google AdSense - Google Chrome",
+                "contexto_objetivo": {
+                    "hwnd": 263972,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Página principal – Google AdSense - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1273,
+                        "y": 0,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://adsense.google.com/adsense/u/0/pub-7025188829601947/home",
+                    "url": "https://adsense.google.com/adsense/u/0/pub-7025188829601947/home",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Default",
+                    "cuenta_navegador": "jvilla10.ing@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": null,
+                "capturado_en": "2026-09-05T01:04:41.562751",
+                "x": 1917,
+                "y": 238,
+                "dx": 0,
+                "dy": 7,
+                "ids_origen": [
+                    73,
+                    74,
+                    75,
+                    76,
+                    77,
+                    78,
+                    79
+                ],
+                "pasos": 7,
+                "eventos_agrupados": 7
+            },
+            {
+                "id": 17,
+                "tipo": "tecla",
+                "origen": "grabacion_global",
+                "descripcion": "Tecla · Print Screen",
+                "contexto_objetivo": {
+                    "hwnd": 329584,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1283,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "url": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 2",
+                    "cuenta_navegador": "villaglabor@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": {
+                    "hwnd": 329584,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1283,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "url": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 2",
+                    "cuenta_navegador": "villaglabor@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "capturado_en": "2026-09-05T01:04:46.427598",
+                "tecla": "print_screen",
+                "caracter": null,
+                "vk": null,
+                "modificadores": [],
+                "duracion_ms": 171,
+                "ids_origen": [
+                    80
+                ]
+            },
+            {
+                "id": 18,
+                "tipo": "comando_teclado",
+                "origen": "grabacion_global",
+                "descripcion": "Comando · Atajo automático · Ctrl + \u0016 · Ctrl + \u0016",
+                "contexto_objetivo": null,
+                "contexto_despues": {
+                    "hwnd": 329584,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1283,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "url": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 2",
+                    "cuenta_navegador": "villaglabor@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "capturado_en": "2026-09-05T01:04:49.814162",
+                "comando_id": "auto_atajo_ctrl_\u0016",
+                "nombre_comando": "Atajo automático · Ctrl + \u0016",
+                "parametros": [
+                    {
+                        "tecla": "Ctrl",
+                        "repeticiones": 1
+                    },
+                    {
+                        "tecla": "\u0016",
+                        "repeticiones": 1
+                    }
+                ],
+                "espera_antes_ms": 0,
+                "espera_despues_ms": 0,
+                "duracion_ms": 77,
+                "ids_origen": [
+                    81
+                ]
+            },
+            {
+                "id": 19,
+                "tipo": "click",
+                "origen": "grabacion_global",
+                "descripcion": "Clic izquierdo · Google Chrome · Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome\nX=2164 · Y=1350",
+                "contexto_objetivo": {
+                    "hwnd": 329584,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1283,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "url": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 2",
+                    "cuenta_navegador": "villaglabor@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": {
+                    "hwnd": 329584,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1283,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "url": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 2",
+                    "cuenta_navegador": "villaglabor@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "capturado_en": "2026-09-05T01:04:52.357581",
+                "boton": "izquierdo",
+                "x": 2164,
+                "y": 1350,
+                "ids_origen": [
+                    82
+                ]
+            },
+            {
+                "id": 20,
+                "tipo": "tecla",
+                "origen": "grabacion_global",
+                "descripcion": "Tecla · Enter",
+                "contexto_objetivo": {
+                    "hwnd": 329584,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1283,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "url": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 2",
+                    "cuenta_navegador": "villaglabor@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": null,
+                "capturado_en": "2026-09-05T01:04:59.985621",
+                "tecla": "enter",
+                "caracter": null,
+                "vk": null,
+                "modificadores": [],
+                "duracion_ms": 125,
+                "ids_origen": [
+                    83
+                ]
+            }
+        ],
+        "acciones_semanticas": [
+            {
+                "id": 1,
+                "tipo": "tecla",
+                "descripcion": "Tecla · Print Screen",
+                "acciones_origen": [
+                    1
+                ],
+                "confianza": "alta",
+                "datos": {
+                    "tecla": "print_screen",
+                    "caracter": null,
+                    "vk": null,
+                    "modificadores": []
+                },
+                "contexto_objetivo": {
+                    "hwnd": 329584,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1283,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "url": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 2",
+                    "cuenta_navegador": "villaglabor@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": {
+                    "hwnd": 329584,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1283,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "url": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 2",
+                    "cuenta_navegador": "villaglabor@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                }
+            },
+            {
+                "id": 2,
+                "tipo": "click",
+                "descripcion": "Clic izquierdo en Google Chrome · Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome",
+                "acciones_origen": [
+                    2
+                ],
+                "confianza": "alta",
+                "datos": {
+                    "x": 1883,
+                    "y": 1356,
+                    "boton": "izquierdo"
+                },
+                "contexto_objetivo": {
+                    "hwnd": 329584,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1283,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "url": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 2",
+                    "cuenta_navegador": "villaglabor@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": {
+                    "hwnd": 329584,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1283,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "url": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 2",
+                    "cuenta_navegador": "villaglabor@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                }
+            },
+            {
+                "id": 3,
+                "tipo": "comando_teclado",
+                "descripcion": "Comando · Atajo automático · Ctrl + \u0016 · Ctrl + \u0016",
+                "acciones_origen": [
+                    3
+                ],
+                "confianza": "baja",
+                "datos": {
+                    "origen": "grabacion_global",
+                    "capturado_en": "2026-09-05T01:03:42.106667",
+                    "comando_id": "auto_atajo_ctrl_\u0016",
+                    "nombre_comando": "Atajo automático · Ctrl + \u0016",
+                    "parametros": [
+                        {
+                            "tecla": "Ctrl",
+                            "repeticiones": 1
+                        },
+                        {
+                            "tecla": "\u0016",
+                            "repeticiones": 1
+                        }
+                    ],
+                    "espera_antes_ms": 0,
+                    "espera_despues_ms": 0,
+                    "duracion_ms": 93,
+                    "ids_origen": [
+                        3
+                    ]
+                },
+                "contexto_objetivo": null,
+                "contexto_despues": {
+                    "hwnd": 329584,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1283,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "url": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 2",
+                    "cuenta_navegador": "villaglabor@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                }
+            },
+            {
+                "id": 4,
+                "tipo": "tecla",
+                "descripcion": "Tecla · Shift + H",
+                "acciones_origen": [
+                    4
+                ],
+                "confianza": "alta",
+                "datos": {
+                    "tecla": "H",
+                    "caracter": "H",
+                    "vk": 72,
+                    "modificadores": [
+                        "Shift"
+                    ]
+                },
+                "contexto_objetivo": {
+                    "hwnd": 329584,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1283,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "url": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 2",
+                    "cuenta_navegador": "villaglabor@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": {
+                    "hwnd": 329584,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1283,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "url": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 2",
+                    "cuenta_navegador": "villaglabor@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                }
+            },
+            {
+                "id": 5,
+                "tipo": "tecla",
+                "descripcion": "Tecla · Shift + A",
+                "acciones_origen": [
+                    5
+                ],
+                "confianza": "alta",
+                "datos": {
+                    "tecla": "A",
+                    "caracter": "A",
+                    "vk": 65,
+                    "modificadores": [
+                        "Shift"
+                    ]
+                },
+                "contexto_objetivo": {
+                    "hwnd": 329584,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1283,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "url": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 2",
+                    "cuenta_navegador": "villaglabor@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": {
+                    "hwnd": 329584,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1283,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "url": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 2",
+                    "cuenta_navegador": "villaglabor@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                }
+            },
+            {
+                "id": 6,
+                "tipo": "escribir_texto",
+                "descripcion": "Escribir \"z un analicis estadistico y entregame un excel\"",
+                "acciones_origen": [
+                    6
+                ],
+                "confianza": "alta",
+                "datos": {
+                    "texto": "z un analicis estadistico y entregame un excel"
+                },
+                "contexto_objetivo": {
+                    "hwnd": 329584,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1283,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "url": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 2",
+                    "cuenta_navegador": "villaglabor@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": {
+                    "hwnd": 329584,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1283,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "url": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 2",
+                    "cuenta_navegador": "villaglabor@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                }
+            },
+            {
+                "id": 7,
+                "tipo": "click",
+                "descripcion": "Clic izquierdo en Google Chrome · Analytics | Inicio - Google Chrome",
+                "acciones_origen": [
+                    7
+                ],
+                "confianza": "alta",
+                "datos": {
+                    "x": 888,
+                    "y": 486,
+                    "boton": "izquierdo"
+                },
+                "contexto_objetivo": {
+                    "hwnd": 3803120,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Analytics | Inicio - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": -7,
+                        "y": 0,
+                        "ancho": 1294,
+                        "alto": 1407,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://analytics.google.com/analytics/web/?utm_source=OGB&utm_medium=app&authuser=0#/a401614461p546201702/reports/intelligenthome",
+                    "url": "https://analytics.google.com/analytics/web/?utm_source=OGB&utm_medium=app&authuser=0#/a401614461p546201702/reports/intelligenthome",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Default",
+                    "cuenta_navegador": "jvilla10.ing@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": {
+                    "hwnd": 3803120,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Analytics | Inicio - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": -7,
+                        "y": 0,
+                        "ancho": 1294,
+                        "alto": 1407,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://analytics.google.com/analytics/web/?utm_source=OGB&utm_medium=app&authuser=0#/a401614461p546201702/reports/intelligenthome",
+                    "url": "https://analytics.google.com/analytics/web/?utm_source=OGB&utm_medium=app&authuser=0#/a401614461p546201702/reports/intelligenthome",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Default",
+                    "cuenta_navegador": "jvilla10.ing@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                }
+            },
+            {
+                "id": 8,
+                "tipo": "desplazar",
+                "descripcion": "Desplazar hacia abajo · 5 paso(s)",
+                "acciones_origen": [
+                    8
+                ],
+                "confianza": "alta",
+                "datos": {
+                    "dx": 0,
+                    "dy": -5,
+                    "pasos": 5,
+                    "x": 888,
+                    "y": 486
+                },
+                "contexto_objetivo": {
+                    "hwnd": 3803120,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Analytics | Inicio - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": -7,
+                        "y": 0,
+                        "ancho": 1294,
+                        "alto": 1407,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://analytics.google.com/analytics/web/?utm_source=OGB&utm_medium=app&authuser=0#/a401614461p546201702/reports/intelligenthome",
+                    "url": "https://analytics.google.com/analytics/web/?utm_source=OGB&utm_medium=app&authuser=0#/a401614461p546201702/reports/intelligenthome",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Default",
+                    "cuenta_navegador": "jvilla10.ing@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": {
+                    "hwnd": 3803120,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Analytics | Inicio - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": -7,
+                        "y": 0,
+                        "ancho": 1294,
+                        "alto": 1407,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://analytics.google.com/analytics/web/?utm_source=OGB&utm_medium=app&authuser=0#/a401614461p546201702/reports/intelligenthome",
+                    "url": "https://analytics.google.com/analytics/web/?utm_source=OGB&utm_medium=app&authuser=0#/a401614461p546201702/reports/intelligenthome",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Default",
+                    "cuenta_navegador": "jvilla10.ing@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                }
+            },
+            {
+                "id": 9,
+                "tipo": "tecla",
+                "descripcion": "Tecla · Print Screen",
+                "acciones_origen": [
+                    9
+                ],
+                "confianza": "alta",
+                "datos": {
+                    "tecla": "print_screen",
+                    "caracter": null,
+                    "vk": null,
+                    "modificadores": [],
+                    "cambio_contexto": true,
+                    "proceso_antes": "chrome.exe",
+                    "proceso_despues": "chrome.exe"
+                },
+                "contexto_objetivo": {
+                    "hwnd": 3803120,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Analytics | Inicio - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": -7,
+                        "y": 0,
+                        "ancho": 1294,
+                        "alto": 1407,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://analytics.google.com/analytics/web/?utm_source=OGB&utm_medium=app&authuser=0#/a401614461p546201702/reports/intelligenthome",
+                    "url": "https://analytics.google.com/analytics/web/?utm_source=OGB&utm_medium=app&authuser=0#/a401614461p546201702/reports/intelligenthome",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Default",
+                    "cuenta_navegador": "jvilla10.ing@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": {
+                    "hwnd": 329584,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1283,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "url": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 2",
+                    "cuenta_navegador": "villaglabor@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                }
+            },
+            {
+                "id": 10,
+                "tipo": "click",
+                "descripcion": "Clic izquierdo en Google Chrome · Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome",
+                "acciones_origen": [
+                    10
+                ],
+                "confianza": "alta",
+                "datos": {
+                    "x": 2142,
+                    "y": 1358,
+                    "boton": "izquierdo"
+                },
+                "contexto_objetivo": {
+                    "hwnd": 329584,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1283,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "url": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 2",
+                    "cuenta_navegador": "villaglabor@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": {
+                    "hwnd": 329584,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1283,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "url": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 2",
+                    "cuenta_navegador": "villaglabor@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                }
+            },
+            {
+                "id": 11,
+                "tipo": "comando_teclado",
+                "descripcion": "Comando · Atajo automático · Ctrl + \u0016 · Ctrl + \u0016",
+                "acciones_origen": [
+                    11
+                ],
+                "confianza": "baja",
+                "datos": {
+                    "origen": "grabacion_global",
+                    "capturado_en": "2026-09-05T01:04:25.352817",
+                    "comando_id": "auto_atajo_ctrl_\u0016",
+                    "nombre_comando": "Atajo automático · Ctrl + \u0016",
+                    "parametros": [
+                        {
+                            "tecla": "Ctrl",
+                            "repeticiones": 1
+                        },
+                        {
+                            "tecla": "\u0016",
+                            "repeticiones": 1
+                        }
+                    ],
+                    "espera_antes_ms": 0,
+                    "espera_despues_ms": 0,
+                    "duracion_ms": 125,
+                    "ids_origen": [
+                        60
+                    ]
+                },
+                "contexto_objetivo": null,
+                "contexto_despues": {
+                    "hwnd": 329584,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1283,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "url": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 2",
+                    "cuenta_navegador": "villaglabor@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                }
+            },
+            {
+                "id": 12,
+                "tipo": "click",
+                "descripcion": "Clic izquierdo en Google Chrome · Página principal – Google AdSense - Google Chrome",
+                "acciones_origen": [
+                    12
+                ],
+                "confianza": "alta",
+                "datos": {
+                    "x": 1979,
+                    "y": 476,
+                    "boton": "izquierdo"
+                },
+                "contexto_objetivo": {
+                    "hwnd": 263972,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Página principal – Google AdSense - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1273,
+                        "y": 0,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://adsense.google.com/adsense/u/0/pub-7025188829601947/home",
+                    "url": "https://adsense.google.com/adsense/u/0/pub-7025188829601947/home",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Default",
+                    "cuenta_navegador": "jvilla10.ing@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": {
+                    "hwnd": 263972,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Página principal – Google AdSense - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1273,
+                        "y": 0,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://adsense.google.com/adsense/u/0/pub-7025188829601947/home",
+                    "url": "https://adsense.google.com/adsense/u/0/pub-7025188829601947/home",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Default",
+                    "cuenta_navegador": "jvilla10.ing@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                }
+            },
+            {
+                "id": 13,
+                "tipo": "desplazar",
+                "descripcion": "Desplazar hacia abajo · 7 paso(s)",
+                "acciones_origen": [
+                    13
+                ],
+                "confianza": "alta",
+                "datos": {
+                    "dx": 0,
+                    "dy": -7,
+                    "pasos": 7,
+                    "x": 1979,
+                    "y": 476
+                },
+                "contexto_objetivo": {
+                    "hwnd": 263972,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Página principal – Google AdSense - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1273,
+                        "y": 0,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://adsense.google.com/adsense/u/0/pub-7025188829601947/home",
+                    "url": "https://adsense.google.com/adsense/u/0/pub-7025188829601947/home",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Default",
+                    "cuenta_navegador": "jvilla10.ing@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": {
+                    "hwnd": 263972,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Página principal – Google AdSense - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1273,
+                        "y": 0,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://adsense.google.com/adsense/u/0/pub-7025188829601947/home",
+                    "url": "https://adsense.google.com/adsense/u/0/pub-7025188829601947/home",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Default",
+                    "cuenta_navegador": "jvilla10.ing@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                }
+            },
+            {
+                "id": 14,
+                "tipo": "click",
+                "descripcion": "Clic izquierdo en Google Chrome · Página principal – Google AdSense - Google Chrome",
+                "acciones_origen": [
+                    14
+                ],
+                "confianza": "alta",
+                "datos": {
+                    "x": 1917,
+                    "y": 238,
+                    "boton": "izquierdo"
+                },
+                "contexto_objetivo": {
+                    "hwnd": 263972,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Página principal – Google AdSense - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1273,
+                        "y": 0,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://adsense.google.com/adsense/u/0/pub-7025188829601947/home",
+                    "url": "https://adsense.google.com/adsense/u/0/pub-7025188829601947/home",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Default",
+                    "cuenta_navegador": "jvilla10.ing@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": {
+                    "hwnd": 263972,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Página principal – Google AdSense - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1273,
+                        "y": 0,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://adsense.google.com/adsense/u/0/pub-7025188829601947/home",
+                    "url": "https://adsense.google.com/adsense/u/0/pub-7025188829601947/home",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Default",
+                    "cuenta_navegador": "jvilla10.ing@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                }
+            },
+            {
+                "id": 15,
+                "tipo": "desplazar",
+                "descripcion": "Desplazar hacia abajo · 3 paso(s)",
+                "acciones_origen": [
+                    15
+                ],
+                "confianza": "alta",
+                "datos": {
+                    "dx": 0,
+                    "dy": -3,
+                    "pasos": 3,
+                    "x": 1917,
+                    "y": 238
+                },
+                "contexto_objetivo": {
+                    "hwnd": 263972,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Página principal – Google AdSense - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1273,
+                        "y": 0,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://adsense.google.com/adsense/u/0/pub-7025188829601947/home",
+                    "url": "https://adsense.google.com/adsense/u/0/pub-7025188829601947/home",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Default",
+                    "cuenta_navegador": "jvilla10.ing@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": {
+                    "hwnd": 263972,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Página principal – Google AdSense - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1273,
+                        "y": 0,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://adsense.google.com/adsense/u/0/pub-7025188829601947/home",
+                    "url": "https://adsense.google.com/adsense/u/0/pub-7025188829601947/home",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Default",
+                    "cuenta_navegador": "jvilla10.ing@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                }
+            },
+            {
+                "id": 16,
+                "tipo": "desplazar",
+                "descripcion": "Desplazar hacia arriba · 7 paso(s)",
+                "acciones_origen": [
+                    16
+                ],
+                "confianza": "alta",
+                "datos": {
+                    "dx": 0,
+                    "dy": 7,
+                    "pasos": 7,
+                    "x": 1917,
+                    "y": 238
+                },
+                "contexto_objetivo": {
+                    "hwnd": 263972,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Página principal – Google AdSense - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1273,
+                        "y": 0,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://adsense.google.com/adsense/u/0/pub-7025188829601947/home",
+                    "url": "https://adsense.google.com/adsense/u/0/pub-7025188829601947/home",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Default",
+                    "cuenta_navegador": "jvilla10.ing@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": {
+                    "hwnd": 263972,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Página principal – Google AdSense - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1273,
+                        "y": 0,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://adsense.google.com/adsense/u/0/pub-7025188829601947/home",
+                    "url": "https://adsense.google.com/adsense/u/0/pub-7025188829601947/home",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Default",
+                    "cuenta_navegador": "jvilla10.ing@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                }
+            },
+            {
+                "id": 17,
+                "tipo": "tecla",
+                "descripcion": "Tecla · Print Screen",
+                "acciones_origen": [
+                    17
+                ],
+                "confianza": "alta",
+                "datos": {
+                    "tecla": "print_screen",
+                    "caracter": null,
+                    "vk": null,
+                    "modificadores": []
+                },
+                "contexto_objetivo": {
+                    "hwnd": 329584,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1283,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "url": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 2",
+                    "cuenta_navegador": "villaglabor@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": {
+                    "hwnd": 329584,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1283,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "url": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 2",
+                    "cuenta_navegador": "villaglabor@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                }
+            },
+            {
+                "id": 18,
+                "tipo": "comando_teclado",
+                "descripcion": "Comando · Atajo automático · Ctrl + \u0016 · Ctrl + \u0016",
+                "acciones_origen": [
+                    18
+                ],
+                "confianza": "baja",
+                "datos": {
+                    "origen": "grabacion_global",
+                    "capturado_en": "2026-09-05T01:04:49.814162",
+                    "comando_id": "auto_atajo_ctrl_\u0016",
+                    "nombre_comando": "Atajo automático · Ctrl + \u0016",
+                    "parametros": [
+                        {
+                            "tecla": "Ctrl",
+                            "repeticiones": 1
+                        },
+                        {
+                            "tecla": "\u0016",
+                            "repeticiones": 1
+                        }
+                    ],
+                    "espera_antes_ms": 0,
+                    "espera_despues_ms": 0,
+                    "duracion_ms": 77,
+                    "ids_origen": [
+                        81
+                    ]
+                },
+                "contexto_objetivo": null,
+                "contexto_despues": {
+                    "hwnd": 329584,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1283,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "url": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 2",
+                    "cuenta_navegador": "villaglabor@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                }
+            },
+            {
+                "id": 19,
+                "tipo": "click",
+                "descripcion": "Clic izquierdo en Google Chrome · Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome",
+                "acciones_origen": [
+                    19
+                ],
+                "confianza": "alta",
+                "datos": {
+                    "x": 2164,
+                    "y": 1350,
+                    "boton": "izquierdo"
+                },
+                "contexto_objetivo": {
+                    "hwnd": 329584,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1283,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "url": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 2",
+                    "cuenta_navegador": "villaglabor@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": {
+                    "hwnd": 329584,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1283,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "url": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 2",
+                    "cuenta_navegador": "villaglabor@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                }
+            },
+            {
+                "id": 20,
+                "tipo": "tecla",
+                "descripcion": "Tecla · Enter",
+                "acciones_origen": [
+                    20
+                ],
+                "confianza": "alta",
+                "datos": {
+                    "tecla": "enter",
+                    "caracter": null,
+                    "vk": null,
+                    "modificadores": []
+                },
+                "contexto_objetivo": {
+                    "hwnd": 329584,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1283,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "url": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 2",
+                    "cuenta_navegador": "villaglabor@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                },
+                "contexto_despues": {
+                    "hwnd": 329584,
+                    "pid": 16696,
+                    "proceso": "chrome.exe",
+                    "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+                    "titulo": "Jorge Isaac - BIN Light Etapa 2 - Part 2 - Google Chrome",
+                    "clase": "Chrome_WidgetWin_1",
+                    "geometria": {
+                        "x": 1283,
+                        "y": 710,
+                        "ancho": 1294,
+                        "alto": 707,
+                        "maximizada": false,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "web",
+                    "localizador": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "url": "https://chatgpt.com/g/g-p-6854320a090c8191818b70dfe11f39f7/c/6a987b46-abb0-83e9-8308-142243169695",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "Profile 2",
+                    "cuenta_navegador": "villaglabor@gmail.com",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": "uia_correo",
+                    "user_data_dir_navegador": "",
+                    "url_observable": true,
+                    "url_origen": "omnibox_uia"
+                }
+            }
+        ],
+        "accion_actual_indice": null,
+        "repeticion_actual": 0,
+        "repeticiones_totales": 1,
+        "ejecucion_real_indice": 0,
+        "ejecucion_real_repeticion": 1,
+        "ejecuciones_reales_completadas": 0,
+        "delay_ejecucion_restante_ms": 0,
+        "ejecucion_real_fase": "inactiva",
+        "elapsed_repeticion_real_ms": 0,
+        "duracion_origen": "grabacion",
+        "detalle_estado": "Próxima ejecución: Mañana · 01:09 · en 2 h 17 min",
+        "supervisor_espera_acumulada_ms": 0,
+        "supervisor_intentos": 0,
+        "supervisor_ultima_decision": null,
+        "supervisor_ultimo_motivo": "",
+        "ultimo_checkpoint": {},
+        "duracion_real_ultima_segundos": 547,
+        "desfase_duracion_segundos": 445,
+        "contexto": "",
+        "last_skipped_run_key": "manual-20260905-012927"
+    },
+    {
+        "id": 3,
+        "nombre": "Demostración de comandos",
+        "hora": "05:40",
+        "veces": 1,
+        "intervalo_valor": 24,
+        "intervalo_unidad": "horas",
+        "dias": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+        ],
+        "duracion": "00:00:18",
+        "limpieza_ventanas": "Ninguna",
+        "estado": "EN ESPERA",
+        "transcurrido": "00:00:00",
+        "progreso": 0,
+        "elapsed_seconds": 0,
+        "runtime_base_seconds": 0,
+        "runtime_started_at": null,
+        "current_run_key": null,
+        "last_run_key": "manual-20260905-210023",
+        "queued_at": null,
+        "completed_at": null,
+        "ultima_ejecucion": "2026-09-05T21:00:44.548986",
+        "acciones": [
+            {
+                "id": 1,
+                "tipo": "click",
+                "origen": "grabacion_global",
+                "descripcion": "Clic izquierdo · Microsoft Word · Documento1 - Word\nX=703 · Y=48",
+                "contexto_objetivo": {
+                    "hwnd": 1050440,
+                    "pid": 18212,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": -8,
+                        "y": -8,
+                        "ancho": 2576,
+                        "alto": 1416,
+                        "maximizada": true,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                },
+                "contexto_despues": {
+                    "hwnd": 1050440,
+                    "pid": 18212,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": -8,
+                        "y": -8,
+                        "ancho": 2576,
+                        "alto": 1416,
+                        "maximizada": true,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                },
+                "capturado_en": "2026-09-05T01:22:50.122838",
+                "boton": "izquierdo",
+                "x": 703,
+                "y": 48,
+                "ids_origen": [
+                    1
+                ]
+            },
+            {
+                "id": 2,
+                "tipo": "tecla",
+                "origen": "grabacion_global",
+                "descripcion": "Tecla · Print Screen",
+                "contexto_objetivo": {
+                    "hwnd": 1050440,
+                    "pid": 18212,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": -8,
+                        "y": -8,
+                        "ancho": 2576,
+                        "alto": 1416,
+                        "maximizada": true,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                },
+                "contexto_despues": null,
+                "capturado_en": "2026-09-05T01:22:53.194942",
+                "tecla": "print_screen",
+                "caracter": null,
+                "vk": null,
+                "modificadores": [],
+                "duracion_ms": 93,
+                "ids_origen": [
+                    2
+                ]
+            },
+            {
+                "id": 3,
+                "tipo": "click",
+                "origen": "grabacion_global",
+                "descripcion": "Clic izquierdo · Microsoft Word · Documento1 - Word\nX=1168 · Y=932",
+                "contexto_objetivo": {
+                    "hwnd": 1050440,
+                    "pid": 18212,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": -8,
+                        "y": -8,
+                        "ancho": 2576,
+                        "alto": 1416,
+                        "maximizada": true,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                },
+                "contexto_despues": null,
+                "capturado_en": "2026-09-05T01:22:57.046669",
+                "boton": "izquierdo",
+                "x": 1168,
+                "y": 932,
+                "ids_origen": [
+                    3
+                ]
+            },
+            {
+                "id": 4,
+                "tipo": "comando_teclado",
+                "origen": "grabacion_global",
+                "descripcion": "Comando · Atajo automático · Ctrl + \u0016 · Ctrl + \u0016",
+                "contexto_objetivo": null,
+                "contexto_despues": null,
+                "capturado_en": "2026-09-05T01:22:57.103700",
+                "comando_id": "auto_atajo_ctrl_\u0016",
+                "nombre_comando": "Atajo automático · Ctrl + \u0016",
+                "parametros": [
+                    {
+                        "tecla": "Ctrl",
+                        "repeticiones": 1
+                    },
+                    {
+                        "tecla": "\u0016",
+                        "repeticiones": 1
+                    }
+                ],
+                "espera_antes_ms": 0,
+                "espera_despues_ms": 0,
+                "duracion_ms": 109,
+                "ids_origen": [
+                    4
+                ]
+            }
+        ],
+        "acciones_semanticas": [
+            {
+                "id": 1,
+                "tipo": "click",
+                "descripcion": "Clic izquierdo en Microsoft Word · Documento1 - Word",
+                "acciones_origen": [
+                    1
+                ],
+                "confianza": "alta",
+                "datos": {
+                    "x": 703,
+                    "y": 48,
+                    "boton": "izquierdo"
+                },
+                "contexto_objetivo": {
+                    "hwnd": 1050440,
+                    "pid": 18212,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": -8,
+                        "y": -8,
+                        "ancho": 2576,
+                        "alto": 1416,
+                        "maximizada": true,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                },
+                "contexto_despues": {
+                    "hwnd": 1050440,
+                    "pid": 18212,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": -8,
+                        "y": -8,
+                        "ancho": 2576,
+                        "alto": 1416,
+                        "maximizada": true,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                }
+            },
+            {
+                "id": 2,
+                "tipo": "tecla",
+                "descripcion": "Tecla · Print Screen",
+                "acciones_origen": [
+                    2
+                ],
+                "confianza": "alta",
+                "datos": {
+                    "tecla": "print_screen",
+                    "caracter": null,
+                    "vk": null,
+                    "modificadores": []
+                },
+                "contexto_objetivo": {
+                    "hwnd": 1050440,
+                    "pid": 18212,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": -8,
+                        "y": -8,
+                        "ancho": 2576,
+                        "alto": 1416,
+                        "maximizada": true,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                },
+                "contexto_despues": {
+                    "hwnd": 1050440,
+                    "pid": 18212,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": -8,
+                        "y": -8,
+                        "ancho": 2576,
+                        "alto": 1416,
+                        "maximizada": true,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                }
+            },
+            {
+                "id": 3,
+                "tipo": "click",
+                "descripcion": "Clic izquierdo en Microsoft Word · Documento1 - Word",
+                "acciones_origen": [
+                    3
+                ],
+                "confianza": "alta",
+                "datos": {
+                    "x": 1168,
+                    "y": 932,
+                    "boton": "izquierdo"
+                },
+                "contexto_objetivo": {
+                    "hwnd": 1050440,
+                    "pid": 18212,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": -8,
+                        "y": -8,
+                        "ancho": 2576,
+                        "alto": 1416,
+                        "maximizada": true,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                },
+                "contexto_despues": {
+                    "hwnd": 1050440,
+                    "pid": 18212,
+                    "proceso": "WINWORD.EXE",
+                    "ejecutable": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "titulo": "Documento1 - Word",
+                    "clase": "OpusApp",
+                    "geometria": {
+                        "x": -8,
+                        "y": -8,
+                        "ancho": 2576,
+                        "alto": 1416,
+                        "maximizada": true,
+                        "minimizada": false
+                    },
+                    "tipo_recurso": "aplicacion",
+                    "localizador": "C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE",
+                    "url": "",
+                    "ruta_recurso": "",
+                    "perfil_navegador": "",
+                    "cuenta_navegador": "",
+                    "cuenta_web_observada": "",
+                    "cuenta_navegador_origen": ""
+                }
+            },
+            {
+                "id": 4,
+                "tipo": "comando_teclado",
+                "descripcion": "Comando · Atajo automático · Ctrl + \u0016 · Ctrl + \u0016",
+                "acciones_origen": [
+                    4
+                ],
+                "confianza": "baja",
+                "datos": {
+                    "origen": "grabacion_global",
+                    "capturado_en": "2026-09-05T01:22:57.103700",
+                    "comando_id": "auto_atajo_ctrl_\u0016",
+                    "nombre_comando": "Atajo automático · Ctrl + \u0016",
+                    "parametros": [
+                        {
+                            "tecla": "Ctrl",
+                            "repeticiones": 1
+                        },
+                        {
+                            "tecla": "\u0016",
+                            "repeticiones": 1
+                        }
+                    ],
+                    "espera_antes_ms": 0,
+                    "espera_despues_ms": 0,
+                    "duracion_ms": 109,
+                    "ids_origen": [
+                        4
+                    ]
+                },
+                "contexto_objetivo": null,
+                "contexto_despues": null
+            }
+        ],
+        "accion_actual_indice": null,
+        "repeticion_actual": 0,
+        "repeticiones_totales": 1,
+        "ejecucion_real_indice": 0,
+        "ejecucion_real_repeticion": 1,
+        "ejecuciones_reales_completadas": 0,
+        "delay_ejecucion_restante_ms": 0,
+        "ejecucion_real_fase": "inactiva",
+        "elapsed_repeticion_real_ms": 0,
+        "duracion_origen": "grabacion",
+        "detalle_estado": "Próxima ejecución: Mañana · 05:40 · en 6 h 48 min",
+        "supervisor_espera_acumulada_ms": 0,
+        "supervisor_intentos": 0,
+        "supervisor_ultima_decision": null,
+        "supervisor_ultimo_motivo": "",
+        "ultimo_checkpoint": {},
+        "duracion_real_ultima_segundos": 21,
+        "desfase_duracion_segundos": 3,
+        "contexto": "",
+        "last_skipped_run_key": "sched-20260905-0540"
+    },
+    {
+        "id": 4,
+        "nombre": "NEtflix",
+        "hora": "05:40",
+        "veces": 1,
+        "intervalo_valor": 24,
+        "intervalo_unidad": "horas",
+        "dias": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+        ],
+        "duracion": "00:00:00",
+        "limpieza_ventanas": "Ninguna",
+        "estado": "REQUIERE CONFIGURACIÓN",
+        "transcurrido": "00:00:00",
+        "progreso": 0,
+        "elapsed_seconds": 0,
+        "runtime_base_seconds": 0,
+        "runtime_started_at": null,
+        "current_run_key": null,
+        "last_run_key": null,
+        "queued_at": null,
+        "completed_at": null,
+        "ultima_ejecucion": null,
+        "acciones": [],
+        "acciones_semanticas": [],
+        "accion_actual_indice": null,
+        "repeticion_actual": 0,
+        "repeticiones_totales": 1,
+        "ejecucion_real_indice": 0,
+        "ejecucion_real_repeticion": 1,
+        "ejecuciones_reales_completadas": 0,
+        "delay_ejecucion_restante_ms": 0,
+        "ejecucion_real_fase": "inactiva",
+        "elapsed_repeticion_real_ms": 0,
+        "duracion_origen": "sin_calcular",
+        "detalle_estado": "Llegó la hora, pero no hay acciones configuradas.",
+        "contexto": "",
+        "supervisor_espera_acumulada_ms": 0,
+        "supervisor_intentos": 0,
+        "supervisor_ultima_decision": null,
+        "supervisor_ultimo_motivo": "",
+        "ultimo_checkpoint": {}
     }
 ]

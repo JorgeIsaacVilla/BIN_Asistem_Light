@@ -350,5 +350,43 @@
             }
         ],
         "personalizado": true
+    },
+    {
+        "id": "custom-20260905005144725010",
+        "nombre": "Captura Pantalla",
+        "parametros": [
+            {
+                "tecla": "Print Screen",
+                "repeticiones": 1
+            }
+        ],
+        "personalizado": true
+    },
+    {
+        "id": "custom-window-20260905005614102655",
+        "nombre": "Anexar ventana de ejemplo",
+        "tipo_comando": "ventana",
+        "ventana": {
+            "tipo_ventana": "web",
+            "tipo_recurso": "web",
+            "software_nombre": "chrome",
+            "proceso": "chrome.exe",
+            "ejecutable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+            "cuenta_asociada": "",
+            "cuenta_web": "",
+            "url": "https://alfora.art",
+            "ruta_recurso": "",
+            "geometria": {
+                "x": 0,
+                "y": 0,
+                "ancho": 1200,
+                "alto": 800,
+                "maximizada": false,
+                "minimizada": false
+            },
+            "contexto_manual": true,
+            "bloquear_actualizacion_automatica": true
+        },
+        "personalizado": true
     }
 ]

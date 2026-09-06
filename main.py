@@ -1,4 +1,25 @@
 #v1.6.15
+#============================================================================================
+#1) En el boton "+Añadir acción" en el modulo de Agregar comando clic, primero: simulo el clic. Cuando segundo: cuando preciono el boton de Crear comando ó Agregar acción, Me sale el popUp para decidir el tiempo que debe durar antes y despues del clic. Doy agregar, Y no lo agrega...
+
+#2) Cuando agrego una nueva vemtama a la biblioteca de comandos, Funciona perfectamente. Pero me gustaria que salga un popUp que diga -- comando Ventana agregada exitosamente a la Biblioteca de comandos
+
+#3) En mostrar las horas de inicio en los contenedores de tareas de la lista de tareas dentro del boton Ver, Me gustaria seleccionar las horas como una linea temporal, y no digitandolas, ya que es muy dificil actualmente digitar la hora, es incomodo. Imagino como una línea vertical en la que salen las horas, y puedo escrolear las horas, por un lado, y luego los minutos por otro. (DESARROLLADO)
+
+#4) Evalua la opción para hacer los clics he interacciónes (Como cambios de ventana, entre otros) invisibles ante la ejecución de tareas, ya que tengo el precentimiendo, que las acciónes guardadas, tambien se están haciendo sobre la interfaz de BIN. Evalua si esto tambien afectaria el clic del usuario, y de ser así, entonces haremos invisible los clics, menos el boton de frenar acción. (ESTA NO SE HARÁ)
+
+
+#5) Organicé mi mesa de trabajo en modo manual (Escribiendo comando por comando), Una ventana a la izquierda 50% width 100% height, y otras 2 a la derecha, 50% width y height, una arriba y otra abajo. Al momento de ejecutar, las organizó inicialmente Bien, pero dejó un espacio entre la ventana de la izquierda, y las ventanas de la derecha, Luego intentó corregirlo, anexando más ventanas, he intentnado acomodarla segun la memoria. PEro al final dió error. No me molesta los protocolos de corrección, Lo que me molesta son los espacios del centro, ya que en otras acciónes y otras ejecuciónes tambien deja espacios. Yo creo que es por lo del margen de error de 8px, evaluemoslo u corrijamoslo. 
+
+#6) En las pruebas, probé un comando de imprimir pantalla, Pero no lo ejecutó. yo estoy seguro que comandos similares, tampoco están funcionando. Evalualo y corrijamoslo. 
+
+#7) Al finalizar las tareas por error, o por finalización exitosa, Si abre whatsapp y escribe el mensaje; pero, no lo envia, y en correo, sale se configuró el panel local. y no se pudo mandar por correo. Yo creo que es porque no tenía la opción de que si nó está instalado, abrirlo en web y una cuenta asociada donde esté abierta. // Me preocupa que mi correo es outlook, no gemail. así que tenemos que dar la opción para diferentes proveedores de correos.
+
+#8) al finalizar antes y despues, si cierra las ventanas. PEro en el caso de los documentos que requieren validación para guardar, o no guardar, frena el proceso de cerrado de ventanas. además hay que darle por defaul 5 segundos despues de cerrar las ventanas, y luego empezar a ejecutar la tarea. y me gustaria que ese tiempo de espera sea configurable en configuración. Así si el PC es más lento, entonces el usuario podrá estimar el tiempo, y aplicar el cambio. (En este punto no se me ocurre una solución para los guardados. Solo que los archivos sean guardados automaticamente en escritorio con el nombre y la hora de la tarea, pero no se me ocurre como.)
+
+#Eso son todos los errores que encontré en la prueba
+#============================================================================================
+
 
 import sys
 import json
@@ -4628,6 +4649,131 @@ class CommandLibraryDialog(QDialog):
         self.accept()
 
 # ============================================================
+# SELECTOR VISUAL DE HORA
+# ============================================================
+
+
+class TimeScrollSelector(QWidget):
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        layout = QHBoxLayout(self)
+
+        layout.setContentsMargins(
+            0,
+            0,
+            0,
+            0,
+        )
+
+        layout.setSpacing(6)
+
+        # ----------------------------------------------------
+        # HORAS
+        # ----------------------------------------------------
+
+        self.selector_hora = QComboBox()
+
+        self.selector_hora.addItems(
+            [
+                f"{hora:02}"
+                for hora in range(24)
+            ]
+        )
+
+        self.selector_hora.setMaxVisibleItems(10)
+
+        # ----------------------------------------------------
+        # SEPARADOR
+        # ----------------------------------------------------
+
+        separador = QLabel(":")
+
+        separador.setAlignment(
+            Qt.AlignCenter
+        )
+
+        # ----------------------------------------------------
+        # MINUTOS
+        # ----------------------------------------------------
+
+        self.selector_minuto = QComboBox()
+
+        self.selector_minuto.addItems(
+            [
+                f"{minuto:02}"
+                for minuto in range(60)
+            ]
+        )
+
+        self.selector_minuto.setMaxVisibleItems(10)
+
+        # ----------------------------------------------------
+        # LAYOUT
+        # ----------------------------------------------------
+
+        layout.addWidget(
+            self.selector_hora
+        )
+
+        layout.addWidget(
+            separador
+        )
+
+        layout.addWidget(
+            self.selector_minuto
+        )
+
+        layout.addStretch()
+
+    # ========================================================
+    # COMPATIBILIDAD CON QTIMEEDIT
+    # ========================================================
+
+    def setTime(
+        self,
+        hora,
+    ):
+        if not isinstance(
+            hora,
+            QTime,
+        ):
+            return
+
+        if not hora.isValid():
+            return
+
+        self.selector_hora.setCurrentText(
+            f"{hora.hour():02}"
+        )
+
+        self.selector_minuto.setCurrentText(
+            f"{hora.minute():02}"
+        )
+
+    def time(
+        self,
+    ):
+        try:
+            hora = int(
+                self.selector_hora.currentText()
+            )
+
+            minuto = int(
+                self.selector_minuto.currentText()
+            )
+
+        except Exception:
+            hora = 0
+            minuto = 0
+
+        return QTime(
+            hora,
+            minuto,
+        )
+
+# ============================================================
 # EDITOR DE TAREAS
 # ============================================================
 
@@ -4708,13 +4854,19 @@ class TaskEditorDialog(QDialog):
         # HORA
         # ----------------------------------------------------
 
-        self.hora = QTimeEdit()
+        self.hora = TimeScrollSelector()
 
-        self.hora.setDisplayFormat("HH:mm")
+        self.hora.setTime(
+            QTime(
+                5,
+                40,
+            )
+        )
 
-        self.hora.setTime(QTime(5, 40))
-
-        formulario.addRow("Hora:", self.hora)
+        formulario.addRow(
+            "Hora:",
+            self.hora,
+        )
 
         # ----------------------------------------------------
         # REPETICIONES
