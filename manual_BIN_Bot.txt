@@ -1,0 +1,220 @@
+Instalaciones necesarias para BIN_Light
+============================
+
+
+ => python -m pip install selenium  ----> Con esto podrás hacer consultas en el html de google en busquedas
+
+
+ => python -c "import selenium; print('Selenium OK:', selenium.__version__)" ----> Para verificación
+
+
+
+MANUAL BIN_Bot
+==============================
+
+DEPURACIÓN / DEBUG
+==============================
+
+BIN_Bot puede ejecutarse normalmente o en modo depuración.
+
+USO NORMAL
+----------
+
+Para iniciar BIN_Bot de forma normal:
+
+python BIN_Bot.py
+
+Este es el modo recomendado para el uso habitual.
+
+No muestra información técnica interna.
+
+
+MODO DEBUG
+----------
+
+El modo DEBUG se utiliza únicamente para diagnosticar problemas,
+revisar cómo BIN interpreta una consulta y comprobar qué ruta de
+respuesta está utilizando.
+
+Para iniciar BIN_Bot directamente en modo DEBUG:
+
+python BIN_Bot.py --debug
+
+
+ACTIVAR DEBUG DESDE EL CHAT
+---------------------------
+
+Si BIN_Bot ya está abierto en modo normal, no es necesario cerrarlo.
+
+Dentro del propio chat escribe:
+
+/debug on
+
+BIN debería responder:
+
+BIN: DEBUG activado.
+
+
+DESACTIVAR DEBUG DESDE EL CHAT
+------------------------------
+
+Para volver al modo normal:
+
+/debug off
+
+BIN debería responder:
+
+BIN: DEBUG desactivado.
+
+
+IMPORTANTE
+----------
+
+No escribas:
+
+--debug
+
+dentro del chat.
+
+Ese formato solamente funciona como argumento al iniciar el archivo
+desde CMD:
+
+python BIN_Bot.py --debug
+
+Si escribes "--debug" dentro de la conversación, BIN puede interpretarlo
+como una consulta normal.
+
+
+QUÉ MUESTRA EL MODO DEBUG
+-------------------------
+
+Cuando DEBUG está activo, BIN puede mostrar información interna como:
+
+- Consulta recibida.
+- Intención detectada.
+- Confianza calculada.
+- Sección del manual encontrada.
+- Origen de la respuesta.
+- Disponibilidad de Internet.
+- Resultado de la búsqueda en Google.
+- Método utilizado para obtener la respuesta.
+- Tiempo empleado en responder.
+- Errores internos útiles para depuración.
+
+
+EJEMPLO
+-------
+
+Iniciar:
+
+python BIN_Bot.py --debug
+
+Luego preguntar:
+
+que es una API?
+
+La consola puede mostrar información parecida a:
+
+[BIN DEBUG] MANUAL: ...
+[BIN DEBUG] INTERNET: {"disponible": true}
+[BIN DEBUG] GOOGLE: ...
+[BIN DEBUG] RESPUESTA: ...
+
+
+CUÁNDO USAR DEBUG
+-----------------
+
+Usar DEBUG cuando:
+
+- BIN responde algo incorrecto.
+- Una pregunta del manual termina buscando en Google.
+- Google no devuelve una respuesta útil.
+- El porcentaje de confianza parece incorrecto.
+- Se está instalando BIN_Bot en otro proyecto.
+- Se está comprobando una nueva versión.
+- Se necesita identificar en qué parte del flujo ocurre un fallo.
+
+
+CUÁNDO NO ES NECESARIO
+----------------------
+
+Para el uso normal:
+
+python BIN_Bot.py
+
+No es necesario ejecutar previamente:
+
+python -m py_compile BIN_Bot.py
+
+ni:
+
+python BIN_Bot.py --selftest
+
+Esos comandos son herramientas de desarrollo y comprobación.
+
+
+COMPROBACIÓN DE SINTAXIS
+------------------------
+
+Para comprobar que BIN_Bot.py no contiene errores de sintaxis:
+
+python -m py_compile BIN_Bot.py
+
+Este comando NO activa Internet.
+Este comando NO modifica el funcionamiento de BIN.
+Este comando NO es necesario antes de cada inicio.
+
+
+SELF TEST
+---------
+
+Para ejecutar las pruebas internas:
+
+python BIN_Bot.py --selftest
+
+El self-test sirve para revisar funciones internas conocidas.
+
+No es necesario ejecutarlo antes de cada uso.
+
+
+RESUMEN RÁPIDO
+--------------
+
+Uso normal:
+
+python BIN_Bot.py
+
+Iniciar con depuración:
+
+python BIN_Bot.py --debug
+
+Activar depuración con BIN ya abierto:
+
+/debug on
+
+Desactivar depuración:
+
+/debug off
+
+Comprobar sintaxis:
+
+python -m py_compile BIN_Bot.py
+
+Ejecutar pruebas internas:
+
+python BIN_Bot.py --selftest
+
+
+RECOMENDACIÓN PARA OTROS PROYECTOS
+----------------------------------
+
+Cuando BIN_Bot se instale dentro de otro proyecto:
+
+1. Ejecutar primero una prueba normal.
+2. Si ocurre un problema, activar DEBUG.
+3. Revisar origen, confianza y ruta de respuesta.
+4. Corregir únicamente el componente que esté fallando.
+5. Desactivar DEBUG para el uso final.
+
+El usuario final no necesita utilizar el modo DEBUG.
+Es una herramienta de desarrollo, integración y diagnóstico.

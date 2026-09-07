@@ -1,0 +1,97 @@
+{
+    "tipo": "BIN_MEMORIA",
+    "schema_version": 1,
+    "actualizado_en": "2026-09-07T16:13:02.358588+00:00",
+    "memorias": [
+        {
+            "respuesta": "Todo muy bien por aquí , ¿y tú qué tal estás?",
+            "consultas": [
+                "hola que tal?="
+            ],
+            "fuente": "GOOGLE",
+            "creado_en": "2026-09-07T04:37:12.439286+00:00",
+            "actualizado_en": "2026-09-07T04:37:12.439286+00:00",
+            "veces_aprendida": 1
+        },
+        {
+            "respuesta": "conjunto de reglas y protocolos que permite que dos sistemas de software se comuniquen entre sí",
+            "consultas": [
+                "que es una API?"
+            ],
+            "fuente": "GOOGLE",
+            "creado_en": "2026-09-07T04:40:17.309720+00:00",
+            "actualizado_en": "2026-09-07T04:40:17.309720+00:00",
+            "veces_aprendida": 1
+        },
+        {
+            "respuesta": "Aquí tienes un código completo en un solo archivo HTML que incluye la estructura y JavaScript básico para una calculadora funcional",
+            "consultas": [
+                "Puedes escribir el codigo en javascript dentro de html para hacer una calculadora basica?"
+            ],
+            "fuente": "GOOGLE",
+            "creado_en": "2026-09-07T04:41:00.718680+00:00",
+            "actualizado_en": "2026-09-07T04:41:00.718680+00:00",
+            "veces_aprendida": 1
+        },
+        {
+            "respuesta": "Me da mucho gusto saber que ya están funcionando correctamente",
+            "consultas": [
+                "que bien, ya funcionas"
+            ],
+            "fuente": "GOOGLE",
+            "creado_en": "2026-09-07T04:59:50.131561+00:00",
+            "actualizado_en": "2026-09-07T04:59:50.131561+00:00",
+            "veces_aprendida": 1
+        },
+        {
+            "respuesta": "b(1 + b)",
+            "consultas": [
+                "\u001b[B+\u001b[\u001b[B2+2"
+            ],
+            "fuente": "GOOGLE",
+            "creado_en": "2026-09-07T05:00:09.405849+00:00",
+            "actualizado_en": "2026-09-07T05:00:09.405849+00:00",
+            "veces_aprendida": 1
+        },
+        {
+            "respuesta": "no funciono a través de comandos tradicionales o códigos rígidos como los de un sistema operativo",
+            "consultas": [
+                "cuales son los comandos que manejas?"
+            ],
+            "fuente": "GOOGLE",
+            "creado_en": "2026-09-07T05:00:48.601786+00:00",
+            "actualizado_en": "2026-09-07T05:00:48.601786+00:00",
+            "veces_aprendida": 1
+        },
+        {
+            "respuesta": "es un número entero que representa un valor nulo y la ausencia de cantidad",
+            "consultas": [
+                "0"
+            ],
+            "fuente": "GOOGLE",
+            "creado_en": "2026-09-07T05:07:33.158158+00:00",
+            "actualizado_en": "2026-09-07T05:07:33.158158+00:00",
+            "veces_aprendida": 1
+        },
+        {
+            "respuesta": "Todo está muy bien por aquí, listo para ayudarte en lo que necesites hoy",
+            "consultas": [
+                "como estÃ¡ todo?"
+            ],
+            "fuente": "GOOGLE",
+            "creado_en": "2026-09-07T16:12:43.763990+00:00",
+            "actualizado_en": "2026-09-07T16:12:43.763990+00:00",
+            "veces_aprendida": 1
+        },
+        {
+            "respuesta": "¡De nada! Es un placer poder ayudarte",
+            "consultas": [
+                "que bien. Muchas gracias"
+            ],
+            "fuente": "GOOGLE",
+            "creado_en": "2026-09-07T16:13:02.358588+00:00",
+            "actualizado_en": "2026-09-07T16:13:02.358588+00:00",
+            "veces_aprendida": 1
+        }
+    ]
+}

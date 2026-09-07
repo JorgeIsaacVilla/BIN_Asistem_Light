@@ -1,0 +1,2703 @@
+{
+  "tipo": "BIN_MANUAL",
+  "schema_version": 1,
+  "manual_version": "1.1-numerado",
+  "bin_version": "1.6.16",
+  "estado": "base estable + documentación visual inicial",
+  "titulo": "Manual de BIN IA Asistem — Light",
+  "descripcion": "Fuente estructurada compartida para consultas de BIN_Bot y renderizado del manual/chat en BIN_Light.",
+  "ruta_recomendada": "data/manual_bin.json",
+  "recursos": {
+    "base": "src",
+    "rutas_relativas": true,
+    "capturas": [
+      "src/Captura1.PNG",
+      "src/Captura2.PNG",
+      "src/Captura3.PNG",
+      "src/Captura4.PNG",
+      "src/Captura5.PNG",
+      "src/Captura6.PNG"
+    ],
+    "nota": "Las rutas son relativas a la carpeta raíz de BIN Light; no deben almacenarse rutas absolutas del equipo."
+  },
+  "arquitectura": {
+    "BIN_Bot": "Consulta, indexa y recupera contenido del manual. No necesita renderizar imágenes para comprender el texto asociado.",
+    "BIN_Light": "Renderiza títulos, texto, listas, imágenes y futuras acciones/botones usando la misma fuente JSON.",
+    "principio": "Una sola fuente de verdad para el manual: data/manual_bin.json."
+  },
+  "compatibilidad_render": {
+    "tipos_bloque": [
+      "texto",
+      "lista",
+      "pasos",
+      "imagen",
+      "interacciones"
+    ],
+    "imagen": {
+      "ruta": "relativa",
+      "alt": "texto alternativo",
+      "descripcion": "texto indexable"
+    },
+    "interacciones": "Cada pantalla conserva una lista rica de objetos y una versión textual en bloques.items para que BIN_Bot pueda indexarla incluso antes del renderer visual completo."
+  },
+  "secciones": [
+    {
+      "id": "introduccion",
+      "titulo": "BIN IA ASISTEM — LIGHT v1.6.16",
+      "aliases": [
+        "qué es BIN Light",
+        "que es bin",
+        "bin light",
+        "versión estable",
+        "version estable",
+        "v1.6.16"
+      ],
+      "resumen": "Descripción general y prioridades de la versión estable.",
+      "bloques": [
+        {
+          "tipo": "texto",
+          "contenido": "BIN Light es una versión ligera de BIN orientada a la automatización de tareas repetitivas en Windows. Esta versión NO utiliza IA local. En su lugar, trabaja mediante un sistema avanzado de análisis automático, supervisión de contexto, decisiones condicionales, correcciones y ejecución física de acciones. BIN observa el entorno de trabajo, registra las acciones demostradas por el usuario y utiliza la información disponible de ventanas, aplicaciones, navegadores y recursos para intentar reproducir la tarea de la forma más estable posible."
+        },
+        {
+          "tipo": "lista",
+          "items": [
+            "Bajo consumo de recursos.",
+            "Automatización mecánica de tareas.",
+            "Ejecución de secuencias largas.",
+            "Supervisión del estado de las ventanas.",
+            "Corrección automática cuando el entorno cambia.",
+            "Funcionamiento en equipos modestos.",
+            "Capacidad para permanecer activo durante períodos prolongados.",
+            "El asistente de BIN funciona en una sola pantalla, la principal. Si se piensa grabar instrucciones o ejecutar tareas automatizadas, se recomienda desconectar las pantallas externas y dejar solamente la pantalla principal."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "requisitos",
+      "titulo": "REQUISITOS",
+      "aliases": [
+        "requisitos",
+        "instalar BIN",
+        "dependencias",
+        "PySide6",
+        "psutil",
+        "mss",
+        "pynput",
+        "ejecutar BIN"
+      ],
+      "resumen": "Sistema, dependencias y comandos básicos de instalación/ejecución.",
+      "bloques": [
+        {
+          "tipo": "texto",
+          "contenido": "Sistema recomendado: Windows 10 / Windows 11 y Python 3. Dependencias externas: PySide6, psutil, mss y pynput.\n\nInstalación:\npython -m pip install PySide6 psutil mss pynput\n\nPara comprobar las dependencias:\npython -c \"import PySide6, psutil, mss, pynput; print('BIN Light: dependencias OK')\"\n\nPara comprobar el archivo principal:\npython -m py_compile main.py\n\nPara ejecutar BIN:\npython main.py"
+        }
+      ]
+    },
+    {
+      "id": "sin_ia_local",
+      "titulo": "IMPORTANTE — ESTA VERSIÓN NO UTILIZA IA LOCAL",
+      "aliases": [
+        "ia local",
+        "qwen",
+        "modelo local",
+        "cómo decide BIN",
+        "como decide bin"
+      ],
+      "resumen": "El motor de automatización de BIN Light toma decisiones mediante contexto y reglas, no mediante un modelo local pesado.",
+      "bloques": [
+        {
+          "tipo": "texto",
+          "contenido": "BIN Light v1.6.16 no incorpora un modelo de inteligencia artificial local. Las decisiones durante una automatización son realizadas por el propio motor de BIN utilizando contexto de las acciones, estado de las ventanas, procesos activos, posición y dimensiones de ventanas, rutas de archivos y carpetas, URL del navegador, perfil del navegador, cuenta asociada cuando puede ser identificada, historial de la demostración, reglas y parámetros condicionales, verificaciones antes y después de las acciones y sistemas de corrección y recuperación. El objetivo es que BIN pueda adaptarse a pequeñas diferencias entre la demostración original y el entorno encontrado durante la ejecución."
+        }
+      ]
+    },
+    {
+      "id": "chat_bin",
+      "titulo": "CHAT DE BIN",
+      "aliases": [
+        "chat",
+        "chat de bin",
+        "asistente",
+        "registro",
+        "mensajes de bin"
+      ],
+      "resumen": "Uso del chat operativo integrado.",
+      "bloques": [
+        {
+          "tipo": "texto",
+          "contenido": "BIN incluye un chat operativo integrado. En esta versión el chat funciona principalmente como registro y asistente local del sistema. Permite mostrar información sobre acciones observadas, contextos detectados, correcciones realizadas, esperas, verificaciones, errores y estado de una ejecución. BIN también puede interactuar con Google Chrome durante las automatizaciones. Cuando existe conexión a Internet, las tareas demostradas pueden utilizar páginas y servicios web normalmente."
+        }
+      ]
+    },
+    {
+      "id": "automatizacion_ventanas",
+      "titulo": "AUTOMATIZACIÓN DE VENTANAS",
+      "aliases": [
+        "ventanas",
+        "posición de ventana",
+        "tamano ventana",
+        "tamaño ventana",
+        "url ventana",
+        "corregir ventana",
+        "contexto ventana"
+      ],
+      "resumen": "Cómo BIN identifica y corrige estados de ventanas durante una tarea.",
+      "bloques": [
+        {
+          "tipo": "texto",
+          "contenido": "BIN Light supervisa continuamente las ventanas disponibles en Windows. Durante una tarea puede utilizar información como aplicación o proceso, título de la ventana, clase de ventana, posición, tamaño, estado de la ventana, recurso abierto, ruta, URL, perfil del navegador y cuenta asociada. Cuando BIN encuentra una ventana que corresponde al contexto esperado, puede intentar corregir automáticamente su posición, tamaño, URL u otros estados compatibles antes de continuar con la siguiente acción. Esto ayuda a conservar las condiciones necesarias para que clics, scrolls, escritura y comandos físicos ocurran en el lugar esperado."
+        }
+      ]
+    },
+    {
+      "id": "navegadores",
+      "titulo": "NAVEGADORES",
+      "aliases": [
+        "chrome",
+        "navegador",
+        "perfil de chrome",
+        "cuenta web",
+        "sesión web",
+        "sesion web"
+      ],
+      "resumen": "Recomendaciones para automatizaciones con navegadores.",
+      "bloques": [
+        {
+          "tipo": "texto",
+          "contenido": "BIN puede trabajar con navegadores compatibles durante una automatización. Para obtener mejores resultados se recomienda utilizar una configuración sencilla y consistente. Especialmente en Google Chrome, utiliza, siempre que sea posible, una sola cuenta de Google por cada perfil del navegador utilizado en una tarea. BIN puede identificar información del perfil y, cuando es observable, la cuenta asociada. Las contraseñas, autenticación multifactor, passkeys, confirmaciones desde teléfonos u otros mecanismos de seguridad deben ser realizados manualmente por el usuario."
+        }
+      ]
+    },
+    {
+      "id": "recomendaciones_uso",
+      "titulo": "RECOMENDACIONES DE USO",
+      "aliases": [
+        "recomendaciones",
+        "buenas prácticas",
+        "buenas practicas",
+        "cómo grabar",
+        "como grabar",
+        "rutina estable",
+        "contraseñas",
+        "guardar archivos"
+      ],
+      "resumen": "Diecinueve recomendaciones de la versión estable para construir automatizaciones más confiables.",
+      "bloques": [
+        {
+          "tipo": "pasos",
+          "items": [
+            "1. REDUCE LA CANTIDAD DE PASOS — Utiliza la menor cantidad de acciones posible. Una tarea corta y directa normalmente será más resistente que una tarea llena de movimientos innecesarios.",
+            "2. UTILIZA PASOS CLAROS Y PAUSADOS — Evita realizar demasiadas acciones seguidas durante la demostración. BIN necesita tiempo para observar los cambios producidos en Windows.",
+            "3. UTILIZA ESPERAS RAZONABLES — Para aplicaciones o páginas que necesitan tiempo de carga, puede ser conveniente esperar aproximadamente entre 5 y 12 segundos antes de continuar. Esto también permite que BIN tenga tiempo para detectar y corregir cambios inesperados.",
+            "4. MANTÉN EL MISMO SOFTWARE — Si enseñas una rutina utilizando una versión determinada de un programa, intenta conservar esa misma versión. Una actualización importante puede modificar ventanas, botones, menús, coordenadas, distribución visual o comportamiento. Si el programa cambia demasiado, lo recomendable es volver a demostrar la tarea.",
+            "5. EN RUTAS WEB, UTILIZA LA URL DIRECTAMENTE — Cuando sea posible, navega directamente hacia la URL necesaria. Esto suele ser más estable que depender de varios clics para llegar a una página.",
+            "6. MANTÉN UNA MESA DE TRABAJO CONSISTENTE — Para tareas repetitivas es recomendable mantener un orden similar en el escritorio y en las aplicaciones utilizadas. BIN puede corregir determinados estados, pero una estructura predecible siempre mejora la estabilidad.",
+            "7. CIERRA VENTANAS INNECESARIAS — Antes de iniciar una automatización importante, intenta cerrar programas, ventanas o pestañas que no sean necesarias. Esto reduce posibles ambigüedades.",
+            "8. RECOMENDACIÓN IMPORTANTE PARA VENTANAS — Antes y después de mover o cambiar el tamaño de una ventana durante una demostración, haz clic en su barra de título. Esto ayuda a BIN a observar correctamente la ventana activa y actualizar posición, tamaño, aplicación, contexto y URL cuando corresponde.",
+            "9. EVITA PASOS INNECESARIOS — Si una operación puede realizarse con una acción directa, prefiere esa opción. Menos pasos significan menos puntos posibles de fallo.",
+            "10. MANTÉN LAS VENTANAS EN UN TAMAÑO ADECUADO — Deja siempre las ventanas suficientemente extendidas. No dejes ventanas o pestañas extremadamente pequeñas o reducidas durante la demostración, después de la demostración o cuando prepares el entorno. Windows puede conservar las últimas características de las ventanas y esto puede provocar correcciones adicionales, aumentar el procesamiento y alargar los tiempos de ejecución.",
+            "11. PARA ORGANIZAR UNA MESA DE TRABAJO WEB, PREFIERE INSTRUCCIONES DIRECTAS — Si se requiere organizar una mesa de trabajo web, es preferible hacerlo mediante acciones o instrucciones directas en lugar de una demostración innecesariamente larga. Esto suele ser más exacto.",
+            "12. LIMPIA LAS ACCIONES INNECESARIAS — Si una tarea es repetitiva, después de grabarla revisa el Panel de acciones. Elimina movimientos, clics, scrolls u otras acciones que no sean necesarias para obtener el resultado final. Una instrucción más directa normalmente será más estable.",
+            "13. VERIFICA LAS SESIONES DE LAS CUENTAS — Comprueba periódicamente que las sesiones necesarias continúen abiertas. Los navegadores o servicios pueden cerrar una sesión por expiración, eliminación de cookies, cambios de seguridad, actualizaciones o cierres manuales de sesión.",
+            "14. PREFIERE ACCIONES DE LLAMADO DIRECTAS — Siempre que sea posible, utiliza clics o acciones directas para llamar una aplicación, recurso o ventana.",
+            "15. REVISA LOS MINIPROMPTS DESPUÉS DE GRABAR — Después de entrenar o grabar una rutina, revisa los miniprompts y las acciones detectadas. Elimina scrolls y clics utilizados solamente para llegar a una ventana cuando BIN ya pueda identificar y llamar esa ventana directamente. Esto ayuda a reducir considerablemente el tiempo de ejecución.",
+            "16. DIVIDE LAS TAREAS COMPLEJAS — Si no se tiene dominio completo de un software o una rutina es demasiado extensa, puede ser conveniente dividirla. Ejemplo: organizar mesa de trabajo; publicar en redes sociales; cerrar ventanas de la mesa de trabajo, cada una con su horario.",
+            "17. PREPARA UNA SESIÓN ADECUADA PARA BIN — Para automatizaciones desatendidas se recomienda utilizar una sesión de Windows preparada específicamente para BIN y evitar que una contraseña o pantalla de bloqueo impida el acceso al escritorio durante una tarea. BIN no debe utilizarse como almacenamiento de contraseñas.",
+            "18. NO GRABES INICIOS DE SESIÓN, CONTRASEÑAS NI CÓDIGOS DE AUTENTICACIÓN — No incluyas contraseñas, PIN, códigos de verificación, códigos de autenticación multifactor, passkeys, frases de recuperación, tokens u otros datos privados de autenticación. BIN Light registra acciones de teclado y no incorpora una bóveda segura de credenciales. Inicia sesión manualmente antes de grabar una rutina y nunca uses una demostración de BIN para almacenar o reproducir una contraseña.",
+            "19. GUARDA LOS ARCHIVOS DENTRO DE LA PROPIA RUTINA CUANDO SEA NECESARIO — Si un archivo requiere guardar cambios, se recomienda que el guardado forme parte de la demostración o de la instrucción manual. Esto evita colisiones con el cerrado automático de ventanas que muestran confirmaciones de guardar o descartar. Como medida de protección de datos e información tratada, BIN no decide automáticamente por el usuario en estos casos."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "automatizaciones_web",
+      "titulo": "CONSIDERACIONES PARA AUTOMATIZACIONES WEB",
+      "aliases": [
+        "automatización web",
+        "automatizacion web",
+        "páginas web",
+        "paginas web",
+        "carga web",
+        "cookies",
+        "redirecciones"
+      ],
+      "resumen": "Factores dinámicos que pueden afectar una rutina web.",
+      "bloques": [
+        {
+          "tipo": "texto",
+          "contenido": "Las páginas web son entornos dinámicos. Una misma página puede cambiar debido a tiempo de carga, redirecciones, sesiones, cookies, publicidad, actualizaciones del sitio, estado de la cuenta o conexión a Internet. Por esta razón, las automatizaciones web pueden necesitar más tiempo de espera y supervisión que una aplicación local."
+        }
+      ]
+    },
+    {
+      "id": "filosofia_bin_light",
+      "titulo": "FILOSOFÍA DE BIN LIGHT",
+      "aliases": [
+        "filosofía",
+        "filosofia",
+        "cómo funciona bin",
+        "como funciona bin",
+        "demostración y ejecución",
+        "demostracion y ejecucion"
+      ],
+      "resumen": "Principio de captura, análisis de entorno, corrección y ejecución física.",
+      "bloques": [
+        {
+          "tipo": "texto",
+          "contenido": "Durante la demostración, BIN intenta capturar todo. Durante la ejecución, BIN analiza el entorno e intenta mantener las condiciones necesarias para continuar la tarea. Cuando puede corregir un estado de forma segura, intenta corregirlo. Cuando una acción física sigue siendo necesaria, conserva y ejecuta la acción física. El objetivo no es sustituir todas las acciones del usuario, sino reproducir de forma confiable las tareas que el usuario le ha enseñado."
+        }
+      ]
+    },
+    {
+      "id": "version",
+      "titulo": "VERSIÓN",
+      "aliases": [
+        "versión",
+        "version",
+        "v1.6.16",
+        "estable"
+      ],
+      "resumen": "BIN IA Asistem — Light, versión estable v1.6.16.",
+      "bloques": [
+        {
+          "tipo": "texto",
+          "contenido": "BIN IA Asistem — Light. Versión estable: v1.6.16."
+        }
+      ]
+    },
+    {
+      "id": "estado_proyecto",
+      "titulo": "ESTADO DEL PROYECTO",
+      "aliases": [
+        "estado proyecto",
+        "desarrollo",
+        "prioridades desarrollo",
+        "estabilidad",
+        "bajo consumo"
+      ],
+      "resumen": "Criterios que deben conservarse al ampliar BIN Light.",
+      "bloques": [
+        {
+          "tipo": "texto",
+          "contenido": "BIN Light continúa en desarrollo. Las nuevas funciones deben incorporarse conservando como prioridades: estabilidad, bajo consumo, ejecución prolongada, compatibilidad con Windows, recuperación ante cambios del entorno y automatizaciones comprensibles y reproducibles."
+        }
+      ]
+    },
+    {
+      "id": "interfaz_principal",
+      "titulo": "Interfaz principal de BIN Light",
+      "aliases": [
+        "interfaz principal de bin light",
+        "captura1.png",
+        "interacciones",
+        "botones",
+        "manual de interfaz"
+      ],
+      "resumen": "Vista principal de BIN IA Asistem — Light v1.6.16 con Lista de tareas, Visor IA, Panel de acciones y Chat con BIN.",
+      "bloques": [
+        {
+          "tipo": "imagen",
+          "ruta": "src/Captura1_numerada.png",
+          "alt": "Interfaz principal de BIN Light — controles numerados",
+          "descripcion": "Vista principal de BIN IA Asistem — Light v1.6.16 con Lista de tareas, Visor IA, Panel de acciones y Chat con BIN. Los círculos amarillos numerados se explican en la lista de interacciones de esta sección."
+        },
+        {
+          "tipo": "interacciones",
+          "items": [
+            "[1] MOSTRAR RUTINA: Inicia el flujo de demostración para que BIN observe una rutina real y genere o complemente acciones. Acción del usuario: Pulsar el botón para comenzar; durante una grabación el mismo flujo permite detenerla. Resultado: BIN prepara una rutina nueva o trabaja sobre la tarea seleccionada según el contexto. Nota: No debe utilizarse para registrar contraseñas, PIN, 2FA, passkeys o tokens.",
+            "[2] PANTALLA COMPLETA: Cambia la presentación de BIN para aprovechar toda la pantalla principal. Acción del usuario: Pulsar para alternar el modo de visualización. Resultado: La ventana principal cambia entre su presentación normal y la vista de pantalla completa.",
+            "[3] + NUEVA: Crea una tarea nueva y abre su configuración inicial. Acción del usuario: Pulsar para abrir Configuración de tarea. Resultado: Permite definir nombre, horario, repeticiones, intervalo, limpieza de mesa y días de ejecución antes de guardar.",
+            "[4] Lista de tareas / desplazamiento: Permite recorrer tareas guardadas cuando no caben simultáneamente en el panel izquierdo. Acción del usuario: Usar la rueda del ratón o la barra de desplazamiento. Resultado: Se muestran otras tarjetas de tarea sin cambiar su configuración.",
+            "[5] Tarjeta de tarea: Selecciona una tarea para convertirla en el contexto activo de trabajo. Acción del usuario: Hacer clic sobre la tarjeta o interactuar con sus controles. Resultado: El Panel de acciones y el chat pueden mostrar información asociada a la tarea seleccionada.",
+            "[6] CONTEXTO >: Expande o contrae la información contextual vinculada a una tarea. Acción del usuario: Pulsar para mostrar u ocultar el contexto. Resultado: Permite revisar información que BIN utiliza para entender el entorno de ejecución.",
+            "[7] VER: Abre la configuración o detalle editable de la tarea. Acción del usuario: Pulsar VER en la tarjeta. Resultado: Se abre el diálogo Configuración de tarea con los valores guardados.",
+            "[8] COPIAR: Duplica la tarea para reutilizar su estructura como punto de partida. Acción del usuario: Pulsar COPIAR. Resultado: BIN crea una copia que luego puede ajustarse sin rehacer toda la rutina.",
+            "[9] CONTINUAR / PAUSAR: Controla una ejecución que puede estar activa o en pausa. En la captura aparece CONTINUAR porque la tarea está pausada. Acción del usuario: Pulsar CONTINUAR para reanudar o PAUSAR cuando el control esté en modo de pausa. Resultado: La ejecución cambia entre estado activo y pausado sin borrar la secuencia.",
+            "[10] ▶ EJECUTAR AHORA: Solicita la ejecución inmediata de la tarea seleccionada sin esperar a su siguiente horario programado. Acción del usuario: Pulsar el botón. Resultado: BIN prepara la tarea para ejecución inmediata cuando el estado y las condiciones lo permiten.",
+            "[11] RESETEAR TAREA: Reinicia el estado operativo de la tarea sin convertir el reset en una eliminación de su entrenamiento. Acción del usuario: Pulsar RESETEAR TAREA. Resultado: Se reinician estados de ejecución/progreso asociados a la tarea, conservando su configuración y acciones guardadas.",
+            "[12] ELIMINAR: Elimina una tarea guardada. Acción del usuario: Pulsar ELIMINAR y confirmar cuando BIN lo solicite. Resultado: La tarea deja de formar parte de la lista de tareas.",
+            "[13] Visor IA — clic izquierdo: El visor muestra la pantalla principal capturada por BIN y puede traducir una posición de clic a coordenadas normalizadas. Acción del usuario: Hacer clic izquierdo dentro de la imagen válida del visor. Resultado: BIN emite la posición correspondiente dentro de la imagen; las bandas vacías de escalado se ignoran.",
+            "[14] Visor IA — doble clic: Distingue un doble clic de un clic simple para evitar registrar ambos por accidente. Acción del usuario: Hacer doble clic izquierdo dentro del visor. Resultado: Se cancela el clic simple pendiente y se emite la interacción de doble clic.",
+            "[15] Visor IA — clic derecho: Permite registrar o solicitar una interacción de clic derecho desde el visor. Acción del usuario: Hacer clic derecho dentro de la imagen. Resultado: BIN emite la posición normalizada del clic derecho.",
+            "[16] Visor IA — scroll: Permite registrar o solicitar desplazamiento vertical sobre una posición del visor. Acción del usuario: Mover la rueda del ratón dentro de la imagen. Resultado: BIN emite posición y dirección/intensidad del scroll.",
+            "[17] CONFIGURACIÓN: Abre la configuración general de BIN. Acción del usuario: Pulsar el botón con el icono de engranaje. Resultado: Se abre el diálogo de configuración general del software.",
+            "[18] ▲ / control del chat: Expande o contrae el área inferior del chat con BIN. Acción del usuario: Pulsar la flecha. Resultado: El área de conversación cambia de tamaño/visibilidad sin afectar la tarea.",
+            "[19] Campo “Escribe una indicación para BIN…”: Permite escribir una consulta, instrucción o comando para el asistente de BIN. Acción del usuario: Hacer clic, escribir el mensaje y enviarlo. Resultado: El texto pasa al flujo del chat y, cuando BIN_Bot esté conectado, será interpretado por el asistente.",
+            "[20] ENVIAR: Envía al chat el texto escrito en el campo de entrada. Acción del usuario: Pulsar ENVIAR. Resultado: BIN procesa la entrada y muestra la respuesta o el registro correspondiente.",
+            "[21] ↑ de una acción: Mueve una acción una posición hacia arriba dentro de la secuencia de la tarea. Acción del usuario: Pulsar ↑ en la fila de la acción. Resultado: La acción intercambia posición con la anterior y se guardan los cambios.",
+            "[22] ↓ de una acción: Mueve una acción una posición hacia abajo dentro de la secuencia. Acción del usuario: Pulsar ↓. Resultado: La acción intercambia posición con la siguiente y se guardan los cambios.",
+            "[23] EDITAR acción: Abre la Biblioteca de comandos en modo de edición para modificar la acción existente. Acción del usuario: Pulsar EDITAR en la acción. Resultado: Se abre el editor con los datos de la acción; al guardar se conserva su posición e identificador dentro de la tarea.",
+            "[24] × acción: Elimina un paso concreto del Panel de acciones. Acción del usuario: Pulsar × y confirmar. Resultado: La acción se quita de la secuencia y BIN recalcula/actualiza el estado de la tarea.",
+            "[25] + AÑADIR ACCIÓN: Abre la Biblioteca de comandos para añadir manualmente un nuevo paso a la tarea seleccionada. Acción del usuario: Pulsar + AÑADIR ACCIÓN. Resultado: Se abre el editor de comandos de teclado/clic, ventana o texto. Nota: No permite modificar el panel si la ejecución correspondiente está activa o pausada con un run en curso.",
+            "[26] LIMPIAR PANEL DE ACCIÓN: Limpia o deselecciona el espacio de trabajo del Panel de acciones sin utilizarlo como comando para borrar las acciones persistentes de las tareas. Acción del usuario: Pulsar el botón. Resultado: El panel queda libre para continuar trabajando con otra selección."
+          ],
+          "formato": "[número] control: explicación"
+        }
+      ],
+      "interacciones": [
+        {
+          "id": "C1-01",
+          "control": "MOSTRAR RUTINA",
+          "tipo": "botón",
+          "descripcion": "Inicia el flujo de demostración para que BIN observe una rutina real y genere o complemente acciones.",
+          "accion_usuario": "Pulsar el botón para comenzar; durante una grabación el mismo flujo permite detenerla.",
+          "resultado": "BIN prepara una rutina nueva o trabaja sobre la tarea seleccionada según el contexto.",
+          "notas": "No debe utilizarse para registrar contraseñas, PIN, 2FA, passkeys o tokens.",
+          "numero": 1,
+          "referencia_visual": "1"
+        },
+        {
+          "id": "C1-02",
+          "control": "PANTALLA COMPLETA",
+          "tipo": "botón",
+          "descripcion": "Cambia la presentación de BIN para aprovechar toda la pantalla principal.",
+          "accion_usuario": "Pulsar para alternar el modo de visualización.",
+          "resultado": "La ventana principal cambia entre su presentación normal y la vista de pantalla completa.",
+          "numero": 2,
+          "referencia_visual": "2"
+        },
+        {
+          "id": "C1-03",
+          "control": "+ NUEVA",
+          "tipo": "botón",
+          "descripcion": "Crea una tarea nueva y abre su configuración inicial.",
+          "accion_usuario": "Pulsar para abrir Configuración de tarea.",
+          "resultado": "Permite definir nombre, horario, repeticiones, intervalo, limpieza de mesa y días de ejecución antes de guardar.",
+          "numero": 3,
+          "referencia_visual": "3"
+        },
+        {
+          "id": "C1-04",
+          "control": "Lista de tareas / desplazamiento",
+          "tipo": "scroll",
+          "descripcion": "Permite recorrer tareas guardadas cuando no caben simultáneamente en el panel izquierdo.",
+          "accion_usuario": "Usar la rueda del ratón o la barra de desplazamiento.",
+          "resultado": "Se muestran otras tarjetas de tarea sin cambiar su configuración.",
+          "numero": 4,
+          "referencia_visual": "4"
+        },
+        {
+          "id": "C1-05",
+          "control": "Tarjeta de tarea",
+          "tipo": "selección",
+          "descripcion": "Selecciona una tarea para convertirla en el contexto activo de trabajo.",
+          "accion_usuario": "Hacer clic sobre la tarjeta o interactuar con sus controles.",
+          "resultado": "El Panel de acciones y el chat pueden mostrar información asociada a la tarea seleccionada.",
+          "numero": 5,
+          "referencia_visual": "5"
+        },
+        {
+          "id": "C1-06",
+          "control": "CONTEXTO >",
+          "tipo": "botón desplegable",
+          "descripcion": "Expande o contrae la información contextual vinculada a una tarea.",
+          "accion_usuario": "Pulsar para mostrar u ocultar el contexto.",
+          "resultado": "Permite revisar información que BIN utiliza para entender el entorno de ejecución.",
+          "numero": 6,
+          "referencia_visual": "6"
+        },
+        {
+          "id": "C1-07",
+          "control": "VER",
+          "tipo": "botón",
+          "descripcion": "Abre la configuración o detalle editable de la tarea.",
+          "accion_usuario": "Pulsar VER en la tarjeta.",
+          "resultado": "Se abre el diálogo Configuración de tarea con los valores guardados.",
+          "numero": 7,
+          "referencia_visual": "7"
+        },
+        {
+          "id": "C1-08",
+          "control": "COPIAR",
+          "tipo": "botón",
+          "descripcion": "Duplica la tarea para reutilizar su estructura como punto de partida.",
+          "accion_usuario": "Pulsar COPIAR.",
+          "resultado": "BIN crea una copia que luego puede ajustarse sin rehacer toda la rutina.",
+          "numero": 8,
+          "referencia_visual": "8"
+        },
+        {
+          "id": "C1-09",
+          "control": "CONTINUAR / PAUSAR",
+          "tipo": "botón dinámico",
+          "descripcion": "Controla una ejecución que puede estar activa o en pausa. En la captura aparece CONTINUAR porque la tarea está pausada.",
+          "accion_usuario": "Pulsar CONTINUAR para reanudar o PAUSAR cuando el control esté en modo de pausa.",
+          "resultado": "La ejecución cambia entre estado activo y pausado sin borrar la secuencia.",
+          "numero": 9,
+          "referencia_visual": "9"
+        },
+        {
+          "id": "C1-10",
+          "control": "▶ EJECUTAR AHORA",
+          "tipo": "botón",
+          "descripcion": "Solicita la ejecución inmediata de la tarea seleccionada sin esperar a su siguiente horario programado.",
+          "accion_usuario": "Pulsar el botón.",
+          "resultado": "BIN prepara la tarea para ejecución inmediata cuando el estado y las condiciones lo permiten.",
+          "numero": 10,
+          "referencia_visual": "10"
+        },
+        {
+          "id": "C1-11",
+          "control": "RESETEAR TAREA",
+          "tipo": "botón",
+          "descripcion": "Reinicia el estado operativo de la tarea sin convertir el reset en una eliminación de su entrenamiento.",
+          "accion_usuario": "Pulsar RESETEAR TAREA.",
+          "resultado": "Se reinician estados de ejecución/progreso asociados a la tarea, conservando su configuración y acciones guardadas.",
+          "numero": 11,
+          "referencia_visual": "11"
+        },
+        {
+          "id": "C1-12",
+          "control": "ELIMINAR",
+          "tipo": "botón",
+          "descripcion": "Elimina una tarea guardada.",
+          "accion_usuario": "Pulsar ELIMINAR y confirmar cuando BIN lo solicite.",
+          "resultado": "La tarea deja de formar parte de la lista de tareas.",
+          "numero": 12,
+          "referencia_visual": "12"
+        },
+        {
+          "id": "C1-13",
+          "control": "Visor IA — clic izquierdo",
+          "tipo": "visor interactivo",
+          "descripcion": "El visor muestra la pantalla principal capturada por BIN y puede traducir una posición de clic a coordenadas normalizadas.",
+          "accion_usuario": "Hacer clic izquierdo dentro de la imagen válida del visor.",
+          "resultado": "BIN emite la posición correspondiente dentro de la imagen; las bandas vacías de escalado se ignoran.",
+          "numero": 13,
+          "referencia_visual": "13"
+        },
+        {
+          "id": "C1-14",
+          "control": "Visor IA — doble clic",
+          "tipo": "visor interactivo",
+          "descripcion": "Distingue un doble clic de un clic simple para evitar registrar ambos por accidente.",
+          "accion_usuario": "Hacer doble clic izquierdo dentro del visor.",
+          "resultado": "Se cancela el clic simple pendiente y se emite la interacción de doble clic.",
+          "numero": 14,
+          "referencia_visual": "14"
+        },
+        {
+          "id": "C1-15",
+          "control": "Visor IA — clic derecho",
+          "tipo": "visor interactivo",
+          "descripcion": "Permite registrar o solicitar una interacción de clic derecho desde el visor.",
+          "accion_usuario": "Hacer clic derecho dentro de la imagen.",
+          "resultado": "BIN emite la posición normalizada del clic derecho.",
+          "numero": 15,
+          "referencia_visual": "15"
+        },
+        {
+          "id": "C1-16",
+          "control": "Visor IA — scroll",
+          "tipo": "visor interactivo",
+          "descripcion": "Permite registrar o solicitar desplazamiento vertical sobre una posición del visor.",
+          "accion_usuario": "Mover la rueda del ratón dentro de la imagen.",
+          "resultado": "BIN emite posición y dirección/intensidad del scroll.",
+          "numero": 16,
+          "referencia_visual": "16"
+        },
+        {
+          "id": "C1-17",
+          "control": "CONFIGURACIÓN",
+          "tipo": "botón",
+          "descripcion": "Abre la configuración general de BIN.",
+          "accion_usuario": "Pulsar el botón con el icono de engranaje.",
+          "resultado": "Se abre el diálogo de configuración general del software.",
+          "numero": 17,
+          "referencia_visual": "17"
+        },
+        {
+          "id": "C1-18",
+          "control": "▲ / control del chat",
+          "tipo": "botón",
+          "descripcion": "Expande o contrae el área inferior del chat con BIN.",
+          "accion_usuario": "Pulsar la flecha.",
+          "resultado": "El área de conversación cambia de tamaño/visibilidad sin afectar la tarea.",
+          "numero": 18,
+          "referencia_visual": "18"
+        },
+        {
+          "id": "C1-19",
+          "control": "Campo “Escribe una indicación para BIN…”",
+          "tipo": "entrada de texto",
+          "descripcion": "Permite escribir una consulta, instrucción o comando para el asistente de BIN.",
+          "accion_usuario": "Hacer clic, escribir el mensaje y enviarlo.",
+          "resultado": "El texto pasa al flujo del chat y, cuando BIN_Bot esté conectado, será interpretado por el asistente.",
+          "numero": 19,
+          "referencia_visual": "19"
+        },
+        {
+          "id": "C1-20",
+          "control": "ENVIAR",
+          "tipo": "botón",
+          "descripcion": "Envía al chat el texto escrito en el campo de entrada.",
+          "accion_usuario": "Pulsar ENVIAR.",
+          "resultado": "BIN procesa la entrada y muestra la respuesta o el registro correspondiente.",
+          "numero": 20,
+          "referencia_visual": "20"
+        },
+        {
+          "id": "C1-21",
+          "control": "↑ de una acción",
+          "tipo": "botón",
+          "descripcion": "Mueve una acción una posición hacia arriba dentro de la secuencia de la tarea.",
+          "accion_usuario": "Pulsar ↑ en la fila de la acción.",
+          "resultado": "La acción intercambia posición con la anterior y se guardan los cambios.",
+          "numero": 21,
+          "referencia_visual": "21"
+        },
+        {
+          "id": "C1-22",
+          "control": "↓ de una acción",
+          "tipo": "botón",
+          "descripcion": "Mueve una acción una posición hacia abajo dentro de la secuencia.",
+          "accion_usuario": "Pulsar ↓.",
+          "resultado": "La acción intercambia posición con la siguiente y se guardan los cambios.",
+          "numero": 22,
+          "referencia_visual": "22"
+        },
+        {
+          "id": "C1-23",
+          "control": "EDITAR acción",
+          "tipo": "botón",
+          "descripcion": "Abre la Biblioteca de comandos en modo de edición para modificar la acción existente.",
+          "accion_usuario": "Pulsar EDITAR en la acción.",
+          "resultado": "Se abre el editor con los datos de la acción; al guardar se conserva su posición e identificador dentro de la tarea.",
+          "numero": 23,
+          "referencia_visual": "23"
+        },
+        {
+          "id": "C1-24",
+          "control": "× acción",
+          "tipo": "botón",
+          "descripcion": "Elimina un paso concreto del Panel de acciones.",
+          "accion_usuario": "Pulsar × y confirmar.",
+          "resultado": "La acción se quita de la secuencia y BIN recalcula/actualiza el estado de la tarea.",
+          "numero": 24,
+          "referencia_visual": "24"
+        },
+        {
+          "id": "C1-25",
+          "control": "+ AÑADIR ACCIÓN",
+          "tipo": "botón",
+          "descripcion": "Abre la Biblioteca de comandos para añadir manualmente un nuevo paso a la tarea seleccionada.",
+          "accion_usuario": "Pulsar + AÑADIR ACCIÓN.",
+          "resultado": "Se abre el editor de comandos de teclado/clic, ventana o texto.",
+          "notas": "No permite modificar el panel si la ejecución correspondiente está activa o pausada con un run en curso.",
+          "numero": 25,
+          "referencia_visual": "25"
+        },
+        {
+          "id": "C1-26",
+          "control": "LIMPIAR PANEL DE ACCIÓN",
+          "tipo": "botón",
+          "descripcion": "Limpia o deselecciona el espacio de trabajo del Panel de acciones sin utilizarlo como comando para borrar las acciones persistentes de las tareas.",
+          "accion_usuario": "Pulsar el botón.",
+          "resultado": "El panel queda libre para continuar trabajando con otra selección.",
+          "numero": 26,
+          "referencia_visual": "26"
+        }
+      ],
+      "elementos_informativos": [
+        "Indicadores TAREAS GUARDADAS, PRÓXIMA TAREA y BIN OPERATIVO/reloj son estados informativos.",
+        "CPU y RAM muestran consumo del sistema/BIN como información de estado.",
+        "CAMBIOS GUARDADOS funciona como estado visual del Panel de acciones cuando no hay cambios pendientes."
+      ],
+      "convencion_numeracion": "El número amarillo visible en la captura corresponde al campo numero de esta lista.",
+      "cantidad_interacciones_numeradas": 26
+    },
+    {
+      "id": "biblioteca_anadir_accion",
+      "titulo": "Biblioteca de comandos — Añadir acción",
+      "aliases": [
+        "biblioteca de comandos — añadir acción",
+        "captura2.png",
+        "interacciones",
+        "botones",
+        "manual de interfaz"
+      ],
+      "resumen": "Editor manual para seleccionar comandos guardados o crear acciones de teclado/clic, ventana y texto.",
+      "bloques": [
+        {
+          "tipo": "imagen",
+          "ruta": "src/Captura2_numerada.png",
+          "alt": "Biblioteca de comandos — Añadir acción — controles numerados",
+          "descripcion": "Editor manual para seleccionar comandos guardados o crear acciones de teclado/clic, ventana y texto. Los círculos amarillos numerados se explican en la lista de interacciones de esta sección."
+        },
+        {
+          "tipo": "interacciones",
+          "items": [
+            "[1] X de la ventana: Cierra el diálogo Añadir acción. Acción del usuario: Pulsar X. Resultado: El diálogo se cierra sin aceptar una nueva acción pendiente.",
+            "[2] Scroll de COMANDOS GUARDADOS: Recorre la biblioteca persistente de comandos reutilizables. Acción del usuario: Usar la rueda o la barra vertical. Resultado: Permite acceder a comandos fuera del área visible.",
+            "[3] Tarjeta de comando guardado: Selecciona un comando existente de la biblioteca para reutilizarlo. Acción del usuario: Hacer clic sobre el comando. Resultado: El comando queda como selección actual y se habilita AGREGAR ACCIÓN.",
+            "[4] ✎ editar comando guardado: Abre la edición del comando persistente seleccionado sin tener que recrearlo desde cero. Acción del usuario: Pulsar el icono de lápiz junto al comando. Resultado: BIN carga sus parámetros en el editor para modificarlos.",
+            "[5] × eliminar comando guardado: Elimina un comando de la biblioteca global. Acción del usuario: Pulsar × junto al comando y confirmar cuando corresponda. Resultado: El comando deja de aparecer en la biblioteca.",
+            "[6] AGREGAR ACCIÓN: Añade a la tarea el comando de biblioteca actualmente seleccionado. Acción del usuario: Seleccionar un comando y pulsar AGREGAR ACCIÓN. Resultado: BIN abre/continúa el flujo de configuración temporal de la acción y, al aceptar, la incorpora a la secuencia.",
+            "[7] AGREGAR COMANDO CLIC: Muestra el constructor de comandos de teclado y clic. Acción del usuario: Pulsar la pestaña. Resultado: El panel derecho cambia al editor de comando/clic.",
+            "[8] AGREGAR COMANDO VENTANA: Muestra el editor de características de ventana. Acción del usuario: Pulsar la pestaña. Resultado: El panel derecho cambia al constructor de acciones de ventana.",
+            "[9] AGREGAR TEXTO: Abre un cuadro multilínea para crear una acción que escriba texto en el campo que esté enfocado durante la ejecución. Acción del usuario: Pulsar AGREGAR TEXTO. Resultado: Se abre el popup “Agregar texto”.",
+            "[10] Nombre del comando: Define el nombre legible con el que se guardará un nuevo comando reutilizable. Acción del usuario: Escribir un nombre descriptivo. Resultado: El nombre se usa para identificar el comando dentro de la biblioteca.",
+            "[11] Veces del parámetro: Define cuántas veces se ejecuta la tecla o parámetro del bloque actual. Acción del usuario: Aumentar o disminuir el valor. Resultado: Permite crear secuencias como Tab repetido varias veces.",
+            "[12] Selector de tecla/parámetro: Selecciona la tecla o componente del comando de teclado. Acción del usuario: Abrir la lista y elegir la tecla deseada. Resultado: El parámetro pasa a formar parte de la secuencia del comando.",
+            "[13] × del parámetro: Elimina un parámetro del comando que se está construyendo. Acción del usuario: Pulsar × dentro de la tarjeta de parámetro. Resultado: Ese parámetro se retira de la secuencia antes de guardar.",
+            "[14] + AGREGAR NUEVO PARÁMETRO: Añade otro bloque de tecla/repetición al comando de teclado. Acción del usuario: Pulsar el botón. Resultado: Aparece un nuevo parámetro configurable para construir combinaciones o secuencias más largas.",
+            "[15] CREAR COMANDO: Guarda el comando de teclado construido como elemento reutilizable de la biblioteca. Acción del usuario: Completar nombre/parámetros y pulsar CREAR COMANDO. Resultado: El nuevo comando queda disponible en COMANDOS GUARDADOS.",
+            "[16] Nombre de la acción de clic: Asigna una etiqueta legible al clic manual que se añadirá a una tarea. Acción del usuario: Escribir un nombre como “Seleccionar botón Publicar”. Resultado: La acción puede identificarse con mayor claridad en el Panel de acciones.",
+            "[17] Botón de ratón: Define si el clic utiliza botón izquierdo o derecho. Acción del usuario: Abrir el selector y elegir el botón. Resultado: La acción guarda el tipo de botón elegido.",
+            "[18] Veces del clic: Define si la interacción equivale a un clic normal o a dos pulsaciones/doble clic. Acción del usuario: Establecer 1 o 2. Resultado: BIN guarda la cantidad de clics que deberá reproducir.",
+            "[19] Coordenada X: Define manualmente la posición horizontal del clic en pantalla. Acción del usuario: Escribir o ajustar X. Resultado: La acción utilizará esa coordenada cuando se ejecute.",
+            "[20] Coordenada Y: Define manualmente la posición vertical del clic. Acción del usuario: Escribir o ajustar Y. Resultado: La acción utilizará esa coordenada cuando se ejecute.",
+            "[21] SIMULAR CLIC / CAPTURAR COORDENADAS: Permite obtener X/Y haciendo un clic real en la posición deseada. El diálogo se aparta temporalmente para no estorbar. Acción del usuario: Pulsar el botón y luego hacer un clic izquierdo en la posición de pantalla que se quiere capturar. Resultado: BIN captura las coordenadas, suprime ese clic de selección y restaura el editor con X/Y rellenadas.",
+            "[22] AGREGAR CLIC: Selecciona la configuración de clic actual para usarla como acción de la tarea. Acción del usuario: Completar los campos y pulsar AGREGAR CLIC. Resultado: BIN pasa al flujo de tiempo de la acción para definir esperas antes/después y luego añadirla.",
+            "[23] CANCELAR: Cierra el constructor sin crear el comando/clic pendiente. Acción del usuario: Pulsar CANCELAR. Resultado: Se descarta la selección no aceptada."
+          ],
+          "formato": "[número] control: explicación"
+        }
+      ],
+      "interacciones": [
+        {
+          "id": "C2-01",
+          "control": "X de la ventana",
+          "tipo": "control de ventana",
+          "descripcion": "Cierra el diálogo Añadir acción.",
+          "accion_usuario": "Pulsar X.",
+          "resultado": "El diálogo se cierra sin aceptar una nueva acción pendiente.",
+          "numero": 1,
+          "referencia_visual": "1"
+        },
+        {
+          "id": "C2-02",
+          "control": "Scroll de COMANDOS GUARDADOS",
+          "tipo": "scroll",
+          "descripcion": "Recorre la biblioteca persistente de comandos reutilizables.",
+          "accion_usuario": "Usar la rueda o la barra vertical.",
+          "resultado": "Permite acceder a comandos fuera del área visible.",
+          "numero": 2,
+          "referencia_visual": "2"
+        },
+        {
+          "id": "C2-03",
+          "control": "Tarjeta de comando guardado",
+          "tipo": "selección",
+          "descripcion": "Selecciona un comando existente de la biblioteca para reutilizarlo.",
+          "accion_usuario": "Hacer clic sobre el comando.",
+          "resultado": "El comando queda como selección actual y se habilita AGREGAR ACCIÓN.",
+          "numero": 3,
+          "referencia_visual": "3"
+        },
+        {
+          "id": "C2-04",
+          "control": "✎ editar comando guardado",
+          "tipo": "botón",
+          "descripcion": "Abre la edición del comando persistente seleccionado sin tener que recrearlo desde cero.",
+          "accion_usuario": "Pulsar el icono de lápiz junto al comando.",
+          "resultado": "BIN carga sus parámetros en el editor para modificarlos.",
+          "numero": 4,
+          "referencia_visual": "4"
+        },
+        {
+          "id": "C2-05",
+          "control": "× eliminar comando guardado",
+          "tipo": "botón",
+          "descripcion": "Elimina un comando de la biblioteca global.",
+          "accion_usuario": "Pulsar × junto al comando y confirmar cuando corresponda.",
+          "resultado": "El comando deja de aparecer en la biblioteca.",
+          "numero": 5,
+          "referencia_visual": "5"
+        },
+        {
+          "id": "C2-06",
+          "control": "AGREGAR ACCIÓN",
+          "tipo": "botón",
+          "descripcion": "Añade a la tarea el comando de biblioteca actualmente seleccionado.",
+          "accion_usuario": "Seleccionar un comando y pulsar AGREGAR ACCIÓN.",
+          "resultado": "BIN abre/continúa el flujo de configuración temporal de la acción y, al aceptar, la incorpora a la secuencia.",
+          "numero": 6,
+          "referencia_visual": "6"
+        },
+        {
+          "id": "C2-07",
+          "control": "AGREGAR COMANDO CLIC",
+          "tipo": "pestaña/botón",
+          "descripcion": "Muestra el constructor de comandos de teclado y clic.",
+          "accion_usuario": "Pulsar la pestaña.",
+          "resultado": "El panel derecho cambia al editor de comando/clic.",
+          "numero": 7,
+          "referencia_visual": "7"
+        },
+        {
+          "id": "C2-08",
+          "control": "AGREGAR COMANDO VENTANA",
+          "tipo": "pestaña/botón",
+          "descripcion": "Muestra el editor de características de ventana.",
+          "accion_usuario": "Pulsar la pestaña.",
+          "resultado": "El panel derecho cambia al constructor de acciones de ventana.",
+          "numero": 8,
+          "referencia_visual": "8"
+        },
+        {
+          "id": "C2-09",
+          "control": "AGREGAR TEXTO",
+          "tipo": "botón",
+          "descripcion": "Abre un cuadro multilínea para crear una acción que escriba texto en el campo que esté enfocado durante la ejecución.",
+          "accion_usuario": "Pulsar AGREGAR TEXTO.",
+          "resultado": "Se abre el popup “Agregar texto”.",
+          "numero": 9,
+          "referencia_visual": "9"
+        },
+        {
+          "id": "C2-10",
+          "control": "Nombre del comando",
+          "tipo": "entrada de texto",
+          "descripcion": "Define el nombre legible con el que se guardará un nuevo comando reutilizable.",
+          "accion_usuario": "Escribir un nombre descriptivo.",
+          "resultado": "El nombre se usa para identificar el comando dentro de la biblioteca.",
+          "numero": 10,
+          "referencia_visual": "10"
+        },
+        {
+          "id": "C2-11",
+          "control": "Veces del parámetro",
+          "tipo": "selector numérico",
+          "descripcion": "Define cuántas veces se ejecuta la tecla o parámetro del bloque actual.",
+          "accion_usuario": "Aumentar o disminuir el valor.",
+          "resultado": "Permite crear secuencias como Tab repetido varias veces.",
+          "numero": 11,
+          "referencia_visual": "11"
+        },
+        {
+          "id": "C2-12",
+          "control": "Selector de tecla/parámetro",
+          "tipo": "lista desplegable",
+          "descripcion": "Selecciona la tecla o componente del comando de teclado.",
+          "accion_usuario": "Abrir la lista y elegir la tecla deseada.",
+          "resultado": "El parámetro pasa a formar parte de la secuencia del comando.",
+          "numero": 12,
+          "referencia_visual": "12"
+        },
+        {
+          "id": "C2-13",
+          "control": "× del parámetro",
+          "tipo": "botón",
+          "descripcion": "Elimina un parámetro del comando que se está construyendo.",
+          "accion_usuario": "Pulsar × dentro de la tarjeta de parámetro.",
+          "resultado": "Ese parámetro se retira de la secuencia antes de guardar.",
+          "numero": 13,
+          "referencia_visual": "13"
+        },
+        {
+          "id": "C2-14",
+          "control": "+ AGREGAR NUEVO PARÁMETRO",
+          "tipo": "botón",
+          "descripcion": "Añade otro bloque de tecla/repetición al comando de teclado.",
+          "accion_usuario": "Pulsar el botón.",
+          "resultado": "Aparece un nuevo parámetro configurable para construir combinaciones o secuencias más largas.",
+          "numero": 14,
+          "referencia_visual": "14"
+        },
+        {
+          "id": "C2-15",
+          "control": "CREAR COMANDO",
+          "tipo": "botón",
+          "descripcion": "Guarda el comando de teclado construido como elemento reutilizable de la biblioteca.",
+          "accion_usuario": "Completar nombre/parámetros y pulsar CREAR COMANDO.",
+          "resultado": "El nuevo comando queda disponible en COMANDOS GUARDADOS.",
+          "numero": 15,
+          "referencia_visual": "15"
+        },
+        {
+          "id": "C2-16",
+          "control": "Nombre de la acción de clic",
+          "tipo": "entrada de texto",
+          "descripcion": "Asigna una etiqueta legible al clic manual que se añadirá a una tarea.",
+          "accion_usuario": "Escribir un nombre como “Seleccionar botón Publicar”.",
+          "resultado": "La acción puede identificarse con mayor claridad en el Panel de acciones.",
+          "numero": 16,
+          "referencia_visual": "16"
+        },
+        {
+          "id": "C2-17",
+          "control": "Botón de ratón",
+          "tipo": "lista desplegable",
+          "descripcion": "Define si el clic utiliza botón izquierdo o derecho.",
+          "accion_usuario": "Abrir el selector y elegir el botón.",
+          "resultado": "La acción guarda el tipo de botón elegido.",
+          "numero": 17,
+          "referencia_visual": "17"
+        },
+        {
+          "id": "C2-18",
+          "control": "Veces del clic",
+          "tipo": "selector numérico",
+          "descripcion": "Define si la interacción equivale a un clic normal o a dos pulsaciones/doble clic.",
+          "accion_usuario": "Establecer 1 o 2.",
+          "resultado": "BIN guarda la cantidad de clics que deberá reproducir.",
+          "numero": 18,
+          "referencia_visual": "18"
+        },
+        {
+          "id": "C2-19",
+          "control": "Coordenada X",
+          "tipo": "selector numérico",
+          "descripcion": "Define manualmente la posición horizontal del clic en pantalla.",
+          "accion_usuario": "Escribir o ajustar X.",
+          "resultado": "La acción utilizará esa coordenada cuando se ejecute.",
+          "numero": 19,
+          "referencia_visual": "19"
+        },
+        {
+          "id": "C2-20",
+          "control": "Coordenada Y",
+          "tipo": "selector numérico",
+          "descripcion": "Define manualmente la posición vertical del clic.",
+          "accion_usuario": "Escribir o ajustar Y.",
+          "resultado": "La acción utilizará esa coordenada cuando se ejecute.",
+          "numero": 20,
+          "referencia_visual": "20"
+        },
+        {
+          "id": "C2-21",
+          "control": "SIMULAR CLIC / CAPTURAR COORDENADAS",
+          "tipo": "botón",
+          "descripcion": "Permite obtener X/Y haciendo un clic real en la posición deseada. El diálogo se aparta temporalmente para no estorbar.",
+          "accion_usuario": "Pulsar el botón y luego hacer un clic izquierdo en la posición de pantalla que se quiere capturar.",
+          "resultado": "BIN captura las coordenadas, suprime ese clic de selección y restaura el editor con X/Y rellenadas.",
+          "numero": 21,
+          "referencia_visual": "21"
+        },
+        {
+          "id": "C2-22",
+          "control": "AGREGAR CLIC",
+          "tipo": "botón",
+          "descripcion": "Selecciona la configuración de clic actual para usarla como acción de la tarea.",
+          "accion_usuario": "Completar los campos y pulsar AGREGAR CLIC.",
+          "resultado": "BIN pasa al flujo de tiempo de la acción para definir esperas antes/después y luego añadirla.",
+          "numero": 22,
+          "referencia_visual": "22"
+        },
+        {
+          "id": "C2-23",
+          "control": "CANCELAR",
+          "tipo": "botón",
+          "descripcion": "Cierra el constructor sin crear el comando/clic pendiente.",
+          "accion_usuario": "Pulsar CANCELAR.",
+          "resultado": "Se descarta la selección no aceptada.",
+          "numero": 23,
+          "referencia_visual": "23"
+        }
+      ],
+      "elementos_informativos": [],
+      "convencion_numeracion": "El número amarillo visible en la captura corresponde al campo numero de esta lista.",
+      "cantidad_interacciones_numeradas": 23
+    },
+    {
+      "id": "configuracion_tarea",
+      "titulo": "Configuración de tarea",
+      "aliases": [
+        "configuración de tarea",
+        "captura3.png",
+        "interacciones",
+        "botones",
+        "manual de interfaz"
+      ],
+      "resumen": "Diálogo para definir cuándo y cómo entra una tarea en la cola de ejecución de BIN.",
+      "bloques": [
+        {
+          "tipo": "imagen",
+          "ruta": "src/Captura3_numerada.png",
+          "alt": "Configuración de tarea — controles numerados",
+          "descripcion": "Diálogo para definir cuándo y cómo entra una tarea en la cola de ejecución de BIN. Los círculos amarillos numerados se explican en la lista de interacciones de esta sección."
+        },
+        {
+          "tipo": "interacciones",
+          "items": [
+            "[1] X de la ventana: Cierra Configuración de tarea. Acción del usuario: Pulsar X. Resultado: El diálogo se cierra sin confirmar cambios nuevos.",
+            "[2] Nombre: Define el nombre con el que la tarea aparecerá en la Lista de tareas y en el Panel de acciones. Acción del usuario: Escribir o editar el nombre. Resultado: El valor se guarda al pulsar GUARDAR.",
+            "[3] Hora: Selecciona la hora de inicio programada de la tarea. Acción del usuario: Abrir o desplazar el selector de hora hasta el valor deseado. Resultado: La tarea utiliza esa hora como referencia de programación.",
+            "[4] Minuto: Selecciona los minutos de la hora de inicio. Acción del usuario: Abrir o desplazar el selector de minutos. Resultado: Completa la hora HH:MM de la tarea.",
+            "[5] Veces por ejecución: Indica cuántas repeticiones debe realizar la tarea dentro de una ejecución programada. Acción del usuario: Ajustar el número de repeticiones. Resultado: BIN guarda la cantidad para el ciclo de ejecución.",
+            "[6] Cada — valor: Define el valor del intervalo entre ejecuciones o repeticiones, combinado con la unidad seleccionada. Acción del usuario: Ajustar el número. Resultado: BIN combina este valor con minutos, horas o días.",
+            "[7] Cada — unidad: Define si el intervalo “Cada” se interpreta en minutos, horas o días. Acción del usuario: Elegir la unidad. Resultado: BIN interpreta la periodicidad usando la unidad seleccionada.",
+            "[8] Duración estimada: Muestra la duración estimada de la tarea según su secuencia y tiempos configurados. No es un valor que el usuario necesite editar manualmente. Acción del usuario: Consultar el valor mostrado. Resultado: Ayuda a anticipar cuánto puede durar la tarea y a comprender posibles solapamientos de horario.",
+            "[9] Limpieza de mesa: Controla si BIN debe organizar o limpiar el entorno de trabajo antes y/o después de ejecutar la tarea. Acción del usuario: Elegir Ninguna, Antes, Después o Antes y después. Resultado: La tarea conserva el modo seleccionado para preparar y/o cerrar su bloque de trabajo. Nota: Si una aplicación solicita guardar o descartar un documento, esa decisión debe formar parte de la propia rutina; BIN no debe inventar la respuesta.",
+            "[10] Día L: Activa o desactiva la ejecución los lunes. Acción del usuario: Marcar o desmarcar L. Resultado: El lunes queda incluido o excluido de los días programados.",
+            "[11] Día M: Activa o desactiva la ejecución los martes. Acción del usuario: Marcar o desmarcar M. Resultado: El martes queda incluido o excluido.",
+            "[12] Día X: Activa o desactiva la ejecución los miércoles. Acción del usuario: Marcar o desmarcar X. Resultado: El miércoles queda incluido o excluido.",
+            "[13] Día J: Activa o desactiva la ejecución los jueves. Acción del usuario: Marcar o desmarcar J. Resultado: El jueves queda incluido o excluido.",
+            "[14] Día V: Activa o desactiva la ejecución los viernes. Acción del usuario: Marcar o desmarcar V. Resultado: El viernes queda incluido o excluido.",
+            "[15] Día S: Activa o desactiva la ejecución los sábados. Acción del usuario: Marcar o desmarcar S. Resultado: El sábado queda incluido o excluido.",
+            "[16] Día D: Activa o desactiva la ejecución los domingos. Acción del usuario: Marcar o desmarcar D. Resultado: El domingo queda incluido o excluido.",
+            "[17] GUARDAR: Valida y guarda la configuración de la tarea. Acción del usuario: Pulsar GUARDAR. Resultado: BIN comprueba la configuración y posibles solapamientos de horario antes de aceptar.",
+            "[18] CANCELAR: Cierra el diálogo sin aceptar los cambios pendientes. Acción del usuario: Pulsar CANCELAR. Resultado: Se descartan las modificaciones no guardadas."
+          ],
+          "formato": "[número] control: explicación"
+        }
+      ],
+      "interacciones": [
+        {
+          "numero": 1,
+          "id": "C3-01",
+          "control": "X de la ventana",
+          "tipo": "control de ventana",
+          "descripcion": "Cierra Configuración de tarea.",
+          "accion_usuario": "Pulsar X.",
+          "resultado": "El diálogo se cierra sin confirmar cambios nuevos."
+        },
+        {
+          "numero": 2,
+          "id": "C3-02",
+          "control": "Nombre",
+          "tipo": "entrada de texto",
+          "descripcion": "Define el nombre con el que la tarea aparecerá en la Lista de tareas y en el Panel de acciones.",
+          "accion_usuario": "Escribir o editar el nombre.",
+          "resultado": "El valor se guarda al pulsar GUARDAR."
+        },
+        {
+          "numero": 3,
+          "id": "C3-03",
+          "control": "Hora",
+          "tipo": "selector de hora",
+          "descripcion": "Selecciona la hora de inicio programada de la tarea.",
+          "accion_usuario": "Abrir o desplazar el selector de hora hasta el valor deseado.",
+          "resultado": "La tarea utiliza esa hora como referencia de programación."
+        },
+        {
+          "numero": 4,
+          "id": "C3-04",
+          "control": "Minuto",
+          "tipo": "selector de minuto",
+          "descripcion": "Selecciona los minutos de la hora de inicio.",
+          "accion_usuario": "Abrir o desplazar el selector de minutos.",
+          "resultado": "Completa la hora HH:MM de la tarea."
+        },
+        {
+          "numero": 5,
+          "id": "C3-05",
+          "control": "Veces por ejecución",
+          "tipo": "selector numérico",
+          "descripcion": "Indica cuántas repeticiones debe realizar la tarea dentro de una ejecución programada.",
+          "accion_usuario": "Ajustar el número de repeticiones.",
+          "resultado": "BIN guarda la cantidad para el ciclo de ejecución."
+        },
+        {
+          "numero": 6,
+          "id": "C3-06",
+          "control": "Cada — valor",
+          "tipo": "selector numérico",
+          "descripcion": "Define el valor del intervalo entre ejecuciones o repeticiones, combinado con la unidad seleccionada.",
+          "accion_usuario": "Ajustar el número.",
+          "resultado": "BIN combina este valor con minutos, horas o días."
+        },
+        {
+          "numero": 7,
+          "id": "C3-07",
+          "control": "Cada — unidad",
+          "tipo": "selector",
+          "descripcion": "Define si el intervalo “Cada” se interpreta en minutos, horas o días.",
+          "accion_usuario": "Elegir la unidad.",
+          "resultado": "BIN interpreta la periodicidad usando la unidad seleccionada."
+        },
+        {
+          "numero": 8,
+          "id": "C3-08",
+          "control": "Duración estimada",
+          "tipo": "indicador informativo",
+          "descripcion": "Muestra la duración estimada de la tarea según su secuencia y tiempos configurados. No es un valor que el usuario necesite editar manualmente.",
+          "accion_usuario": "Consultar el valor mostrado.",
+          "resultado": "Ayuda a anticipar cuánto puede durar la tarea y a comprender posibles solapamientos de horario."
+        },
+        {
+          "numero": 9,
+          "id": "C3-09",
+          "control": "Limpieza de mesa",
+          "tipo": "selector",
+          "descripcion": "Controla si BIN debe organizar o limpiar el entorno de trabajo antes y/o después de ejecutar la tarea.",
+          "accion_usuario": "Elegir Ninguna, Antes, Después o Antes y después.",
+          "resultado": "La tarea conserva el modo seleccionado para preparar y/o cerrar su bloque de trabajo.",
+          "notas": "Si una aplicación solicita guardar o descartar un documento, esa decisión debe formar parte de la propia rutina; BIN no debe inventar la respuesta."
+        },
+        {
+          "numero": 10,
+          "id": "C3-10",
+          "control": "Día L",
+          "tipo": "checkbox",
+          "descripcion": "Activa o desactiva la ejecución los lunes.",
+          "accion_usuario": "Marcar o desmarcar L.",
+          "resultado": "El lunes queda incluido o excluido de los días programados."
+        },
+        {
+          "numero": 11,
+          "id": "C3-11",
+          "control": "Día M",
+          "tipo": "checkbox",
+          "descripcion": "Activa o desactiva la ejecución los martes.",
+          "accion_usuario": "Marcar o desmarcar M.",
+          "resultado": "El martes queda incluido o excluido."
+        },
+        {
+          "numero": 12,
+          "id": "C3-12",
+          "control": "Día X",
+          "tipo": "checkbox",
+          "descripcion": "Activa o desactiva la ejecución los miércoles.",
+          "accion_usuario": "Marcar o desmarcar X.",
+          "resultado": "El miércoles queda incluido o excluido."
+        },
+        {
+          "numero": 13,
+          "id": "C3-13",
+          "control": "Día J",
+          "tipo": "checkbox",
+          "descripcion": "Activa o desactiva la ejecución los jueves.",
+          "accion_usuario": "Marcar o desmarcar J.",
+          "resultado": "El jueves queda incluido o excluido."
+        },
+        {
+          "numero": 14,
+          "id": "C3-14",
+          "control": "Día V",
+          "tipo": "checkbox",
+          "descripcion": "Activa o desactiva la ejecución los viernes.",
+          "accion_usuario": "Marcar o desmarcar V.",
+          "resultado": "El viernes queda incluido o excluido."
+        },
+        {
+          "numero": 15,
+          "id": "C3-15",
+          "control": "Día S",
+          "tipo": "checkbox",
+          "descripcion": "Activa o desactiva la ejecución los sábados.",
+          "accion_usuario": "Marcar o desmarcar S.",
+          "resultado": "El sábado queda incluido o excluido."
+        },
+        {
+          "numero": 16,
+          "id": "C3-16",
+          "control": "Día D",
+          "tipo": "checkbox",
+          "descripcion": "Activa o desactiva la ejecución los domingos.",
+          "accion_usuario": "Marcar o desmarcar D.",
+          "resultado": "El domingo queda incluido o excluido."
+        },
+        {
+          "numero": 17,
+          "id": "C3-17",
+          "control": "GUARDAR",
+          "tipo": "botón",
+          "descripcion": "Valida y guarda la configuración de la tarea.",
+          "accion_usuario": "Pulsar GUARDAR.",
+          "resultado": "BIN comprueba la configuración y posibles solapamientos de horario antes de aceptar."
+        },
+        {
+          "numero": 18,
+          "id": "C3-18",
+          "control": "CANCELAR",
+          "tipo": "botón",
+          "descripcion": "Cierra el diálogo sin aceptar los cambios pendientes.",
+          "accion_usuario": "Pulsar CANCELAR.",
+          "resultado": "Se descartan las modificaciones no guardadas."
+        }
+      ],
+      "elementos_informativos": [
+        "Duración estimada es un campo de solo lectura: BIN la calcula y el usuario puede verla, pero no modificarla.",
+        "El aviso inferior recuerda que BIN comprobará automáticamente los solapamientos de horario antes de guardar."
+      ],
+      "convencion_numeracion": "El número amarillo visible en la captura corresponde al campo numero de esta lista.",
+      "cantidad_interacciones_numeradas": 18
+    },
+    {
+      "id": "editar_accion_clic",
+      "titulo": "Biblioteca de comandos — Editar acción de clic",
+      "aliases": [
+        "biblioteca de comandos — editar acción de clic",
+        "captura4.png",
+        "interacciones",
+        "botones",
+        "manual de interfaz"
+      ],
+      "resumen": "Modo de edición de una acción existente de clic/teclado.",
+      "bloques": [
+        {
+          "tipo": "imagen",
+          "ruta": "src/Captura4_numerada.png",
+          "alt": "Biblioteca de comandos — Editar acción de clic — controles numerados",
+          "descripcion": "Modo de edición de una acción existente de clic/teclado. Los círculos amarillos numerados se explican en la lista de interacciones de esta sección."
+        },
+        {
+          "tipo": "interacciones",
+          "items": [
+            "[1] X de la ventana: Cierra el editor de la acción actual. Acción del usuario: Pulsar X. Resultado: Se abandona la edición pendiente.",
+            "[2] Scroll de COMANDOS GUARDADOS: Recorre la biblioteca mientras se está editando una acción. Acción del usuario: Usar rueda/barra vertical. Resultado: Permite elegir otro comando si se desea sustituir la acción.",
+            "[3] Tarjeta de comando guardado: Selecciona un comando existente como posible reemplazo de la acción actual. Acción del usuario: Hacer clic sobre un comando. Resultado: El comando queda preparado para usarlo como nueva configuración de la acción.",
+            "[4] ✎ editar comando guardado: Modifica el comando persistente de la biblioteca. Acción del usuario: Pulsar ✎. Resultado: Se cargan sus datos para edición.",
+            "[5] × eliminar comando guardado: Elimina un comando guardado de la biblioteca. Acción del usuario: Pulsar × y confirmar. Resultado: El comando desaparece de la biblioteca.",
+            "[6] AGREGAR COMANDO CLIC: Muestra la edición de teclado/clic. Acción del usuario: Pulsar la pestaña. Resultado: Se muestra el constructor correspondiente.",
+            "[7] AGREGAR COMANDO VENTANA: Permite cambiar la acción editada a una acción de ventana. Acción del usuario: Pulsar la pestaña. Resultado: Se muestra el editor de características de ventana.",
+            "[8] AGREGAR TEXTO: Permite reemplazar/convertir la acción en una acción de texto manual. Acción del usuario: Pulsar AGREGAR TEXTO. Resultado: Se abre el popup multilínea.",
+            "[9] Nombre del comando: Edita el nombre del comando nuevo que pudiera guardarse en la biblioteca. Acción del usuario: Escribir el nombre. Resultado: El nuevo comando reutilizable usará ese nombre.",
+            "[10] Veces del parámetro: Edita la cantidad de pulsaciones del parámetro de teclado. Acción del usuario: Ajustar el valor. Resultado: La secuencia refleja la nueva repetición.",
+            "[11] Selector de tecla: Cambia la tecla del parámetro. Acción del usuario: Elegir otra tecla. Resultado: El parámetro se actualiza.",
+            "[12] × del parámetro: Retira el parámetro actual. Acción del usuario: Pulsar ×. Resultado: El parámetro sale de la secuencia.",
+            "[13] + AGREGAR NUEVO PARÁMETRO: Añade otro parámetro al comando de teclado. Acción del usuario: Pulsar el botón. Resultado: Aparece un nuevo bloque configurable.",
+            "[14] CREAR COMANDO: Guarda un nuevo comando de teclado reutilizable en la biblioteca. Acción del usuario: Pulsar tras completar nombre y parámetros. Resultado: El comando se añade a la biblioteca global.",
+            "[15] Nombre de la acción: Edita la etiqueta de la acción de clic existente. Acción del usuario: Modificar el texto. Resultado: La acción mostrará el nuevo nombre al guardar.",
+            "[16] Botón: Cambia el botón de ratón que usará la acción. Acción del usuario: Elegir Izquierdo o Derecho. Resultado: La acción guarda el nuevo botón.",
+            "[17] Veces: Cambia la cantidad de clics. Acción del usuario: Ajustar 1 o 2. Resultado: La acción se ejecutará como clic simple o doble según el valor.",
+            "[18] X: Modifica la coordenada horizontal del clic existente. Acción del usuario: Editar X. Resultado: La nueva posición se usa al guardar.",
+            "[19] Y: Modifica la coordenada vertical. Acción del usuario: Editar Y. Resultado: La nueva posición se usa al guardar.",
+            "[20] SIMULAR CLIC / CAPTURAR COORDENADAS: Vuelve a capturar visualmente la posición del clic. Acción del usuario: Pulsar y luego hacer clic izquierdo en la ubicación deseada. Resultado: BIN actualiza X/Y con la nueva posición capturada.",
+            "[21] AGREGAR CLIC: Selecciona la configuración de clic mostrada como contenido actualizado de la acción. Acción del usuario: Pulsar AGREGAR CLIC. Resultado: El editor prepara esa configuración para el guardado/tiempos.",
+            "[22] GUARDAR CAMBIOS: Confirma la modificación de la acción existente. Acción del usuario: Pulsar GUARDAR CAMBIOS. Resultado: La acción se reemplaza conservando su posición e identificador dentro de la tarea.",
+            "[23] CANCELAR: Abandona la edición sin aceptar los cambios pendientes. Acción del usuario: Pulsar CANCELAR. Resultado: La acción original permanece sin los cambios no guardados."
+          ],
+          "formato": "[número] control: explicación"
+        }
+      ],
+      "interacciones": [
+        {
+          "id": "C4-01",
+          "control": "X de la ventana",
+          "tipo": "control de ventana",
+          "descripcion": "Cierra el editor de la acción actual.",
+          "accion_usuario": "Pulsar X.",
+          "resultado": "Se abandona la edición pendiente.",
+          "numero": 1,
+          "referencia_visual": "1"
+        },
+        {
+          "id": "C4-02",
+          "control": "Scroll de COMANDOS GUARDADOS",
+          "tipo": "scroll",
+          "descripcion": "Recorre la biblioteca mientras se está editando una acción.",
+          "accion_usuario": "Usar rueda/barra vertical.",
+          "resultado": "Permite elegir otro comando si se desea sustituir la acción.",
+          "numero": 2,
+          "referencia_visual": "2"
+        },
+        {
+          "id": "C4-03",
+          "control": "Tarjeta de comando guardado",
+          "tipo": "selección",
+          "descripcion": "Selecciona un comando existente como posible reemplazo de la acción actual.",
+          "accion_usuario": "Hacer clic sobre un comando.",
+          "resultado": "El comando queda preparado para usarlo como nueva configuración de la acción.",
+          "numero": 3,
+          "referencia_visual": "3"
+        },
+        {
+          "id": "C4-04",
+          "control": "✎ editar comando guardado",
+          "tipo": "botón",
+          "descripcion": "Modifica el comando persistente de la biblioteca.",
+          "accion_usuario": "Pulsar ✎.",
+          "resultado": "Se cargan sus datos para edición.",
+          "numero": 4,
+          "referencia_visual": "4"
+        },
+        {
+          "id": "C4-05",
+          "control": "× eliminar comando guardado",
+          "tipo": "botón",
+          "descripcion": "Elimina un comando guardado de la biblioteca.",
+          "accion_usuario": "Pulsar × y confirmar.",
+          "resultado": "El comando desaparece de la biblioteca.",
+          "numero": 5,
+          "referencia_visual": "5"
+        },
+        {
+          "id": "C4-06",
+          "control": "AGREGAR COMANDO CLIC",
+          "tipo": "pestaña/botón",
+          "descripcion": "Muestra la edición de teclado/clic.",
+          "accion_usuario": "Pulsar la pestaña.",
+          "resultado": "Se muestra el constructor correspondiente.",
+          "numero": 6,
+          "referencia_visual": "6"
+        },
+        {
+          "id": "C4-07",
+          "control": "AGREGAR COMANDO VENTANA",
+          "tipo": "pestaña/botón",
+          "descripcion": "Permite cambiar la acción editada a una acción de ventana.",
+          "accion_usuario": "Pulsar la pestaña.",
+          "resultado": "Se muestra el editor de características de ventana.",
+          "numero": 7,
+          "referencia_visual": "7"
+        },
+        {
+          "id": "C4-08",
+          "control": "AGREGAR TEXTO",
+          "tipo": "botón",
+          "descripcion": "Permite reemplazar/convertir la acción en una acción de texto manual.",
+          "accion_usuario": "Pulsar AGREGAR TEXTO.",
+          "resultado": "Se abre el popup multilínea.",
+          "numero": 8,
+          "referencia_visual": "8"
+        },
+        {
+          "id": "C4-09",
+          "control": "Nombre del comando",
+          "tipo": "entrada de texto",
+          "descripcion": "Edita el nombre del comando nuevo que pudiera guardarse en la biblioteca.",
+          "accion_usuario": "Escribir el nombre.",
+          "resultado": "El nuevo comando reutilizable usará ese nombre.",
+          "numero": 9,
+          "referencia_visual": "9"
+        },
+        {
+          "id": "C4-10",
+          "control": "Veces del parámetro",
+          "tipo": "selector numérico",
+          "descripcion": "Edita la cantidad de pulsaciones del parámetro de teclado.",
+          "accion_usuario": "Ajustar el valor.",
+          "resultado": "La secuencia refleja la nueva repetición.",
+          "numero": 10,
+          "referencia_visual": "10"
+        },
+        {
+          "id": "C4-11",
+          "control": "Selector de tecla",
+          "tipo": "lista desplegable",
+          "descripcion": "Cambia la tecla del parámetro.",
+          "accion_usuario": "Elegir otra tecla.",
+          "resultado": "El parámetro se actualiza.",
+          "numero": 11,
+          "referencia_visual": "11"
+        },
+        {
+          "id": "C4-12",
+          "control": "× del parámetro",
+          "tipo": "botón",
+          "descripcion": "Retira el parámetro actual.",
+          "accion_usuario": "Pulsar ×.",
+          "resultado": "El parámetro sale de la secuencia.",
+          "numero": 12,
+          "referencia_visual": "12"
+        },
+        {
+          "id": "C4-13",
+          "control": "+ AGREGAR NUEVO PARÁMETRO",
+          "tipo": "botón",
+          "descripcion": "Añade otro parámetro al comando de teclado.",
+          "accion_usuario": "Pulsar el botón.",
+          "resultado": "Aparece un nuevo bloque configurable.",
+          "numero": 13,
+          "referencia_visual": "13"
+        },
+        {
+          "id": "C4-14",
+          "control": "CREAR COMANDO",
+          "tipo": "botón",
+          "descripcion": "Guarda un nuevo comando de teclado reutilizable en la biblioteca.",
+          "accion_usuario": "Pulsar tras completar nombre y parámetros.",
+          "resultado": "El comando se añade a la biblioteca global.",
+          "numero": 14,
+          "referencia_visual": "14"
+        },
+        {
+          "id": "C4-15",
+          "control": "Nombre de la acción",
+          "tipo": "entrada de texto",
+          "descripcion": "Edita la etiqueta de la acción de clic existente.",
+          "accion_usuario": "Modificar el texto.",
+          "resultado": "La acción mostrará el nuevo nombre al guardar.",
+          "numero": 15,
+          "referencia_visual": "15"
+        },
+        {
+          "id": "C4-16",
+          "control": "Botón",
+          "tipo": "lista desplegable",
+          "descripcion": "Cambia el botón de ratón que usará la acción.",
+          "accion_usuario": "Elegir Izquierdo o Derecho.",
+          "resultado": "La acción guarda el nuevo botón.",
+          "numero": 16,
+          "referencia_visual": "16"
+        },
+        {
+          "id": "C4-17",
+          "control": "Veces",
+          "tipo": "selector numérico",
+          "descripcion": "Cambia la cantidad de clics.",
+          "accion_usuario": "Ajustar 1 o 2.",
+          "resultado": "La acción se ejecutará como clic simple o doble según el valor.",
+          "numero": 17,
+          "referencia_visual": "17"
+        },
+        {
+          "id": "C4-18",
+          "control": "X",
+          "tipo": "selector numérico",
+          "descripcion": "Modifica la coordenada horizontal del clic existente.",
+          "accion_usuario": "Editar X.",
+          "resultado": "La nueva posición se usa al guardar.",
+          "numero": 18,
+          "referencia_visual": "18"
+        },
+        {
+          "id": "C4-19",
+          "control": "Y",
+          "tipo": "selector numérico",
+          "descripcion": "Modifica la coordenada vertical.",
+          "accion_usuario": "Editar Y.",
+          "resultado": "La nueva posición se usa al guardar.",
+          "numero": 19,
+          "referencia_visual": "19"
+        },
+        {
+          "id": "C4-20",
+          "control": "SIMULAR CLIC / CAPTURAR COORDENADAS",
+          "tipo": "botón",
+          "descripcion": "Vuelve a capturar visualmente la posición del clic.",
+          "accion_usuario": "Pulsar y luego hacer clic izquierdo en la ubicación deseada.",
+          "resultado": "BIN actualiza X/Y con la nueva posición capturada.",
+          "numero": 20,
+          "referencia_visual": "20"
+        },
+        {
+          "id": "C4-21",
+          "control": "AGREGAR CLIC",
+          "tipo": "botón",
+          "descripcion": "Selecciona la configuración de clic mostrada como contenido actualizado de la acción.",
+          "accion_usuario": "Pulsar AGREGAR CLIC.",
+          "resultado": "El editor prepara esa configuración para el guardado/tiempos.",
+          "numero": 21,
+          "referencia_visual": "21"
+        },
+        {
+          "id": "C4-22",
+          "control": "GUARDAR CAMBIOS",
+          "tipo": "botón",
+          "descripcion": "Confirma la modificación de la acción existente.",
+          "accion_usuario": "Pulsar GUARDAR CAMBIOS.",
+          "resultado": "La acción se reemplaza conservando su posición e identificador dentro de la tarea.",
+          "numero": 22,
+          "referencia_visual": "22"
+        },
+        {
+          "id": "C4-23",
+          "control": "CANCELAR",
+          "tipo": "botón",
+          "descripcion": "Abandona la edición sin aceptar los cambios pendientes.",
+          "accion_usuario": "Pulsar CANCELAR.",
+          "resultado": "La acción original permanece sin los cambios no guardados.",
+          "numero": 23,
+          "referencia_visual": "23"
+        }
+      ],
+      "elementos_informativos": [
+        "ACCIÓN ACTUAL resume la acción que se está editando y sus tiempos; no es un control por sí mismo."
+      ],
+      "convencion_numeracion": "El número amarillo visible en la captura corresponde al campo numero de esta lista.",
+      "cantidad_interacciones_numeradas": 23
+    },
+    {
+      "id": "editar_accion_ventana",
+      "titulo": "Biblioteca de comandos — Editar acción de ventana",
+      "aliases": [
+        "biblioteca de comandos — editar acción de ventana",
+        "captura5.png",
+        "interacciones",
+        "botones",
+        "manual de interfaz"
+      ],
+      "resumen": "Modo de edición manual de características de ventana, URL/ruta y geometría.",
+      "bloques": [
+        {
+          "tipo": "imagen",
+          "ruta": "src/Captura5_numerada.png",
+          "alt": "Biblioteca de comandos — Editar acción de ventana — controles numerados",
+          "descripcion": "Modo de edición manual de características de ventana, URL/ruta y geometría. Los círculos amarillos numerados se explican en la lista de interacciones de esta sección."
+        },
+        {
+          "tipo": "interacciones",
+          "items": [
+            "[1] X de la ventana: Cierra el editor de acción de ventana. Acción del usuario: Pulsar X. Resultado: Se abandona la edición pendiente.",
+            "[2] Scroll de COMANDOS GUARDADOS: Recorre comandos reutilizables mientras se edita una acción de ventana. Acción del usuario: Usar rueda o barra. Resultado: Permite seleccionar otros comandos guardados.",
+            "[3] Tarjeta de comando guardado: Selecciona un comando existente de la biblioteca. Acción del usuario: Hacer clic sobre él. Resultado: El comando puede utilizarse para sustituir la acción actual.",
+            "[4] ✎ editar comando guardado: Edita el comando persistente. Acción del usuario: Pulsar ✎. Resultado: Se cargan sus datos en el constructor.",
+            "[5] × eliminar comando guardado: Elimina el comando persistente. Acción del usuario: Pulsar × y confirmar. Resultado: El comando sale de la biblioteca.",
+            "[6] AGREGAR COMANDO CLIC: Cambia al constructor de teclado/clic. Acción del usuario: Pulsar la pestaña. Resultado: El panel derecho cambia de modo.",
+            "[7] AGREGAR COMANDO VENTANA: Activa el editor de características de ventana. Acción del usuario: Pulsar la pestaña. Resultado: Se muestran los campos de ventana.",
+            "[8] AGREGAR TEXTO: Abre el creador de texto manual. Acción del usuario: Pulsar AGREGAR TEXTO. Resultado: Se muestra el popup multilínea.",
+            "[9] Nombre del comando: Define el nombre de una acción/comando de ventana reutilizable. Acción del usuario: Escribir un nombre descriptivo. Resultado: El nombre identifica el comando en la biblioteca.",
+            "[10] Tipo de ventana: Define qué clase de recurso se está describiendo. El editor adapta campos y etiquetas según el tipo. Acción del usuario: Elegir el tipo, por ejemplo Web, Office, Software u otro recurso compatible. Resultado: Para Web se habilitan cuenta asociada/cuenta web y la dirección se interpreta como URL; para otros tipos el editor adapta software, ejecutable y ruta.",
+            "[11] Cuenta asociada: Permite indicar la cuenta o identidad local asociada al contexto cuando el tipo de ventana lo utiliza. Acción del usuario: Escribir la cuenta identificadora correspondiente. Resultado: BIN conserva este dato como parte de la descripción manual del contexto de la acción.",
+            "[12] Cuenta web: Permite indicar la cuenta del servicio web cuando aplica. Acción del usuario: Escribir la cuenta del servicio. Resultado: BIN puede usarla como referencia contextual; no es un campo para contraseñas.",
+            "[13] Navegador / software: Selecciona el navegador o software instalado relacionado con la ventana. Acción del usuario: Abrir el selector y elegir una opción. Resultado: BIN puede completar o asociar información de proceso/ejecutable según el elemento seleccionado.",
+            "[14] Ejecutable: Define o muestra la ruta del ejecutable cuando corresponde. Acción del usuario: Escribir o conservar la ruta detectada/seleccionada. Resultado: La acción guarda la referencia al ejecutable para abrir o reconocer la aplicación.",
+            "[15] URL / ruta del recurso: Define la dirección que debe abrirse. En modo Web es una URL; en otros tipos puede ser archivo, plantilla, ejecutable o recurso. Acción del usuario: Escribir la URL o ruta correspondiente. Resultado: BIN guarda esa dirección como dato autoritativo de la acción.",
+            "[16] EXAMINAR…: Permite localizar una ruta de archivo/recurso cuando el tipo de ventana habilita exploración. Acción del usuario: Pulsar EXAMINAR… y elegir el recurso. Resultado: La ruta seleccionada se coloca en el campo de dirección. Nota: En modo Web el botón puede estar deshabilitado porque la dirección es una URL escrita directamente.",
+            "[17] Posición X: Define la coordenada horizontal de la ventana. Acción del usuario: Ajustar X. Resultado: BIN intentará colocar la ventana en esa posición durante la acción.",
+            "[18] Posición Y: Define la coordenada vertical. Acción del usuario: Ajustar Y. Resultado: BIN intentará colocar la ventana en esa posición.",
+            "[19] Ancho: Define el ancho objetivo de la ventana. Acción del usuario: Ajustar el valor. Resultado: BIN conserva el ancho como geometría objetivo.",
+            "[20] Alto: Define la altura objetivo. Acción del usuario: Ajustar el valor. Resultado: BIN conserva la altura como geometría objetivo.",
+            "[21] Estado: Define el estado de la ventana: Normal, Maximizada o Minimizada. Acción del usuario: Elegir el estado. Resultado: La acción guarda el estado que debe reproducirse.",
+            "[22] SIMULAR ACCIÓN DE VENTANA: Abre una ventana simulada que puede moverse y redimensionarse para capturar visualmente X, Y, ancho y alto. Acción del usuario: Pulsar el botón, mover/redimensionar la ventana simulada y almacenar sus características. Resultado: Los valores geométricos resultantes vuelven al editor sin modificar todavía la ventana real de la demostración.",
+            "[23] USAR COMO ACCIÓN: Utiliza la configuración de ventana actual como acción de la tarea sin exigir que primero se cree un comando reutilizable. Acción del usuario: Pulsar USAR COMO ACCIÓN. Resultado: La configuración pasa al flujo de acción/tiempos para incorporarse a la tarea.",
+            "[24] CREAR COMANDO VENTANA: Guarda la configuración actual como comando reutilizable de ventana en la biblioteca global. Acción del usuario: Completar los campos y pulsar CREAR COMANDO VENTANA. Resultado: El comando queda disponible para futuras tareas.",
+            "[25] GUARDAR CAMBIOS: Confirma la edición de la acción existente que aparece como ACCIÓN ACTUAL. Acción del usuario: Pulsar GUARDAR CAMBIOS. Resultado: La acción editada sustituye a la anterior conservando su lugar dentro de la secuencia.",
+            "[26] CANCELAR: Cierra el editor sin aceptar la modificación pendiente. Acción del usuario: Pulsar CANCELAR. Resultado: Se conserva la acción previa."
+          ],
+          "formato": "[número] control: explicación"
+        }
+      ],
+      "interacciones": [
+        {
+          "id": "C5-01",
+          "control": "X de la ventana",
+          "tipo": "control de ventana",
+          "descripcion": "Cierra el editor de acción de ventana.",
+          "accion_usuario": "Pulsar X.",
+          "resultado": "Se abandona la edición pendiente.",
+          "numero": 1,
+          "referencia_visual": "1"
+        },
+        {
+          "id": "C5-02",
+          "control": "Scroll de COMANDOS GUARDADOS",
+          "tipo": "scroll",
+          "descripcion": "Recorre comandos reutilizables mientras se edita una acción de ventana.",
+          "accion_usuario": "Usar rueda o barra.",
+          "resultado": "Permite seleccionar otros comandos guardados.",
+          "numero": 2,
+          "referencia_visual": "2"
+        },
+        {
+          "id": "C5-03",
+          "control": "Tarjeta de comando guardado",
+          "tipo": "selección",
+          "descripcion": "Selecciona un comando existente de la biblioteca.",
+          "accion_usuario": "Hacer clic sobre él.",
+          "resultado": "El comando puede utilizarse para sustituir la acción actual.",
+          "numero": 3,
+          "referencia_visual": "3"
+        },
+        {
+          "id": "C5-04",
+          "control": "✎ editar comando guardado",
+          "tipo": "botón",
+          "descripcion": "Edita el comando persistente.",
+          "accion_usuario": "Pulsar ✎.",
+          "resultado": "Se cargan sus datos en el constructor.",
+          "numero": 4,
+          "referencia_visual": "4"
+        },
+        {
+          "id": "C5-05",
+          "control": "× eliminar comando guardado",
+          "tipo": "botón",
+          "descripcion": "Elimina el comando persistente.",
+          "accion_usuario": "Pulsar × y confirmar.",
+          "resultado": "El comando sale de la biblioteca.",
+          "numero": 5,
+          "referencia_visual": "5"
+        },
+        {
+          "id": "C5-06",
+          "control": "AGREGAR COMANDO CLIC",
+          "tipo": "pestaña/botón",
+          "descripcion": "Cambia al constructor de teclado/clic.",
+          "accion_usuario": "Pulsar la pestaña.",
+          "resultado": "El panel derecho cambia de modo.",
+          "numero": 6,
+          "referencia_visual": "6"
+        },
+        {
+          "id": "C5-07",
+          "control": "AGREGAR COMANDO VENTANA",
+          "tipo": "pestaña/botón",
+          "descripcion": "Activa el editor de características de ventana.",
+          "accion_usuario": "Pulsar la pestaña.",
+          "resultado": "Se muestran los campos de ventana.",
+          "numero": 7,
+          "referencia_visual": "7"
+        },
+        {
+          "id": "C5-08",
+          "control": "AGREGAR TEXTO",
+          "tipo": "botón",
+          "descripcion": "Abre el creador de texto manual.",
+          "accion_usuario": "Pulsar AGREGAR TEXTO.",
+          "resultado": "Se muestra el popup multilínea.",
+          "numero": 8,
+          "referencia_visual": "8"
+        },
+        {
+          "id": "C5-09",
+          "control": "Nombre del comando",
+          "tipo": "entrada de texto",
+          "descripcion": "Define el nombre de una acción/comando de ventana reutilizable.",
+          "accion_usuario": "Escribir un nombre descriptivo.",
+          "resultado": "El nombre identifica el comando en la biblioteca.",
+          "numero": 9,
+          "referencia_visual": "9"
+        },
+        {
+          "id": "C5-10",
+          "control": "Tipo de ventana",
+          "tipo": "lista desplegable",
+          "descripcion": "Define qué clase de recurso se está describiendo. El editor adapta campos y etiquetas según el tipo.",
+          "accion_usuario": "Elegir el tipo, por ejemplo Web, Office, Software u otro recurso compatible.",
+          "resultado": "Para Web se habilitan cuenta asociada/cuenta web y la dirección se interpreta como URL; para otros tipos el editor adapta software, ejecutable y ruta.",
+          "numero": 10,
+          "referencia_visual": "10"
+        },
+        {
+          "id": "C5-11",
+          "control": "Cuenta asociada",
+          "tipo": "entrada de texto",
+          "descripcion": "Permite indicar la cuenta o identidad local asociada al contexto cuando el tipo de ventana lo utiliza.",
+          "accion_usuario": "Escribir la cuenta identificadora correspondiente.",
+          "resultado": "BIN conserva este dato como parte de la descripción manual del contexto de la acción.",
+          "numero": 11,
+          "referencia_visual": "11"
+        },
+        {
+          "id": "C5-12",
+          "control": "Cuenta web",
+          "tipo": "entrada de texto",
+          "descripcion": "Permite indicar la cuenta del servicio web cuando aplica.",
+          "accion_usuario": "Escribir la cuenta del servicio.",
+          "resultado": "BIN puede usarla como referencia contextual; no es un campo para contraseñas.",
+          "numero": 12,
+          "referencia_visual": "12"
+        },
+        {
+          "id": "C5-13",
+          "control": "Navegador / software",
+          "tipo": "lista desplegable",
+          "descripcion": "Selecciona el navegador o software instalado relacionado con la ventana.",
+          "accion_usuario": "Abrir el selector y elegir una opción.",
+          "resultado": "BIN puede completar o asociar información de proceso/ejecutable según el elemento seleccionado.",
+          "numero": 13,
+          "referencia_visual": "13"
+        },
+        {
+          "id": "C5-14",
+          "control": "Ejecutable",
+          "tipo": "entrada de texto",
+          "descripcion": "Define o muestra la ruta del ejecutable cuando corresponde.",
+          "accion_usuario": "Escribir o conservar la ruta detectada/seleccionada.",
+          "resultado": "La acción guarda la referencia al ejecutable para abrir o reconocer la aplicación.",
+          "numero": 14,
+          "referencia_visual": "14"
+        },
+        {
+          "id": "C5-15",
+          "control": "URL / ruta del recurso",
+          "tipo": "entrada de texto",
+          "descripcion": "Define la dirección que debe abrirse. En modo Web es una URL; en otros tipos puede ser archivo, plantilla, ejecutable o recurso.",
+          "accion_usuario": "Escribir la URL o ruta correspondiente.",
+          "resultado": "BIN guarda esa dirección como dato autoritativo de la acción.",
+          "numero": 15,
+          "referencia_visual": "15"
+        },
+        {
+          "id": "C5-16",
+          "control": "EXAMINAR…",
+          "tipo": "botón",
+          "descripcion": "Permite localizar una ruta de archivo/recurso cuando el tipo de ventana habilita exploración.",
+          "accion_usuario": "Pulsar EXAMINAR… y elegir el recurso.",
+          "resultado": "La ruta seleccionada se coloca en el campo de dirección.",
+          "notas": "En modo Web el botón puede estar deshabilitado porque la dirección es una URL escrita directamente.",
+          "numero": 16,
+          "referencia_visual": "16"
+        },
+        {
+          "id": "C5-17",
+          "control": "Posición X",
+          "tipo": "selector numérico",
+          "descripcion": "Define la coordenada horizontal de la ventana.",
+          "accion_usuario": "Ajustar X.",
+          "resultado": "BIN intentará colocar la ventana en esa posición durante la acción.",
+          "numero": 17,
+          "referencia_visual": "17"
+        },
+        {
+          "id": "C5-18",
+          "control": "Posición Y",
+          "tipo": "selector numérico",
+          "descripcion": "Define la coordenada vertical.",
+          "accion_usuario": "Ajustar Y.",
+          "resultado": "BIN intentará colocar la ventana en esa posición.",
+          "numero": 18,
+          "referencia_visual": "18"
+        },
+        {
+          "id": "C5-19",
+          "control": "Ancho",
+          "tipo": "selector numérico",
+          "descripcion": "Define el ancho objetivo de la ventana.",
+          "accion_usuario": "Ajustar el valor.",
+          "resultado": "BIN conserva el ancho como geometría objetivo.",
+          "numero": 19,
+          "referencia_visual": "19"
+        },
+        {
+          "id": "C5-20",
+          "control": "Alto",
+          "tipo": "selector numérico",
+          "descripcion": "Define la altura objetivo.",
+          "accion_usuario": "Ajustar el valor.",
+          "resultado": "BIN conserva la altura como geometría objetivo.",
+          "numero": 20,
+          "referencia_visual": "20"
+        },
+        {
+          "id": "C5-21",
+          "control": "Estado",
+          "tipo": "lista desplegable",
+          "descripcion": "Define el estado de la ventana: Normal, Maximizada o Minimizada.",
+          "accion_usuario": "Elegir el estado.",
+          "resultado": "La acción guarda el estado que debe reproducirse.",
+          "numero": 21,
+          "referencia_visual": "21"
+        },
+        {
+          "id": "C5-22",
+          "control": "SIMULAR ACCIÓN DE VENTANA",
+          "tipo": "botón",
+          "descripcion": "Abre una ventana simulada que puede moverse y redimensionarse para capturar visualmente X, Y, ancho y alto.",
+          "accion_usuario": "Pulsar el botón, mover/redimensionar la ventana simulada y almacenar sus características.",
+          "resultado": "Los valores geométricos resultantes vuelven al editor sin modificar todavía la ventana real de la demostración.",
+          "numero": 22,
+          "referencia_visual": "22"
+        },
+        {
+          "id": "C5-23",
+          "control": "USAR COMO ACCIÓN",
+          "tipo": "botón",
+          "descripcion": "Utiliza la configuración de ventana actual como acción de la tarea sin exigir que primero se cree un comando reutilizable.",
+          "accion_usuario": "Pulsar USAR COMO ACCIÓN.",
+          "resultado": "La configuración pasa al flujo de acción/tiempos para incorporarse a la tarea.",
+          "numero": 23,
+          "referencia_visual": "23"
+        },
+        {
+          "id": "C5-24",
+          "control": "CREAR COMANDO VENTANA",
+          "tipo": "botón",
+          "descripcion": "Guarda la configuración actual como comando reutilizable de ventana en la biblioteca global.",
+          "accion_usuario": "Completar los campos y pulsar CREAR COMANDO VENTANA.",
+          "resultado": "El comando queda disponible para futuras tareas.",
+          "numero": 24,
+          "referencia_visual": "24"
+        },
+        {
+          "id": "C5-25",
+          "control": "GUARDAR CAMBIOS",
+          "tipo": "botón",
+          "descripcion": "Confirma la edición de la acción existente que aparece como ACCIÓN ACTUAL.",
+          "accion_usuario": "Pulsar GUARDAR CAMBIOS.",
+          "resultado": "La acción editada sustituye a la anterior conservando su lugar dentro de la secuencia.",
+          "numero": 25,
+          "referencia_visual": "25"
+        },
+        {
+          "id": "C5-26",
+          "control": "CANCELAR",
+          "tipo": "botón",
+          "descripcion": "Cierra el editor sin aceptar la modificación pendiente.",
+          "accion_usuario": "Pulsar CANCELAR.",
+          "resultado": "Se conserva la acción previa.",
+          "numero": 26,
+          "referencia_visual": "26"
+        }
+      ],
+      "elementos_informativos": [
+        "La nota de CARACTERÍSTICAS DE VENTANA indica que esos datos son manuales y autoritativos para la acción; BIN los guarda en el JSON y no los reescribe durante el replay."
+      ],
+      "convencion_numeracion": "El número amarillo visible en la captura corresponde al campo numero de esta lista.",
+      "cantidad_interacciones_numeradas": 26
+    },
+    {
+      "id": "agregar_texto",
+      "titulo": "Agregar texto",
+      "aliases": [
+        "agregar texto",
+        "captura6.png",
+        "interacciones",
+        "botones",
+        "manual de interfaz"
+      ],
+      "resumen": "Popup para crear una acción que escriba texto en el campo enfocado durante la ejecución.",
+      "bloques": [
+        {
+          "tipo": "imagen",
+          "ruta": "src/Captura6_numerada.png",
+          "alt": "Agregar texto — controles numerados",
+          "descripcion": "Popup para crear una acción que escriba texto en el campo enfocado durante la ejecución. Los círculos amarillos numerados se explican en la lista de interacciones de esta sección."
+        },
+        {
+          "tipo": "interacciones",
+          "items": [
+            "[1] X del popup: Cierra el cuadro Agregar texto. Acción del usuario: Pulsar X. Resultado: Se cancela la entrada de texto pendiente.",
+            "[2] Área multilínea de texto: Define exactamente el texto que BIN debe digitar en el campo que esté enfocado durante la ejecución. Acción del usuario: Escribir o pegar el contenido, incluyendo varias líneas si es necesario. Resultado: El texto queda preparado como acción manual; si está vacío BIN muestra una advertencia y no lo acepta.",
+            "[3] OK: Acepta el texto escrito. Acción del usuario: Pulsar OK. Resultado: BIN marca el texto como acción seleccionada y continúa automáticamente con el flujo para agregar/configurar la acción.",
+            "[4] Cancel: Cancela la creación de la acción de texto. Acción del usuario: Pulsar Cancel. Resultado: El popup se cierra sin añadir el texto."
+          ],
+          "formato": "[número] control: explicación"
+        }
+      ],
+      "interacciones": [
+        {
+          "id": "C6-01",
+          "control": "X del popup",
+          "tipo": "control de ventana",
+          "descripcion": "Cierra el cuadro Agregar texto.",
+          "accion_usuario": "Pulsar X.",
+          "resultado": "Se cancela la entrada de texto pendiente.",
+          "numero": 1,
+          "referencia_visual": "1"
+        },
+        {
+          "id": "C6-02",
+          "control": "Área multilínea de texto",
+          "tipo": "entrada de texto",
+          "descripcion": "Define exactamente el texto que BIN debe digitar en el campo que esté enfocado durante la ejecución.",
+          "accion_usuario": "Escribir o pegar el contenido, incluyendo varias líneas si es necesario.",
+          "resultado": "El texto queda preparado como acción manual; si está vacío BIN muestra una advertencia y no lo acepta.",
+          "numero": 2,
+          "referencia_visual": "2"
+        },
+        {
+          "id": "C6-03",
+          "control": "OK",
+          "tipo": "botón",
+          "descripcion": "Acepta el texto escrito.",
+          "accion_usuario": "Pulsar OK.",
+          "resultado": "BIN marca el texto como acción seleccionada y continúa automáticamente con el flujo para agregar/configurar la acción.",
+          "numero": 3,
+          "referencia_visual": "3"
+        },
+        {
+          "id": "C6-04",
+          "control": "Cancel",
+          "tipo": "botón",
+          "descripcion": "Cancela la creación de la acción de texto.",
+          "accion_usuario": "Pulsar Cancel.",
+          "resultado": "El popup se cierra sin añadir el texto.",
+          "numero": 4,
+          "referencia_visual": "4"
+        }
+      ],
+      "elementos_informativos": [
+        "Mientras el popup Agregar texto está abierto, la ventana de edición que queda detrás no es el foco de interacción hasta cerrar o aceptar el popup."
+      ],
+      "convencion_numeracion": "El número amarillo visible en la captura corresponde al campo numero de esta lista.",
+      "cantidad_interacciones_numeradas": 4
+    }
+  ],
+  "indice_consulta": [
+    {
+      "consulta": "¿Cómo creo una tarea?",
+      "secciones": [
+        "interfaz_principal",
+        "configuracion_tarea"
+      ]
+    },
+    {
+      "consulta": "¿Cómo agrego un clic manual?",
+      "secciones": [
+        "biblioteca_anadir_accion",
+        "editar_accion_clic"
+      ]
+    },
+    {
+      "consulta": "¿Cómo capturo coordenadas?",
+      "secciones": [
+        "biblioteca_anadir_accion",
+        "editar_accion_clic"
+      ]
+    },
+    {
+      "consulta": "¿Cómo agrego texto a una tarea?",
+      "secciones": [
+        "biblioteca_anadir_accion",
+        "agregar_texto"
+      ]
+    },
+    {
+      "consulta": "¿Cómo creo una acción de ventana?",
+      "secciones": [
+        "editar_accion_ventana",
+        "automatizacion_ventanas"
+      ]
+    },
+    {
+      "consulta": "¿Cómo organizo una mesa de trabajo?",
+      "secciones": [
+        "configuracion_tarea",
+        "editar_accion_ventana",
+        "recomendaciones_uso"
+      ]
+    },
+    {
+      "consulta": "¿Puedo grabar contraseñas?",
+      "secciones": [
+        "recomendaciones_uso",
+        "navegadores"
+      ]
+    },
+    {
+      "consulta": "¿Qué hace BIN Light?",
+      "secciones": [
+        "introduccion",
+        "sin_ia_local",
+        "filosofia_bin_light"
+      ]
+    }
+  ],
+  "conteo_interacciones_documentadas": 120,
+  "imagenes_raiz": "src",
+  "convencion_interacciones": {
+    "descripcion": "Cada captura del manual contiene círculos amarillos numerados. El número visible en la imagen corresponde directamente al campo 'numero' de una interacción documentada en la misma sección.",
+    "regla": "numero visible en imagen = numero en manual_bin.json",
+    "uso_bin_bot": "BIN_Bot puede responder por nombre del control, por pantalla o por número. Ejemplo: “¿Qué hace el número 25 de la pantalla principal?”",
+    "uso_bin_light": "BIN Light puede renderizar la captura numerada y, debajo o junto a ella, la explicación del número consultado."
+  },
+  "indice_interacciones_numeradas": [
+    {
+      "pantalla_id": "interfaz_principal",
+      "pantalla": "Interfaz principal de BIN Light",
+      "numero": 1,
+      "id": "C1-01",
+      "control": "MOSTRAR RUTINA"
+    },
+    {
+      "pantalla_id": "interfaz_principal",
+      "pantalla": "Interfaz principal de BIN Light",
+      "numero": 2,
+      "id": "C1-02",
+      "control": "PANTALLA COMPLETA"
+    },
+    {
+      "pantalla_id": "interfaz_principal",
+      "pantalla": "Interfaz principal de BIN Light",
+      "numero": 3,
+      "id": "C1-03",
+      "control": "+ NUEVA"
+    },
+    {
+      "pantalla_id": "interfaz_principal",
+      "pantalla": "Interfaz principal de BIN Light",
+      "numero": 4,
+      "id": "C1-04",
+      "control": "Lista de tareas / desplazamiento"
+    },
+    {
+      "pantalla_id": "interfaz_principal",
+      "pantalla": "Interfaz principal de BIN Light",
+      "numero": 5,
+      "id": "C1-05",
+      "control": "Tarjeta de tarea"
+    },
+    {
+      "pantalla_id": "interfaz_principal",
+      "pantalla": "Interfaz principal de BIN Light",
+      "numero": 6,
+      "id": "C1-06",
+      "control": "CONTEXTO >"
+    },
+    {
+      "pantalla_id": "interfaz_principal",
+      "pantalla": "Interfaz principal de BIN Light",
+      "numero": 7,
+      "id": "C1-07",
+      "control": "VER"
+    },
+    {
+      "pantalla_id": "interfaz_principal",
+      "pantalla": "Interfaz principal de BIN Light",
+      "numero": 8,
+      "id": "C1-08",
+      "control": "COPIAR"
+    },
+    {
+      "pantalla_id": "interfaz_principal",
+      "pantalla": "Interfaz principal de BIN Light",
+      "numero": 9,
+      "id": "C1-09",
+      "control": "CONTINUAR / PAUSAR"
+    },
+    {
+      "pantalla_id": "interfaz_principal",
+      "pantalla": "Interfaz principal de BIN Light",
+      "numero": 10,
+      "id": "C1-10",
+      "control": "▶ EJECUTAR AHORA"
+    },
+    {
+      "pantalla_id": "interfaz_principal",
+      "pantalla": "Interfaz principal de BIN Light",
+      "numero": 11,
+      "id": "C1-11",
+      "control": "RESETEAR TAREA"
+    },
+    {
+      "pantalla_id": "interfaz_principal",
+      "pantalla": "Interfaz principal de BIN Light",
+      "numero": 12,
+      "id": "C1-12",
+      "control": "ELIMINAR"
+    },
+    {
+      "pantalla_id": "interfaz_principal",
+      "pantalla": "Interfaz principal de BIN Light",
+      "numero": 13,
+      "id": "C1-13",
+      "control": "Visor IA — clic izquierdo"
+    },
+    {
+      "pantalla_id": "interfaz_principal",
+      "pantalla": "Interfaz principal de BIN Light",
+      "numero": 14,
+      "id": "C1-14",
+      "control": "Visor IA — doble clic"
+    },
+    {
+      "pantalla_id": "interfaz_principal",
+      "pantalla": "Interfaz principal de BIN Light",
+      "numero": 15,
+      "id": "C1-15",
+      "control": "Visor IA — clic derecho"
+    },
+    {
+      "pantalla_id": "interfaz_principal",
+      "pantalla": "Interfaz principal de BIN Light",
+      "numero": 16,
+      "id": "C1-16",
+      "control": "Visor IA — scroll"
+    },
+    {
+      "pantalla_id": "interfaz_principal",
+      "pantalla": "Interfaz principal de BIN Light",
+      "numero": 17,
+      "id": "C1-17",
+      "control": "CONFIGURACIÓN"
+    },
+    {
+      "pantalla_id": "interfaz_principal",
+      "pantalla": "Interfaz principal de BIN Light",
+      "numero": 18,
+      "id": "C1-18",
+      "control": "▲ / control del chat"
+    },
+    {
+      "pantalla_id": "interfaz_principal",
+      "pantalla": "Interfaz principal de BIN Light",
+      "numero": 19,
+      "id": "C1-19",
+      "control": "Campo “Escribe una indicación para BIN…”"
+    },
+    {
+      "pantalla_id": "interfaz_principal",
+      "pantalla": "Interfaz principal de BIN Light",
+      "numero": 20,
+      "id": "C1-20",
+      "control": "ENVIAR"
+    },
+    {
+      "pantalla_id": "interfaz_principal",
+      "pantalla": "Interfaz principal de BIN Light",
+      "numero": 21,
+      "id": "C1-21",
+      "control": "↑ de una acción"
+    },
+    {
+      "pantalla_id": "interfaz_principal",
+      "pantalla": "Interfaz principal de BIN Light",
+      "numero": 22,
+      "id": "C1-22",
+      "control": "↓ de una acción"
+    },
+    {
+      "pantalla_id": "interfaz_principal",
+      "pantalla": "Interfaz principal de BIN Light",
+      "numero": 23,
+      "id": "C1-23",
+      "control": "EDITAR acción"
+    },
+    {
+      "pantalla_id": "interfaz_principal",
+      "pantalla": "Interfaz principal de BIN Light",
+      "numero": 24,
+      "id": "C1-24",
+      "control": "× acción"
+    },
+    {
+      "pantalla_id": "interfaz_principal",
+      "pantalla": "Interfaz principal de BIN Light",
+      "numero": 25,
+      "id": "C1-25",
+      "control": "+ AÑADIR ACCIÓN"
+    },
+    {
+      "pantalla_id": "interfaz_principal",
+      "pantalla": "Interfaz principal de BIN Light",
+      "numero": 26,
+      "id": "C1-26",
+      "control": "LIMPIAR PANEL DE ACCIÓN"
+    },
+    {
+      "pantalla_id": "biblioteca_anadir_accion",
+      "pantalla": "Biblioteca de comandos — Añadir acción",
+      "numero": 1,
+      "id": "C2-01",
+      "control": "X de la ventana"
+    },
+    {
+      "pantalla_id": "biblioteca_anadir_accion",
+      "pantalla": "Biblioteca de comandos — Añadir acción",
+      "numero": 2,
+      "id": "C2-02",
+      "control": "Scroll de COMANDOS GUARDADOS"
+    },
+    {
+      "pantalla_id": "biblioteca_anadir_accion",
+      "pantalla": "Biblioteca de comandos — Añadir acción",
+      "numero": 3,
+      "id": "C2-03",
+      "control": "Tarjeta de comando guardado"
+    },
+    {
+      "pantalla_id": "biblioteca_anadir_accion",
+      "pantalla": "Biblioteca de comandos — Añadir acción",
+      "numero": 4,
+      "id": "C2-04",
+      "control": "✎ editar comando guardado"
+    },
+    {
+      "pantalla_id": "biblioteca_anadir_accion",
+      "pantalla": "Biblioteca de comandos — Añadir acción",
+      "numero": 5,
+      "id": "C2-05",
+      "control": "× eliminar comando guardado"
+    },
+    {
+      "pantalla_id": "biblioteca_anadir_accion",
+      "pantalla": "Biblioteca de comandos — Añadir acción",
+      "numero": 6,
+      "id": "C2-06",
+      "control": "AGREGAR ACCIÓN"
+    },
+    {
+      "pantalla_id": "biblioteca_anadir_accion",
+      "pantalla": "Biblioteca de comandos — Añadir acción",
+      "numero": 7,
+      "id": "C2-07",
+      "control": "AGREGAR COMANDO CLIC"
+    },
+    {
+      "pantalla_id": "biblioteca_anadir_accion",
+      "pantalla": "Biblioteca de comandos — Añadir acción",
+      "numero": 8,
+      "id": "C2-08",
+      "control": "AGREGAR COMANDO VENTANA"
+    },
+    {
+      "pantalla_id": "biblioteca_anadir_accion",
+      "pantalla": "Biblioteca de comandos — Añadir acción",
+      "numero": 9,
+      "id": "C2-09",
+      "control": "AGREGAR TEXTO"
+    },
+    {
+      "pantalla_id": "biblioteca_anadir_accion",
+      "pantalla": "Biblioteca de comandos — Añadir acción",
+      "numero": 10,
+      "id": "C2-10",
+      "control": "Nombre del comando"
+    },
+    {
+      "pantalla_id": "biblioteca_anadir_accion",
+      "pantalla": "Biblioteca de comandos — Añadir acción",
+      "numero": 11,
+      "id": "C2-11",
+      "control": "Veces del parámetro"
+    },
+    {
+      "pantalla_id": "biblioteca_anadir_accion",
+      "pantalla": "Biblioteca de comandos — Añadir acción",
+      "numero": 12,
+      "id": "C2-12",
+      "control": "Selector de tecla/parámetro"
+    },
+    {
+      "pantalla_id": "biblioteca_anadir_accion",
+      "pantalla": "Biblioteca de comandos — Añadir acción",
+      "numero": 13,
+      "id": "C2-13",
+      "control": "× del parámetro"
+    },
+    {
+      "pantalla_id": "biblioteca_anadir_accion",
+      "pantalla": "Biblioteca de comandos — Añadir acción",
+      "numero": 14,
+      "id": "C2-14",
+      "control": "+ AGREGAR NUEVO PARÁMETRO"
+    },
+    {
+      "pantalla_id": "biblioteca_anadir_accion",
+      "pantalla": "Biblioteca de comandos — Añadir acción",
+      "numero": 15,
+      "id": "C2-15",
+      "control": "CREAR COMANDO"
+    },
+    {
+      "pantalla_id": "biblioteca_anadir_accion",
+      "pantalla": "Biblioteca de comandos — Añadir acción",
+      "numero": 16,
+      "id": "C2-16",
+      "control": "Nombre de la acción de clic"
+    },
+    {
+      "pantalla_id": "biblioteca_anadir_accion",
+      "pantalla": "Biblioteca de comandos — Añadir acción",
+      "numero": 17,
+      "id": "C2-17",
+      "control": "Botón de ratón"
+    },
+    {
+      "pantalla_id": "biblioteca_anadir_accion",
+      "pantalla": "Biblioteca de comandos — Añadir acción",
+      "numero": 18,
+      "id": "C2-18",
+      "control": "Veces del clic"
+    },
+    {
+      "pantalla_id": "biblioteca_anadir_accion",
+      "pantalla": "Biblioteca de comandos — Añadir acción",
+      "numero": 19,
+      "id": "C2-19",
+      "control": "Coordenada X"
+    },
+    {
+      "pantalla_id": "biblioteca_anadir_accion",
+      "pantalla": "Biblioteca de comandos — Añadir acción",
+      "numero": 20,
+      "id": "C2-20",
+      "control": "Coordenada Y"
+    },
+    {
+      "pantalla_id": "biblioteca_anadir_accion",
+      "pantalla": "Biblioteca de comandos — Añadir acción",
+      "numero": 21,
+      "id": "C2-21",
+      "control": "SIMULAR CLIC / CAPTURAR COORDENADAS"
+    },
+    {
+      "pantalla_id": "biblioteca_anadir_accion",
+      "pantalla": "Biblioteca de comandos — Añadir acción",
+      "numero": 22,
+      "id": "C2-22",
+      "control": "AGREGAR CLIC"
+    },
+    {
+      "pantalla_id": "biblioteca_anadir_accion",
+      "pantalla": "Biblioteca de comandos — Añadir acción",
+      "numero": 23,
+      "id": "C2-23",
+      "control": "CANCELAR"
+    },
+    {
+      "pantalla_id": "configuracion_tarea",
+      "pantalla": "Configuración de tarea",
+      "numero": 1,
+      "id": "C3-01",
+      "control": "X de la ventana"
+    },
+    {
+      "pantalla_id": "configuracion_tarea",
+      "pantalla": "Configuración de tarea",
+      "numero": 2,
+      "id": "C3-02",
+      "control": "Nombre"
+    },
+    {
+      "pantalla_id": "configuracion_tarea",
+      "pantalla": "Configuración de tarea",
+      "numero": 3,
+      "id": "C3-03",
+      "control": "Hora"
+    },
+    {
+      "pantalla_id": "configuracion_tarea",
+      "pantalla": "Configuración de tarea",
+      "numero": 4,
+      "id": "C3-04",
+      "control": "Minuto"
+    },
+    {
+      "pantalla_id": "configuracion_tarea",
+      "pantalla": "Configuración de tarea",
+      "numero": 5,
+      "id": "C3-05",
+      "control": "Veces por ejecución"
+    },
+    {
+      "pantalla_id": "configuracion_tarea",
+      "pantalla": "Configuración de tarea",
+      "numero": 6,
+      "id": "C3-06",
+      "control": "Cada — valor"
+    },
+    {
+      "pantalla_id": "configuracion_tarea",
+      "pantalla": "Configuración de tarea",
+      "numero": 7,
+      "id": "C3-07",
+      "control": "Cada — unidad"
+    },
+    {
+      "pantalla_id": "configuracion_tarea",
+      "pantalla": "Configuración de tarea",
+      "numero": 8,
+      "id": "C3-08",
+      "control": "Duración estimada"
+    },
+    {
+      "pantalla_id": "configuracion_tarea",
+      "pantalla": "Configuración de tarea",
+      "numero": 9,
+      "id": "C3-09",
+      "control": "Limpieza de mesa"
+    },
+    {
+      "pantalla_id": "configuracion_tarea",
+      "pantalla": "Configuración de tarea",
+      "numero": 10,
+      "id": "C3-10",
+      "control": "Día L"
+    },
+    {
+      "pantalla_id": "configuracion_tarea",
+      "pantalla": "Configuración de tarea",
+      "numero": 11,
+      "id": "C3-11",
+      "control": "Día M"
+    },
+    {
+      "pantalla_id": "configuracion_tarea",
+      "pantalla": "Configuración de tarea",
+      "numero": 12,
+      "id": "C3-12",
+      "control": "Día X"
+    },
+    {
+      "pantalla_id": "configuracion_tarea",
+      "pantalla": "Configuración de tarea",
+      "numero": 13,
+      "id": "C3-13",
+      "control": "Día J"
+    },
+    {
+      "pantalla_id": "configuracion_tarea",
+      "pantalla": "Configuración de tarea",
+      "numero": 14,
+      "id": "C3-14",
+      "control": "Día V"
+    },
+    {
+      "pantalla_id": "configuracion_tarea",
+      "pantalla": "Configuración de tarea",
+      "numero": 15,
+      "id": "C3-15",
+      "control": "Día S"
+    },
+    {
+      "pantalla_id": "configuracion_tarea",
+      "pantalla": "Configuración de tarea",
+      "numero": 16,
+      "id": "C3-16",
+      "control": "Día D"
+    },
+    {
+      "pantalla_id": "configuracion_tarea",
+      "pantalla": "Configuración de tarea",
+      "numero": 17,
+      "id": "C3-17",
+      "control": "GUARDAR"
+    },
+    {
+      "pantalla_id": "configuracion_tarea",
+      "pantalla": "Configuración de tarea",
+      "numero": 18,
+      "id": "C3-18",
+      "control": "CANCELAR"
+    },
+    {
+      "pantalla_id": "editar_accion_clic",
+      "pantalla": "Biblioteca de comandos — Editar acción de clic",
+      "numero": 1,
+      "id": "C4-01",
+      "control": "X de la ventana"
+    },
+    {
+      "pantalla_id": "editar_accion_clic",
+      "pantalla": "Biblioteca de comandos — Editar acción de clic",
+      "numero": 2,
+      "id": "C4-02",
+      "control": "Scroll de COMANDOS GUARDADOS"
+    },
+    {
+      "pantalla_id": "editar_accion_clic",
+      "pantalla": "Biblioteca de comandos — Editar acción de clic",
+      "numero": 3,
+      "id": "C4-03",
+      "control": "Tarjeta de comando guardado"
+    },
+    {
+      "pantalla_id": "editar_accion_clic",
+      "pantalla": "Biblioteca de comandos — Editar acción de clic",
+      "numero": 4,
+      "id": "C4-04",
+      "control": "✎ editar comando guardado"
+    },
+    {
+      "pantalla_id": "editar_accion_clic",
+      "pantalla": "Biblioteca de comandos — Editar acción de clic",
+      "numero": 5,
+      "id": "C4-05",
+      "control": "× eliminar comando guardado"
+    },
+    {
+      "pantalla_id": "editar_accion_clic",
+      "pantalla": "Biblioteca de comandos — Editar acción de clic",
+      "numero": 6,
+      "id": "C4-06",
+      "control": "AGREGAR COMANDO CLIC"
+    },
+    {
+      "pantalla_id": "editar_accion_clic",
+      "pantalla": "Biblioteca de comandos — Editar acción de clic",
+      "numero": 7,
+      "id": "C4-07",
+      "control": "AGREGAR COMANDO VENTANA"
+    },
+    {
+      "pantalla_id": "editar_accion_clic",
+      "pantalla": "Biblioteca de comandos — Editar acción de clic",
+      "numero": 8,
+      "id": "C4-08",
+      "control": "AGREGAR TEXTO"
+    },
+    {
+      "pantalla_id": "editar_accion_clic",
+      "pantalla": "Biblioteca de comandos — Editar acción de clic",
+      "numero": 9,
+      "id": "C4-09",
+      "control": "Nombre del comando"
+    },
+    {
+      "pantalla_id": "editar_accion_clic",
+      "pantalla": "Biblioteca de comandos — Editar acción de clic",
+      "numero": 10,
+      "id": "C4-10",
+      "control": "Veces del parámetro"
+    },
+    {
+      "pantalla_id": "editar_accion_clic",
+      "pantalla": "Biblioteca de comandos — Editar acción de clic",
+      "numero": 11,
+      "id": "C4-11",
+      "control": "Selector de tecla"
+    },
+    {
+      "pantalla_id": "editar_accion_clic",
+      "pantalla": "Biblioteca de comandos — Editar acción de clic",
+      "numero": 12,
+      "id": "C4-12",
+      "control": "× del parámetro"
+    },
+    {
+      "pantalla_id": "editar_accion_clic",
+      "pantalla": "Biblioteca de comandos — Editar acción de clic",
+      "numero": 13,
+      "id": "C4-13",
+      "control": "+ AGREGAR NUEVO PARÁMETRO"
+    },
+    {
+      "pantalla_id": "editar_accion_clic",
+      "pantalla": "Biblioteca de comandos — Editar acción de clic",
+      "numero": 14,
+      "id": "C4-14",
+      "control": "CREAR COMANDO"
+    },
+    {
+      "pantalla_id": "editar_accion_clic",
+      "pantalla": "Biblioteca de comandos — Editar acción de clic",
+      "numero": 15,
+      "id": "C4-15",
+      "control": "Nombre de la acción"
+    },
+    {
+      "pantalla_id": "editar_accion_clic",
+      "pantalla": "Biblioteca de comandos — Editar acción de clic",
+      "numero": 16,
+      "id": "C4-16",
+      "control": "Botón"
+    },
+    {
+      "pantalla_id": "editar_accion_clic",
+      "pantalla": "Biblioteca de comandos — Editar acción de clic",
+      "numero": 17,
+      "id": "C4-17",
+      "control": "Veces"
+    },
+    {
+      "pantalla_id": "editar_accion_clic",
+      "pantalla": "Biblioteca de comandos — Editar acción de clic",
+      "numero": 18,
+      "id": "C4-18",
+      "control": "X"
+    },
+    {
+      "pantalla_id": "editar_accion_clic",
+      "pantalla": "Biblioteca de comandos — Editar acción de clic",
+      "numero": 19,
+      "id": "C4-19",
+      "control": "Y"
+    },
+    {
+      "pantalla_id": "editar_accion_clic",
+      "pantalla": "Biblioteca de comandos — Editar acción de clic",
+      "numero": 20,
+      "id": "C4-20",
+      "control": "SIMULAR CLIC / CAPTURAR COORDENADAS"
+    },
+    {
+      "pantalla_id": "editar_accion_clic",
+      "pantalla": "Biblioteca de comandos — Editar acción de clic",
+      "numero": 21,
+      "id": "C4-21",
+      "control": "AGREGAR CLIC"
+    },
+    {
+      "pantalla_id": "editar_accion_clic",
+      "pantalla": "Biblioteca de comandos — Editar acción de clic",
+      "numero": 22,
+      "id": "C4-22",
+      "control": "GUARDAR CAMBIOS"
+    },
+    {
+      "pantalla_id": "editar_accion_clic",
+      "pantalla": "Biblioteca de comandos — Editar acción de clic",
+      "numero": 23,
+      "id": "C4-23",
+      "control": "CANCELAR"
+    },
+    {
+      "pantalla_id": "editar_accion_ventana",
+      "pantalla": "Biblioteca de comandos — Editar acción de ventana",
+      "numero": 1,
+      "id": "C5-01",
+      "control": "X de la ventana"
+    },
+    {
+      "pantalla_id": "editar_accion_ventana",
+      "pantalla": "Biblioteca de comandos — Editar acción de ventana",
+      "numero": 2,
+      "id": "C5-02",
+      "control": "Scroll de COMANDOS GUARDADOS"
+    },
+    {
+      "pantalla_id": "editar_accion_ventana",
+      "pantalla": "Biblioteca de comandos — Editar acción de ventana",
+      "numero": 3,
+      "id": "C5-03",
+      "control": "Tarjeta de comando guardado"
+    },
+    {
+      "pantalla_id": "editar_accion_ventana",
+      "pantalla": "Biblioteca de comandos — Editar acción de ventana",
+      "numero": 4,
+      "id": "C5-04",
+      "control": "✎ editar comando guardado"
+    },
+    {
+      "pantalla_id": "editar_accion_ventana",
+      "pantalla": "Biblioteca de comandos — Editar acción de ventana",
+      "numero": 5,
+      "id": "C5-05",
+      "control": "× eliminar comando guardado"
+    },
+    {
+      "pantalla_id": "editar_accion_ventana",
+      "pantalla": "Biblioteca de comandos — Editar acción de ventana",
+      "numero": 6,
+      "id": "C5-06",
+      "control": "AGREGAR COMANDO CLIC"
+    },
+    {
+      "pantalla_id": "editar_accion_ventana",
+      "pantalla": "Biblioteca de comandos — Editar acción de ventana",
+      "numero": 7,
+      "id": "C5-07",
+      "control": "AGREGAR COMANDO VENTANA"
+    },
+    {
+      "pantalla_id": "editar_accion_ventana",
+      "pantalla": "Biblioteca de comandos — Editar acción de ventana",
+      "numero": 8,
+      "id": "C5-08",
+      "control": "AGREGAR TEXTO"
+    },
+    {
+      "pantalla_id": "editar_accion_ventana",
+      "pantalla": "Biblioteca de comandos — Editar acción de ventana",
+      "numero": 9,
+      "id": "C5-09",
+      "control": "Nombre del comando"
+    },
+    {
+      "pantalla_id": "editar_accion_ventana",
+      "pantalla": "Biblioteca de comandos — Editar acción de ventana",
+      "numero": 10,
+      "id": "C5-10",
+      "control": "Tipo de ventana"
+    },
+    {
+      "pantalla_id": "editar_accion_ventana",
+      "pantalla": "Biblioteca de comandos — Editar acción de ventana",
+      "numero": 11,
+      "id": "C5-11",
+      "control": "Cuenta asociada"
+    },
+    {
+      "pantalla_id": "editar_accion_ventana",
+      "pantalla": "Biblioteca de comandos — Editar acción de ventana",
+      "numero": 12,
+      "id": "C5-12",
+      "control": "Cuenta web"
+    },
+    {
+      "pantalla_id": "editar_accion_ventana",
+      "pantalla": "Biblioteca de comandos — Editar acción de ventana",
+      "numero": 13,
+      "id": "C5-13",
+      "control": "Navegador / software"
+    },
+    {
+      "pantalla_id": "editar_accion_ventana",
+      "pantalla": "Biblioteca de comandos — Editar acción de ventana",
+      "numero": 14,
+      "id": "C5-14",
+      "control": "Ejecutable"
+    },
+    {
+      "pantalla_id": "editar_accion_ventana",
+      "pantalla": "Biblioteca de comandos — Editar acción de ventana",
+      "numero": 15,
+      "id": "C5-15",
+      "control": "URL / ruta del recurso"
+    },
+    {
+      "pantalla_id": "editar_accion_ventana",
+      "pantalla": "Biblioteca de comandos — Editar acción de ventana",
+      "numero": 16,
+      "id": "C5-16",
+      "control": "EXAMINAR…"
+    },
+    {
+      "pantalla_id": "editar_accion_ventana",
+      "pantalla": "Biblioteca de comandos — Editar acción de ventana",
+      "numero": 17,
+      "id": "C5-17",
+      "control": "Posición X"
+    },
+    {
+      "pantalla_id": "editar_accion_ventana",
+      "pantalla": "Biblioteca de comandos — Editar acción de ventana",
+      "numero": 18,
+      "id": "C5-18",
+      "control": "Posición Y"
+    },
+    {
+      "pantalla_id": "editar_accion_ventana",
+      "pantalla": "Biblioteca de comandos — Editar acción de ventana",
+      "numero": 19,
+      "id": "C5-19",
+      "control": "Ancho"
+    },
+    {
+      "pantalla_id": "editar_accion_ventana",
+      "pantalla": "Biblioteca de comandos — Editar acción de ventana",
+      "numero": 20,
+      "id": "C5-20",
+      "control": "Alto"
+    },
+    {
+      "pantalla_id": "editar_accion_ventana",
+      "pantalla": "Biblioteca de comandos — Editar acción de ventana",
+      "numero": 21,
+      "id": "C5-21",
+      "control": "Estado"
+    },
+    {
+      "pantalla_id": "editar_accion_ventana",
+      "pantalla": "Biblioteca de comandos — Editar acción de ventana",
+      "numero": 22,
+      "id": "C5-22",
+      "control": "SIMULAR ACCIÓN DE VENTANA"
+    },
+    {
+      "pantalla_id": "editar_accion_ventana",
+      "pantalla": "Biblioteca de comandos — Editar acción de ventana",
+      "numero": 23,
+      "id": "C5-23",
+      "control": "USAR COMO ACCIÓN"
+    },
+    {
+      "pantalla_id": "editar_accion_ventana",
+      "pantalla": "Biblioteca de comandos — Editar acción de ventana",
+      "numero": 24,
+      "id": "C5-24",
+      "control": "CREAR COMANDO VENTANA"
+    },
+    {
+      "pantalla_id": "editar_accion_ventana",
+      "pantalla": "Biblioteca de comandos — Editar acción de ventana",
+      "numero": 25,
+      "id": "C5-25",
+      "control": "GUARDAR CAMBIOS"
+    },
+    {
+      "pantalla_id": "editar_accion_ventana",
+      "pantalla": "Biblioteca de comandos — Editar acción de ventana",
+      "numero": 26,
+      "id": "C5-26",
+      "control": "CANCELAR"
+    },
+    {
+      "pantalla_id": "agregar_texto",
+      "pantalla": "Agregar texto",
+      "numero": 1,
+      "id": "C6-01",
+      "control": "X del popup"
+    },
+    {
+      "pantalla_id": "agregar_texto",
+      "pantalla": "Agregar texto",
+      "numero": 2,
+      "id": "C6-02",
+      "control": "Área multilínea de texto"
+    },
+    {
+      "pantalla_id": "agregar_texto",
+      "pantalla": "Agregar texto",
+      "numero": 3,
+      "id": "C6-03",
+      "control": "OK"
+    },
+    {
+      "pantalla_id": "agregar_texto",
+      "pantalla": "Agregar texto",
+      "numero": 4,
+      "id": "C6-04",
+      "control": "Cancel"
+    }
+  ]
+}
