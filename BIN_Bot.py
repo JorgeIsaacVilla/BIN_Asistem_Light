@@ -124,7 +124,7 @@ except Exception:
 
 BIN_BOT_VERSION = "2.0.1"
 
-BIN_LIGHT_COMPATIBLE = "1.6.16"
+BIN_LIGHT_COMPATIBLE = "1.6.18"
 
 UMBRAL_LOCAL_DEFECTO = 82.0
 
@@ -11554,6 +11554,12 @@ guardarse en mi memoria local.
                                 "url"
                             )
                         ),
+
+                        "google_debug_html": (
+                            resultado_google.get(
+                                "debug_html"
+                            )
+                        ),
                     },
                 )
 
@@ -11612,6 +11618,18 @@ guardarse en mi memoria local.
                     "error_google": (
                         resultado_google.get(
                             "error"
+                        )
+                    ),
+
+                    "url_google": (
+                        resultado_google.get(
+                            "url"
+                        )
+                    ),
+
+                    "google_debug_html": (
+                        resultado_google.get(
+                            "debug_html"
                         )
                     ),
                 },

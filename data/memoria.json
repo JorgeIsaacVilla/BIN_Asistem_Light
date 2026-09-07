@@ -1,7 +1,7 @@
 {
     "tipo": "BIN_MEMORIA",
     "schema_version": 1,
-    "actualizado_en": "2026-09-07T16:13:02.358588+00:00",
+    "actualizado_en": "2026-09-07T23:01:00.813141+00:00",
     "memorias": [
         {
             "respuesta": "Todo muy bien por aquí , ¿y tú qué tal estás?",
@@ -91,6 +91,76 @@
             "fuente": "GOOGLE",
             "creado_en": "2026-09-07T16:13:02.358588+00:00",
             "actualizado_en": "2026-09-07T16:13:02.358588+00:00",
+            "veces_aprendida": 1
+        },
+        {
+            "respuesta": "Aquí tienes un código completo en HTML y JavaScript para crear una calculadora básica y funcional",
+            "consultas": [
+                "pueds generar codigo javascript para crear una calculadora?"
+            ],
+            "fuente": "GOOGLE",
+            "creado_en": "2026-09-07T21:26:50.712839+00:00",
+            "actualizado_en": "2026-09-07T21:26:50.713841+00:00",
+            "veces_aprendida": 1
+        },
+        {
+            "respuesta": "Aquí tienes un código sencillo en HTML y JavaScript para crear una calculadora básica funcional",
+            "consultas": [
+                "Puedes generar codigo javascript para hacer una calculadora?"
+            ],
+            "fuente": "GOOGLE",
+            "creado_en": "2026-09-07T21:41:41.804109+00:00",
+            "actualizado_en": "2026-09-07T21:41:41.806157+00:00",
+            "veces_aprendida": 1
+        },
+        {
+            "respuesta": "permite modificar, añadir o reemplazar elementos en una fotografía usando inteligencia artificial con solo pintar sobre la zona deseada",
+            "consultas": [
+                "consulta el pincel magico de canva"
+            ],
+            "fuente": "GOOGLE",
+            "creado_en": "2026-09-07T22:25:12.291253+00:00",
+            "actualizado_en": "2026-09-07T22:25:12.291253+00:00",
+            "veces_aprendida": 1
+        },
+        {
+            "respuesta": "diecisiete",
+            "consultas": [
+                "17"
+            ],
+            "fuente": "GOOGLE",
+            "creado_en": "2026-09-07T22:35:22.308352+00:00",
+            "actualizado_en": "2026-09-07T22:35:22.308352+00:00",
+            "veces_aprendida": 1
+        },
+        {
+            "respuesta": "Sí, los perros tienen conciencia y sienten su entorno, su propio cuerpo y sus emociones",
+            "consultas": [
+                "busca en google si los perros tienen conciencia"
+            ],
+            "fuente": "GOOGLE",
+            "creado_en": "2026-09-07T22:37:19.449078+00:00",
+            "actualizado_en": "2026-09-07T22:37:19.449078+00:00",
+            "veces_aprendida": 1
+        },
+        {
+            "respuesta": "Sí, los perros tienen un grado de conciencia y autopercepción, especialmente a través del olfato y de su relación con el entorno",
+            "consultas": [
+                "dime si los perros tienen conciencia"
+            ],
+            "fuente": "GOOGLE",
+            "creado_en": "2026-09-07T22:40:38.979650+00:00",
+            "actualizado_en": "2026-09-07T22:40:38.979650+00:00",
+            "veces_aprendida": 1
+        },
+        {
+            "respuesta": "Genially y Visme .DpgmK,.Enb9pe,.FAoEle,.LwDUdc,.MTIaKb,.RlTCPd,.RoOVmf,.V3Ezn,.Vnob4b,.YKUhfb,.aVsZpf,.bbxTBb,.caNvfd,.dIfvQd,.iQMtqe,.kJSB8,.mYuoaf,.tUr4Kc,.uNnvb,.wPNfjb{--Yi4Nb:var(--mXZkqc);--pEa0Bc:var(--bbQxAb);--kloG3:var(--mXZkqc);--YaIeMb:var(--XKMDxc);--Pa8Wlb:var(--Nsm0ce);--izGsqb:var(--Nsm0ce);--d5F9Lb:var(--EpFNW);--todMNc:var(--EpFNW);--p9J9c:var(--Nsm0ce)}:root{--KIZPne:#34517d;--xPpiM:#eef0ff;--Ehh4mf:var(--Nsm0ce)}:root{--pEa0Bc:#bfbfbf;--Pa8Wlb:#a8c7fa;--YaIeMb:#28292a;--Yi4Nb:#444746;--ngPXTb:var(--rrJJUc);--hwEqod:var(--jINu6c);--kloG3:#444746;--lv6yU:#a8c7fa;--Wmwad:#b1c5ff;--vWq1if:var(--jINu6c);--Ijc2tf:#2c303d;--VeLyLc:#eef0ff;--fuvksc:#a8c7fa;--gJjJk:#b1c5ff;--LMFHUd:var(--jINu6c);--Zia6nf:var(--BRLwE);--y01ou:#eef0ff;--p9J9c:#a8c7fa;--MoaHse:#b1c5ff;--CRMNZd:var(--jINu6c);--izGsqb:#a8c7fa;--d5F9Lb:var(--EpFNW);--todMNc:#202124;--NoaQW:#eef0ff;--qdHZF:rgba(0,0,0,.6);--V9ysqf:var(--EoKObe);--PBxOKe:#1f1f1f;--MV2sG:var(--XKMDxc);--bcxd3b:var(--YLNNHc);--D9aNi:rgba(232,232,232,0.08)}.LjLAB{margin:0 2px;flex-shrink:0}.NMq1me{position:relative}.Wg1cdb{white-space:nowrap}.FsqiOd{display:none}.PMDqCb{block-size:100%;inline-size:100%;inset-block-start:0;inset-inline-start:0;position:absolute;z-index:1}.QYpGCb{display:none}.DHPVt{visibility:hidden}.DHPVt:has(~.W…",
+            "consultas": [
+                "herramientas creativbas en línea"
+            ],
+            "fuente": "GOOGLE",
+            "creado_en": "2026-09-07T23:01:00.811257+00:00",
+            "actualizado_en": "2026-09-07T23:01:00.812277+00:00",
             "veces_aprendida": 1
         }
     ]

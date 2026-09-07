@@ -1,3 +1,5 @@
-2026/09/07-15:36:52.258 359c Reusing MANIFEST D:\Desktop\Productos en línea\BIN_Asistem_Light\data\BIN_Google_Profile\Default\Local Storage\leveldb/MANIFEST-000001
-2026/09/07-15:36:52.263 359c Recovering log #15
-2026/09/07-15:36:52.265 359c Reusing old log D:\Desktop\Productos en línea\BIN_Asistem_Light\data\BIN_Google_Profile\Default\Local Storage\leveldb/000015.log 
+2026/09/07-18:00:57.352 43b8 Reusing MANIFEST D:\Desktop\Productos en línea\BIN_Asistem_Light\data\BIN_Google_Profile\Default\Local Storage\leveldb/MANIFEST-000001
+2026/09/07-18:00:57.360 43b8 Recovering log #23
+2026/09/07-18:00:57.361 43b8 Level-0 table #25: started
+2026/09/07-18:00:57.365 43b8 Level-0 table #25: 89409 bytes OK
+2026/09/07-18:00:57.369 43b8 Delete type=0 #23

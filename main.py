@@ -1,4 +1,4 @@
-#v1.6.16
+#v1.6.18
 #============================================================================================
 #1) En el boton "+Añadir acción" en el modulo de Agregar comando clic, primero: simulo el clic. Cuando segundo: cuando preciono el boton de Crear comando ó Agregar acción, Me sale el popUp para decidir el tiempo que debe durar antes y despues del clic. Doy agregar, Y no lo agrega... (CORREGIDO)
 
@@ -55,7 +55,7 @@ from pathlib import Path
 from datetime import datetime, timedelta
 from urllib.parse import urlsplit, unquote, quote
 
-from PySide6.QtCore import Qt, QTimer, Signal, QTime, QThread
+from PySide6.QtCore import Qt, QTimer, Signal, QTime, QThread, QUrl
 from PySide6.QtGui import QImage, QPixmap, QIcon
 from PySide6.QtWidgets import (
     QApplication,
@@ -86,6 +86,41 @@ from PySide6.QtWidgets import (
 )
 
 # ============================================================
+# CHAT RICO / WEBENGINE
+# ============================================================
+
+WEBENGINE_ERROR = ""
+
+try:
+    from PySide6.QtWebEngineCore import QWebEngineSettings
+    from PySide6.QtWebEngineWidgets import QWebEngineView
+
+    WEBENGINE_DISPONIBLE = True
+
+except Exception as error:
+    QWebEngineSettings = None
+    QWebEngineView = None
+    WEBENGINE_DISPONIBLE = False
+    WEBENGINE_ERROR = repr(error)
+
+    print(
+        "[BIN] QtWebEngine no disponible:",
+        WEBENGINE_ERROR,
+    )
+
+try:
+    from BIN_Bot import BINBot, BINBotConfig
+
+    BIN_BOT_DISPONIBLE = True
+    BIN_BOT_ERROR_IMPORTACION = ""
+
+except Exception as error:
+    BINBot = None
+    BINBotConfig = None
+    BIN_BOT_DISPONIBLE = False
+    BIN_BOT_ERROR_IMPORTACION = str(error)
+
+# ============================================================
 # COLORES DE BIN
 # ============================================================
 
@@ -113,10 +148,10 @@ VERDE_FLUORESCENTE = "#39ff14"
 
 MANUAL_BIN_LIGHT = """
 BIN IA ASISTEM — LIGHT
-V1.6.16
+V1.6.18
 
 ============================================================
-BIN IA ASISTEM — LIGHT v1.6.16
+BIN IA ASISTEM — LIGHT v1.6.18
 ============================================================
 
 BIN Light es una versión ligera de BIN orientada a la
@@ -190,7 +225,7 @@ python main.py
 IMPORTANTE — ESTA VERSIÓN NO UTILIZA IA LOCAL
 ============================================================
 
-BIN Light v1.6.16 no incorpora un modelo de inteligencia
+BIN Light v1.6.18 no incorpora un modelo de inteligencia
 artificial local.
 
 Las decisiones durante una automatización son realizadas por
@@ -576,7 +611,7 @@ BIN IA Asistem — Light
 
 Versión estable:
 
-v1.6.16
+v1.6.18
 
 
 ============================================================
@@ -6428,17 +6463,75 @@ class BIN(QMainWindow):
         # dependencia adicional; puede conectarse más adelante.
         self.proveedor_ia_visual = None
 
-        # Puente neutral para la IA BOT propia de BIN.
-        # La IA conversa e interpreta; el motor estable conserva
-        # la autoridad sobre replay, supervisor y auditoría.
+        # ====================================================
+        # BIN BOT INTEGRADO
+        # ====================================================
+
         self.proveedor_ia_bot = None
+
+        self.error_ia_bot = ""
+
+
+        if BIN_BOT_DISPONIBLE:
+
+            try:
+
+                config_bot = BINBotConfig(
+
+                    manual_json_path=str(
+                        self.directorio_datos
+                        / "manual_bin_bot.json"
+                    ),
+
+                    comandos_teclado_path=str(
+                        self.directorio_datos
+                        / "comandos_teclado.json"
+                    ),
+
+                    memoria_path=str(
+                        self.directorio_datos
+                        / "memoria.json"
+                    ),
+
+                    google_debug_html_path=str(
+                        self.directorio_datos
+                        / "BIN_Google_Debug.html"
+                    ),
+
+                    google_profile_dir=str(
+                        self.directorio_datos
+                        / "BIN_Google_Profile"
+                    ),
+                )
+
+
+                self.proveedor_ia_bot = BINBot(
+                    config=config_bot
+                )
+
+
+            except Exception as error:
+
+                self.error_ia_bot = str(
+                    error
+                )
+
+
+        else:
+
+            self.error_ia_bot = (
+
+                BIN_BOT_ERROR_IMPORTACION
+
+                or "No se pudo importar BIN_Bot.py."
+            )
 
         # ====================================================
         # VENTANA
         # ====================================================
 
         self.setWindowTitle(
-            "BIN IA Asistem — Light v1.6.16"
+            "BIN IA Asistem — Light v1.6.18"
         )
 
         self.ruta_icono_bin = (
@@ -11811,7 +11904,7 @@ class BIN(QMainWindow):
         )
 
         subtitulo = QLabel(
-            "LIGHT v1.6.16"
+            "LIGHT v1.6.18"
         )
 
         subtitulo.setObjectName(
@@ -12180,141 +12273,149 @@ class BIN(QMainWindow):
         # ====================================================
         # MENSAJE CON SCROLL INTERNO
         # ====================================================
+        # ====================================================
+        # VISOR HTML DEL CHAT
+        # ====================================================
 
-        self.scroll_chat = QScrollArea()
-
-        self.scroll_chat.setWidgetResizable(
-            True
+        self.mensaje_chat = (
+            self._crear_visor_chat_bin()
         )
 
-        self.scroll_chat.setHorizontalScrollBarPolicy(
-            Qt.ScrollBarAlwaysOff
-        )
 
-        self.scroll_chat.setVerticalScrollBarPolicy(
-            Qt.ScrollBarAsNeeded
-        )
-
-        barra_chat = (
-            self.scroll_chat
-            .verticalScrollBar()
-        )
-
-        barra_chat.rangeChanged.connect(
-            lambda minimo, maximo, barra=barra_chat:
-            barra.setValue(
-                maximo
-            )
-        )
-
-        self.scroll_chat.setMinimumHeight(
+        self.mensaje_chat.setMinimumHeight(
             38
         )
 
-        self.scroll_chat.setSizePolicy(
-            QSizePolicy.Expanding,
-            QSizePolicy.Expanding,
-        )
-
-        self.scroll_chat.setFrameShape(
-            QFrame.NoFrame
-        )
-
-        self.scroll_chat.setStyleSheet(
-            """
-            QScrollArea {
-                background: transparent;
-                border: none;
-            }
-
-            QScrollArea > QWidget > QWidget {
-                background: transparent;
-                border: none;
-            }
-            """
-        )
-
-        contenedor_mensaje_chat = QWidget()
-
-        contenedor_mensaje_chat.setStyleSheet(
-            """
-            background: transparent;
-            border: none;
-            """
-        )
-
-        contenedor_mensaje_chat.setMinimumWidth(
-            0
-        )
-
-        contenedor_mensaje_chat.setSizePolicy(
-            QSizePolicy.Expanding,
-            QSizePolicy.Preferred,
-        )
-
-        mensaje_layout = QVBoxLayout(
-            contenedor_mensaje_chat
-        )
-
-        mensaje_layout.setContentsMargins(
-            0,
-            0,
-            4,
-            10,
-        )
-
-        mensaje_layout.setSpacing(
-            0
-        )
-
-        self.mensaje_chat = QLabel(
-            "BIN: Hola. Estoy operativo."
-        )
-
-        self.mensaje_chat.setWordWrap(
-            True
-        )
-
-        self.mensaje_chat.setTextFormat(
-            Qt.RichText
-        )
-
-        self.mensaje_chat.setAlignment(
-            Qt.AlignTop
-            | Qt.AlignLeft
-        )
-
-        self.mensaje_chat.setMinimumWidth(
-            0
-        )
 
         self.mensaje_chat.setSizePolicy(
-            QSizePolicy.Ignored,
-            QSizePolicy.Preferred,
+
+            QSizePolicy.Expanding,
+
+            QSizePolicy.Expanding,
         )
 
-        self.mensaje_chat.setStyleSheet(
+
+        chat_layout.addWidget(
+            self.mensaje_chat,
+            1,
+        )
+
+
+        # ====================================================
+        # VISOR GOOGLE DENTRO DEL CHAT
+        # ====================================================
+        #
+        # Este contenedor existe desde el inicio, pero permanece
+        # oculto y NO crea QWebEngineView.
+        #
+        # El motor Chromium se crea solamente cuando BIN recibe
+        # un HTML real de Google.
+        # ====================================================
+
+        self.contenedor_google_chat = QFrame()
+
+        self.contenedor_google_chat.setObjectName(
+            "googleChatContainer"
+        )
+
+        self.contenedor_google_chat.setStyleSheet(
             f"""
-            color: {TEXTO};
-            background: transparent;
-            border: none;
+            QFrame#googleChatContainer {{
+                background: #0b0e14;
+                border: 1px solid {BORGONA_CLARO};
+                border-radius: 8px;
+            }}
             """
         )
 
-        mensaje_layout.addWidget(
-            self.mensaje_chat
+
+        self.layout_google_chat = QVBoxLayout(
+            self.contenedor_google_chat
         )
 
-        mensaje_layout.addStretch()
-
-        self.scroll_chat.setWidget(
-            contenedor_mensaje_chat
+        self.layout_google_chat.setContentsMargins(
+            8,
+            8,
+            8,
+            8,
         )
 
-        chat_layout.addWidget(
-            self.scroll_chat,
+        self.layout_google_chat.setSpacing(
+            6
+        )
+
+
+        # ----------------------------------------------------
+        # CABECERA DEL VISOR GOOGLE
+        # ----------------------------------------------------
+
+        cabecera_google = QHBoxLayout()
+
+
+        self.label_google_chat = QLabel(
+            "VISTA DEL HTML DESCARGADO DE GOOGLE"
+        )
+
+        self.label_google_chat.setStyleSheet(
+            f"""
+            color: {AMARILLO_FLUORESCENTE};
+            font-size: 12px;
+            font-weight: 800;
+            border: none;
+            background: transparent;
+            """
+        )
+
+
+        self.boton_cerrar_google_chat = QPushButton(
+            "×"
+        )
+
+        self.boton_cerrar_google_chat.setFixedSize(
+            30,
+            24,
+        )
+
+        self.boton_cerrar_google_chat.setToolTip(
+            "Cerrar vista de Google"
+        )
+
+        self.boton_cerrar_google_chat.clicked.connect(
+            self._ocultar_google_chat
+        )
+
+
+        cabecera_google.addWidget(
+            self.label_google_chat,
             1,
         )
+
+        cabecera_google.addWidget(
+            self.boton_cerrar_google_chat
+        )
+
+
+        self.layout_google_chat.addLayout(
+            cabecera_google
+        )
+
+
+        # ----------------------------------------------------
+        # WEBENGINE SE CREARÁ BAJO DEMANDA
+        # ----------------------------------------------------
+
+        self.visor_google_chat = None
+
+
+        self.contenedor_google_chat.hide()
+
+
+        chat_layout.addWidget(
+            self.contenedor_google_chat
+        )
+
+
+        self._renderizar_historial_chat()
 
         # ====================================================
         # ENTRADA
@@ -13459,11 +13560,13 @@ class BIN(QMainWindow):
     def crear_chat_overlay(
         self,
     ):
+
         if not hasattr(
             self,
             "centro_widget",
         ):
             return
+
 
         if getattr(
             self,
@@ -13472,15 +13575,19 @@ class BIN(QMainWindow):
         ) is not None:
             return
 
+
         self.chat_expandido = False
+
 
         self.chat_overlay = QFrame(
             self.centro_widget
         )
 
+
         self.chat_overlay.setObjectName(
             "chatOverlayBin"
         )
+
 
         self.chat_overlay.setStyleSheet(
             f"""
@@ -13495,22 +13602,14 @@ class BIN(QMainWindow):
                 background: transparent;
                 border: none;
             }}
-
-            QScrollArea {{
-                background: transparent;
-                border: none;
-            }}
-
-            QScrollArea > QWidget > QWidget {{
-                background: transparent;
-                border: none;
-            }}
             """
         )
+
 
         layout = QVBoxLayout(
             self.chat_overlay
         )
+
 
         layout.setContentsMargins(
             14,
@@ -13519,184 +13618,121 @@ class BIN(QMainWindow):
             12,
         )
 
+
         layout.setSpacing(
             8
         )
 
+
         self.boton_cerrar_chat_expandido = QPushButton(
             "▼"
         )
+
 
         self.boton_cerrar_chat_expandido.setFixedSize(
             36,
             24,
         )
 
+
         self.boton_cerrar_chat_expandido.setToolTip(
             "Plegar chat"
         )
+
 
         self.boton_cerrar_chat_expandido.clicked.connect(
             self.alternar_chat_plegable
         )
 
+
         layout.addWidget(
+
             self.boton_cerrar_chat_expandido,
+
             alignment=Qt.AlignHCenter,
         )
+
 
         titulo = QLabel(
             "CHAT CON BIN"
         )
 
+
         titulo.setObjectName(
             "tituloPanel"
         )
+
 
         layout.addWidget(
             titulo
         )
 
-        self.scroll_chat_expandido = QScrollArea()
 
-        self.scroll_chat_expandido.setWidgetResizable(
-            True
+        self.mensaje_chat_expandido = (
+            self._crear_visor_chat_bin()
         )
 
-        self.scroll_chat_expandido.setHorizontalScrollBarPolicy(
-            Qt.ScrollBarAlwaysOff
-        )
-
-        self.scroll_chat_expandido.setVerticalScrollBarPolicy(
-            Qt.ScrollBarAsNeeded
-        )
-
-        barra_chat_expandido = (
-            self.scroll_chat_expandido
-            .verticalScrollBar()
-        )
-
-        barra_chat_expandido.rangeChanged.connect(
-            lambda minimo, maximo, barra=barra_chat_expandido:
-            barra.setValue(
-                maximo
-            )
-        )
-
-        self.scroll_chat_expandido.setFrameShape(
-            QFrame.NoFrame
-        )
-
-        contenedor = QWidget()
-
-        contenedor.setStyleSheet(
-            "background: transparent; border: none;"
-        )
-
-        contenedor.setMinimumWidth(
-            0
-        )
-
-        contenedor.setSizePolicy(
-            QSizePolicy.Expanding,
-            QSizePolicy.Preferred,
-        )
-
-        contenido_layout = QVBoxLayout(
-            contenedor
-        )
-
-        contenido_layout.setContentsMargins(
-            4,
-            4,
-            8,
-            12,
-        )
-
-        self.mensaje_chat_expandido = QLabel(
-            ""
-        )
-
-        self.mensaje_chat_expandido.setWordWrap(
-            True
-        )
-
-        self.mensaje_chat_expandido.setTextFormat(
-            Qt.RichText
-        )
-
-        self.mensaje_chat_expandido.setAlignment(
-            Qt.AlignTop
-            | Qt.AlignLeft
-        )
-
-        self.mensaje_chat_expandido.setMinimumWidth(
-            0
-        )
 
         self.mensaje_chat_expandido.setSizePolicy(
-            QSizePolicy.Ignored,
-            QSizePolicy.Preferred,
+
+            QSizePolicy.Expanding,
+
+            QSizePolicy.Expanding,
         )
 
-        self.mensaje_chat_expandido.setStyleSheet(
-            f"""
-            color: {TEXTO};
-            background: transparent;
-            border: none;
-            """
-        )
-
-        contenido_layout.addWidget(
-            self.mensaje_chat_expandido
-        )
-
-        contenido_layout.addStretch()
-
-        self.scroll_chat_expandido.setWidget(
-            contenedor
-        )
 
         layout.addWidget(
-            self.scroll_chat_expandido,
+            self.mensaje_chat_expandido,
             1,
         )
 
+
         entrada_layout = QHBoxLayout()
 
+
         self.entrada_chat_expandida = QLineEdit()
+
 
         self.entrada_chat_expandida.setPlaceholderText(
             "Escribe una indicación para BIN..."
         )
 
+
         self.boton_enviar_chat_expandido = QPushButton(
             "ENVIAR"
         )
+
 
         self.boton_enviar_chat_expandido.clicked.connect(
             self.procesar_chat_expandido
         )
 
+
         self.entrada_chat_expandida.returnPressed.connect(
             self.procesar_chat_expandido
         )
+
 
         entrada_layout.addWidget(
             self.entrada_chat_expandida,
             1,
         )
 
+
         entrada_layout.addWidget(
             self.boton_enviar_chat_expandido
         )
+
 
         layout.addLayout(
             entrada_layout
         )
 
-        self.chat_overlay.hide()
 
+        self._renderizar_historial_chat()
+
+
+        self.chat_overlay.hide()
     def ajustar_chat_overlay(
         self,
     ):
@@ -13737,34 +13773,22 @@ class BIN(QMainWindow):
     def alternar_chat_plegable(
         self,
     ):
+
         if not hasattr(
             self,
             "chat_overlay",
         ):
             return
 
+
         self.chat_expandido = not bool(
             self.chat_expandido
         )
 
+
         if self.chat_expandido:
-            historial = "".join(
-                self.historial_chat_bin
-            )
 
-            if not historial:
-                historial = (
-                    self.mensaje_chat.text()
-                    if hasattr(
-                        self,
-                        "mensaje_chat",
-                    )
-                    else "BIN: Hola. Estoy operativo."
-                )
-
-            self.mensaje_chat_expandido.setText(
-                historial
-            )
+            self._renderizar_historial_chat()
 
             self.ajustar_chat_overlay()
 
@@ -13783,27 +13807,34 @@ class BIN(QMainWindow):
                 "▼"
             )
 
+
         else:
+
             self.chat_overlay.hide()
 
             self.boton_expandir_chat.setText(
                 "▲"
             )
 
+
             if hasattr(
                 self,
                 "entrada_chat",
             ):
+
                 self.entrada_chat.setFocus()
+
 
     def procesar_chat_expandido(
         self,
     ):
+
         if not hasattr(
             self,
             "entrada_chat_expandida",
         ):
             return
+
 
         texto = (
             self.entrada_chat_expandida
@@ -13811,236 +13842,1312 @@ class BIN(QMainWindow):
             .strip()
         )
 
+
         if not texto:
             return
 
+
         self.entrada_chat_expandida.clear()
+
 
         if hasattr(
             self,
             "entrada_chat",
         ):
+
             self.entrada_chat.setText(
                 texto
             )
 
             self.procesar_chat()
 
-    def _bajar_scroll_chat_expandido(
+
+    # ========================================================
+    # VISOR HTML DEL CHAT
+    # ========================================================
+
+    def _crear_visor_chat_bin(
         self,
     ):
-        if not hasattr(
-            self,
-            "scroll_chat_expandido",
-        ):
-            return
 
-        barra = (
-            self.scroll_chat_expandido
-            .verticalScrollBar()
+        # ====================================================
+        # VISOR PRINCIPAL DEL CHAT
+        # ====================================================
+        #
+        # El historial normal de BIN debe permanecer ligero.
+        #
+        # NO usamos QWebEngineView como transcript general:
+        #
+        # - evita levantar Chromium dos veces;
+        # - evita recargas HTML por cada mensaje;
+        # - conserva el estilo Qt de los scrollbars;
+        # - permite seleccionar/copiar texto;
+        # - mantiene BIN Light rápido.
+        #
+        # QtWebEngine queda disponible para utilizarlo
+        # únicamente cuando tengamos que mostrar el HTML
+        # descargado de Google.
+        # ====================================================
+
+        visor = QTextEdit()
+
+
+        visor.setReadOnly(
+            True
         )
 
-        if barra is not None:
+
+        visor.setAcceptRichText(
+            True
+        )
+
+
+        visor.setUndoRedoEnabled(
+            False
+        )
+
+
+        visor.setContextMenuPolicy(
+            Qt.DefaultContextMenu
+        )
+
+
+        visor.setFocusPolicy(
+            Qt.StrongFocus
+        )
+
+
+        visor.setVerticalScrollBarPolicy(
+            Qt.ScrollBarAsNeeded
+        )
+
+
+        visor.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarAlwaysOff
+        )
+
+
+        visor.setStyleSheet(
+            f"""
+            QTextEdit {{
+                color: {TEXTO};
+                background: {FONDO};
+                border: none;
+                padding: 6px;
+            }}
+            """
+        )
+
+
+        return visor
+
+    def _bajar_scroll_visor_chat(
+        self,
+        visor,
+    ):
+
+        if visor is None:
+            return
+
+
+        if (
+            WEBENGINE_DISPONIBLE
+
+            and isinstance(
+                visor,
+                QWebEngineView,
+            )
+        ):
+
+            try:
+
+                visor.page().runJavaScript(
+                    "window.scrollTo(0, document.body.scrollHeight);"
+                )
+
+
+            except Exception:
+
+                pass
+
+
+            return
+
+
+        try:
+
+            barra = visor.verticalScrollBar()
+
+
             barra.setValue(
                 barra.maximum()
             )
+
+
+        except Exception:
+
+            pass
+
+
+    def _bajar_scroll_chat_expandido(
+        self,
+    ):
+
+        self._bajar_scroll_visor_chat(
+
+            getattr(
+                self,
+                "mensaje_chat_expandido",
+                None,
+            )
+        )
+
 
     def _bajar_scroll_chat(
         self,
     ):
-        if not hasattr(
-            self,
-            "scroll_chat",
-        ):
-            return
 
-        barra = (
-            self.scroll_chat
-            .verticalScrollBar()
+        self._bajar_scroll_visor_chat(
+
+            getattr(
+                self,
+                "mensaje_chat",
+                None,
+            )
         )
 
-        if barra is not None:
-            barra.setValue(
-                barra.maximum()
-            )
+
+    # ========================================================
+    # TEXTO SEGURO Y COPIABLE
+    # ========================================================
 
     def _texto_chat_html(
         self,
         texto,
     ):
-        texto = str(
-            texto
-            or ""
+
+        # No transformamos los saltos en <br>.
+        # CSS white-space: pre-wrap conservará saltos,
+        # espacios e indentación de código.
+
+        return html.escape(
+
+            str(
+                texto
+                or ""
+            )
         )
 
-        lineas_html = []
 
-        for linea in texto.split(
-            "\n"
+    # ========================================================
+    # EXTRAER IMÁGENES DEL METADATA DEL MANUAL
+    # ========================================================
+
+    def _extraer_imagenes_metadata_manual(
+        self,
+        metadata,
+    ):
+
+        imagenes = []
+
+        vistas = set()
+
+
+        def recorrer(
+            valor,
         ):
-            partes = re.split(
-                r"(\s+)",
-                linea,
+
+            if isinstance(
+                valor,
+                dict,
+            ):
+
+                tipo = str(
+
+                    valor.get(
+                        "tipo"
+                    )
+
+                    or ""
+
+                ).strip().lower()
+
+
+                ruta = str(
+
+                    valor.get(
+                        "ruta"
+                    )
+
+                    or ""
+
+                ).strip()
+
+
+                if (
+                    tipo == "imagen"
+                    and ruta
+                ):
+
+                    clave = ruta.lower()
+
+
+                    if clave not in vistas:
+
+                        vistas.add(
+                            clave
+                        )
+
+                        imagenes.append(
+                            dict(
+                                valor
+                            )
+                        )
+
+
+                for contenido in valor.values():
+
+                    recorrer(
+                        contenido
+                    )
+
+
+            elif isinstance(
+                valor,
+                (
+                    list,
+                    tuple,
+                ),
+            ):
+
+                for contenido in valor:
+
+                    recorrer(
+                        contenido
+                    )
+
+
+        recorrer(
+            metadata
+        )
+
+
+        directas = (
+
+            metadata.get(
+                "imagenes"
             )
 
-            partes_html = []
+            if isinstance(
+                metadata,
+                dict,
+            )
 
-            for parte in partes:
-                if not parte:
-                    continue
+            else None
+        )
 
-                if parte.isspace():
-                    partes_html.append(
-                        html.escape(
-                            parte
-                        )
+
+        if isinstance(
+            directas,
+            list,
+        ):
+
+            for imagen in directas:
+
+                if isinstance(
+                    imagen,
+                    str,
+                ):
+
+                    datos = {
+
+                        "tipo": "imagen",
+
+                        "ruta": imagen,
+                    }
+
+
+                elif isinstance(
+                    imagen,
+                    dict,
+                ):
+
+                    datos = dict(
+                        imagen
                     )
 
-                    continue
-
-                # Un token extremadamente largo, como una URL,
-                # recibe puntos invisibles de salto.
-                if len(parte) > 48:
-                    fragmentos = [
-                        parte[
-                            indice:
-                            indice + 48
-                        ]
-                        for indice in range(
-                            0,
-                            len(parte),
-                            48,
-                        )
-                    ]
-
-                    partes_html.append(
-                        "\u200b".join(
-                            html.escape(
-                                fragmento
-                            )
-                            for fragmento
-                            in fragmentos
-                        )
-                    )
 
                 else:
-                    partes_html.append(
-                        html.escape(
-                            parte
-                        )
+
+                    continue
+
+
+                ruta = str(
+
+                    datos.get(
+                        "ruta"
                     )
 
-            lineas_html.append(
-                "".join(
-                    partes_html
+                    or ""
+
+                ).strip()
+
+
+                if not ruta:
+                    continue
+
+
+                clave = ruta.lower()
+
+
+                if clave not in vistas:
+
+                    vistas.add(
+                        clave
+                    )
+
+                    imagenes.append(
+                        datos
+                    )
+
+
+        return imagenes
+
+
+    # ========================================================
+    # RENDERIZAR IMÁGENES DEL MANUAL
+    # ========================================================
+
+    def _html_imagenes_manual_chat(
+        self,
+        imagenes,
+    ):
+
+        if not isinstance(
+            imagenes,
+            list,
+        ):
+            return ""
+
+
+        bloques = []
+
+        rutas_vistas = set()
+
+
+        for imagen in imagenes:
+
+            if isinstance(
+                imagen,
+                str,
+            ):
+
+                imagen = {
+                    "ruta": imagen
+                }
+
+
+            if not isinstance(
+                imagen,
+                dict,
+            ):
+                continue
+
+
+            ruta = str(
+
+                imagen.get(
+                    "ruta"
+                )
+
+                or ""
+
+            ).strip()
+
+
+            if not ruta:
+                continue
+
+
+            ruta_real = (
+                self.resolver_ruta_imagen_manual(
+                    ruta
                 )
             )
 
-        return "<br>".join(
-            lineas_html
+
+            if (
+                ruta_real is None
+                or not ruta_real.exists()
+            ):
+
+                bloques.append(
+
+                    '<div class="aviso-chat">'
+                    '⚠ Imagen del manual no encontrada.'
+                    '</div>'
+                )
+
+                continue
+
+
+            clave = str(
+                ruta_real
+            ).lower()
+
+
+            if clave in rutas_vistas:
+                continue
+
+
+            rutas_vistas.add(
+                clave
+            )
+
+
+            url_imagen = (
+                QUrl.fromLocalFile(
+                    str(
+                        ruta_real
+                    )
+                ).toString()
+            )
+
+
+            alt = str(
+
+                imagen.get(
+                    "alt"
+                )
+
+                or imagen.get(
+                    "descripcion"
+                )
+
+                or "Imagen del manual"
+
+            ).strip()
+
+
+            # =================================================
+            # SOLO RENDERIZAR LA IMAGEN
+            # =================================================
+            #
+            # La ruta, nombre, descripción y demás metadata
+            # siguen existiendo internamente.
+            #
+            # No mostramos texto debajo de la imagen porque
+            # ensucia visualmente la conversación.
+            # =================================================
+
+            bloques.append(
+
+                '<figure class="manual-imagen">'
+
+                '<img src="'
+
+                + html.escape(
+                    url_imagen,
+                    quote=True,
+                )
+
+                + '" alt="'
+
+                + html.escape(
+                    alt,
+                    quote=True,
+                )
+
+                + '">'
+
+                '</figure>'
+            )
+
+
+        return "".join(
+            bloques
         )
     
-    def _renderizar_historial_chat(
+    # ========================================================
+    # SNAPSHOT DEL HTML DE GOOGLE
+    # ========================================================
+
+    def _crear_snapshot_google_chat(
         self,
+        ruta_html,
     ):
-        texto_historial = "".join(
-            self.historial_chat_bin
+
+        ruta = Path(
+
+            str(
+                ruta_html
+                or ""
+            ).strip()
         )
 
-        if hasattr(
-            self,
-            "mensaje_chat",
-        ):
-            self.mensaje_chat.setText(
-                texto_historial
+
+        if not ruta.is_absolute():
+
+            ruta = (
+                self.directorio_bin
+                / ruta
             )
 
-            QTimer.singleShot(
-                0,
-                self._bajar_scroll_chat,
+
+        try:
+
+            ruta = ruta.resolve(
+                strict=False
             )
 
-        if hasattr(
-            self,
-            "mensaje_chat_expandido",
-        ):
-            self.mensaje_chat_expandido.setText(
-                texto_historial
+
+        except Exception:
+
+            pass
+
+
+        if not ruta.exists():
+            return None
+
+
+        try:
+
+            carpeta = (
+
+                self.directorio_datos
+
+                / "BIN_Google_Chat"
             )
 
-            QTimer.singleShot(
-                0,
-                self._bajar_scroll_chat_expandido,
+
+            carpeta.mkdir(
+
+                parents=True,
+
+                exist_ok=True,
             )
 
-    def registrar_mensaje_usuario(
+
+            destino = (
+
+                carpeta
+
+                / (
+
+                    "google_"
+
+                    + datetime.now().strftime(
+                        "%Y%m%d_%H%M%S_%f"
+                    )
+
+                    + ".html"
+                )
+            )
+
+
+            shutil.copy2(
+                ruta,
+                destino,
+            )
+
+
+            snapshots = sorted(
+
+                carpeta.glob(
+                    "google_*.html"
+                ),
+
+                key=lambda archivo:
+                archivo.stat().st_mtime,
+
+                reverse=True,
+            )
+
+
+            # Conservamos los últimos 40 resultados.
+
+            for viejo in snapshots[
+                40:
+            ]:
+
+                try:
+
+                    viejo.unlink()
+
+
+                except Exception:
+
+                    pass
+
+
+            return destino
+
+
+        except Exception:
+
+            return ruta
+
+
+    # ========================================================
+    # GOOGLE HTML DENTRO DEL CHAT
+    # ========================================================
+
+    def _mostrar_google_en_chat(
         self,
-        mensaje,
+        ruta_html,
     ):
-        mensaje = str(
-            mensaje
+
+        ruta_html = str(
+            ruta_html
             or ""
         ).strip()
 
-        if not mensaje:
-            return
 
-        nombre = str(
-            self.configuracion.get(
-                "nombre_usuario",
-                "",
+        if not ruta_html:
+            return False
+
+
+        # ====================================================
+        # WEBENGINE DEBE ESTAR DISPONIBLE
+        # ====================================================
+
+        if not WEBENGINE_DISPONIBLE:
+
+            self.registrar_evento_bin(
+                "AVISO",
+                (
+                    "El HTML de Google fue descargado, "
+                    "pero QtWebEngine no está disponible."
+                ),
             )
-            or "USUARIO"
-        ).strip()
 
-        if not nombre:
-            nombre = "USUARIO"
+            return False
 
-        bloque = (
-            '<div align="right" '
-            'style="margin-top:7px; margin-bottom:7px;">'
 
-            f'<span style="color:{VERDE_FLUORESCENTE}; '
-            'font-weight:900;">'
-            f'{self._texto_chat_html(nombre)}'
-            '</span>'
+        # ====================================================
+        # CREAR SNAPSHOT ESTABLE
+        # ====================================================
 
-            '<br>'
-
-            f'<span style="color:{TEXTO};">'
-            f'{self._texto_chat_html(mensaje)}'
-            '</span>'
-
-            '</div>'
+        snapshot = (
+            self._crear_snapshot_google_chat(
+                ruta_html
+            )
         )
+
+
+        if snapshot is None:
+
+            self.registrar_evento_bin(
+                "AVISO",
+                (
+                    "No encontré el HTML descargado "
+                    "de Google."
+                ),
+            )
+
+            return False
+
+
+        contenedor = getattr(
+            self,
+            "contenedor_google_chat",
+            None,
+        )
+
+
+        layout_google = getattr(
+            self,
+            "layout_google_chat",
+            None,
+        )
+
+
+        if (
+            contenedor is None
+            or layout_google is None
+        ):
+
+            return False
+
+
+        # ====================================================
+        # CREAR WEBENGINE SOLAMENTE LA PRIMERA VEZ
+        # ====================================================
+
+        visor = getattr(
+            self,
+            "visor_google_chat",
+            None,
+        )
+
+
+        if visor is None:
+
+            visor = QWebEngineView()
+
+
+            visor.setContextMenuPolicy(
+                Qt.DefaultContextMenu
+            )
+
+
+            visor.setFocusPolicy(
+                Qt.StrongFocus
+            )
+
+
+            visor.setMinimumHeight(
+                300
+            )
+
+
+            visor.setMaximumHeight(
+                420
+            )
+
+
+            visor.setSizePolicy(
+                QSizePolicy.Expanding,
+                QSizePolicy.Fixed,
+            )
+
+
+            visor.setStyleSheet(
+                """
+                background: #ffffff;
+                border: none;
+                """
+            )
+
+
+            ajustes = visor.settings()
+
+
+            # =================================================
+            # SNAPSHOT GOOGLE — MODO VISUAL
+            # =================================================
+            #
+            # Este visor no vuelve a ejecutar Google.
+            #
+            # Selenium ya realizó la navegación y guardó
+            # el DOM renderizado.
+            #
+            # Desactivamos JavaScript únicamente en este
+            # QWebEngineView para evitar que el snapshot local
+            # intente volver a cargar los scripts de gstatic
+            # desde un origen file:// y genere errores CORS.
+            #
+            # CSS, imágenes y contenido HTML continúan
+            # pudiendo mostrarse.
+            # =================================================
+
+            ajustes.setAttribute(
+
+                QWebEngineSettings.WebAttribute.JavascriptEnabled,
+
+                False,
+            )
+
+
+            ajustes.setAttribute(
+
+                QWebEngineSettings.WebAttribute.LocalContentCanAccessFileUrls,
+
+                True,
+            )
+
+
+            ajustes.setAttribute(
+
+                QWebEngineSettings.WebAttribute.LocalContentCanAccessRemoteUrls,
+
+                True,
+            )
+
+
+            layout_google.addWidget(
+                visor
+            )
+
+
+            self.visor_google_chat = visor
+
+
+        # ====================================================
+        # CARGAR EL HTML DIRECTAMENTE EN CHROMIUM
+        # ====================================================
+        #
+        # NO usamos iframe.
+        #
+        # QWebEngineView es el navegador embebido.
+        # ====================================================
+
+        url_snapshot = QUrl.fromLocalFile(
+            str(
+                Path(
+                    snapshot
+                ).resolve()
+            )
+        )
+
+
+        visor.setUrl(
+            url_snapshot
+        )
+
+
+        self.label_google_chat.setText(
+            "VISTA DEL HTML DESCARGADO DE GOOGLE"
+        )
+
+
+        contenedor.show()
+
+
+        return True
+
+
+    # ========================================================
+    # OCULTAR VISOR GOOGLE
+    # ========================================================
+
+    def _ocultar_google_chat(
+        self,
+    ):
+
+        contenedor = getattr(
+            self,
+            "contenedor_google_chat",
+            None,
+        )
+
+
+        if contenedor is not None:
+
+            contenedor.hide()
+
+
+        visor = getattr(
+            self,
+            "visor_google_chat",
+            None,
+        )
+
+
+        if visor is not None:
+
+            # Detiene recursos/scripts del snapshot anterior
+            # sin destruir Chromium.
+            visor.setUrl(
+                QUrl(
+                    "about:blank"
+                )
+            )
+
+    # ========================================================
+    # DOCUMENTO HTML COMPLETO DEL CHAT
+    # ========================================================
+
+    def _documento_html_chat(
+        self,
+    ):
+
+        cuerpo = "".join(
+            self.historial_chat_bin
+        )
+
+
+        if not cuerpo:
+
+            cuerpo = (
+
+                '<div class="mensaje-bin">'
+
+                f'<strong style="color:{AMARILLO_FLUORESCENTE};">'
+                'BIN'
+                '</strong>'
+
+                '<br>'
+
+                'Hola. Estoy operativo.'
+
+                '</div>'
+            )
+
+
+        return f"""<!doctype html>
+<html>
+<head>
+
+<meta charset="utf-8">
+
+<style>
+
+html,
+body {{
+    margin: 0;
+    padding: 0;
+    background: {FONDO};
+    color: {TEXTO};
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.48;
+    user-select: text;
+    -webkit-user-select: text;
+}}
+
+body {{
+    padding: 8px 10px 18px 10px;
+    overflow-wrap: anywhere;
+}}
+
+* {{
+    box-sizing: border-box;
+}}
+
+::selection {{
+    background: {BORGONA};
+    color: #ffffff;
+}}
+
+.texto-chat {{
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    user-select: text;
+    -webkit-user-select: text;
+}}
+
+pre,
+code {{
+    white-space: pre-wrap;
+    font-family: Consolas, "Courier New", monospace;
+    user-select: text;
+    -webkit-user-select: text;
+}}
+
+.manual-imagen {{
+    margin: 12px 0 6px 0;
+    padding: 10px;
+    background: #080a0f;
+    border: 1px solid #252a35;
+    border-radius: 8px;
+    text-align: center;
+}}
+
+.manual-imagen img {{
+    display: block;
+    max-width: 100%;
+    max-height: 560px;
+    width: auto;
+    height: auto;
+    margin: 0 auto;
+    object-fit: contain;
+    border-radius: 6px;
+}}
+
+.manual-imagen figcaption {{
+    margin-top: 8px;
+    color: {TEXTO_SECUNDARIO};
+    font-size: 12px;
+    white-space: pre-wrap;
+}}
+
+.google-contenedor {{
+    margin-top: 14px;
+    padding: 10px;
+    background: #0b0e14;
+    border: 1px solid {BORGONA_CLARO};
+    border-radius: 8px;
+}}
+
+.google-titulo {{
+    margin-bottom: 8px;
+    color: {AMARILLO_FLUORESCENTE};
+    font-size: 12px;
+    font-weight: 800;
+}}
+
+.google-frame {{
+    display: block;
+    width: 100%;
+    height: 520px;
+    background: #ffffff;
+    border: 1px solid #2d3340;
+    border-radius: 6px;
+}}
+
+.aviso-chat {{
+    margin-top: 10px;
+    padding: 8px 10px;
+    color: {AMARILLO};
+    background: #11151d;
+    border: 1px solid #393f4d;
+    border-radius: 6px;
+}}
+
+</style>
+
+</head>
+
+<body>
+
+{cuerpo}
+
+</body>
+
+</html>"""
+
+
+    # ========================================================
+    # RENDERIZAR HISTORIAL
+    # ========================================================
+
+    def _renderizar_historial_chat(
+        self,
+    ):
+
+        documento = (
+            self._documento_html_chat()
+        )
+
+
+        ruta_render = (
+
+            self.directorio_datos
+
+            / "BIN_Chat_Render.html"
+        )
+
+
+        if WEBENGINE_DISPONIBLE:
+
+            try:
+
+                ruta_render.write_text(
+
+                    documento,
+
+                    encoding="utf-8",
+                )
+
+
+            except Exception:
+
+                pass
+
+
+        url_render = (
+            QUrl.fromLocalFile(
+                str(
+                    ruta_render
+                )
+            )
+        )
+
+
+        for nombre in (
+
+            "mensaje_chat",
+
+            "mensaje_chat_expandido",
+        ):
+
+            visor = getattr(
+                self,
+                nombre,
+                None,
+            )
+
+
+            if visor is None:
+                continue
+
+
+            if (
+                WEBENGINE_DISPONIBLE
+
+                and isinstance(
+                    visor,
+                    QWebEngineView,
+                )
+            ):
+
+                actual = str(
+
+                    visor.url().toLocalFile()
+
+                    or ""
+                )
+
+
+                if (
+                    actual
+
+                    and Path(
+                        actual
+                    ) == ruta_render
+                ):
+
+                    visor.reload()
+
+
+                else:
+
+                    visor.setUrl(
+                        url_render
+                    )
+
+
+            else:
+
+                visor.setHtml(
+                    documento
+                )
+
+
+                QTimer.singleShot(
+
+                    0,
+
+                    lambda visor=visor:
+
+                    self._bajar_scroll_visor_chat(
+                        visor
+                    ),
+                )
+
+
+    # ========================================================
+    # AGREGAR BLOQUE AL HISTORIAL
+    # ========================================================
+
+    def _agregar_bloque_historial_chat(
+        self,
+        bloque,
+    ):
+
+        if not hasattr(
+            self,
+            "historial_chat_bin",
+        ):
+
+            self.historial_chat_bin = []
+
 
         self.historial_chat_bin.append(
-            bloque
+
+            str(
+                bloque
+                or ""
+            )
         )
 
+
         limite = max(
+
             50,
+
             int(
+
                 getattr(
                     self,
                     "max_historial_chat_bin",
                     500,
                 )
+
                 or 500
             ),
         )
+
 
         if len(
             self.historial_chat_bin
         ) > limite:
 
             self.historial_chat_bin = (
+
                 self.historial_chat_bin[
                     -limite:
                 ]
             )
 
+
         self._renderizar_historial_chat()
+
+
+    # ========================================================
+    # MENSAJE DEL USUARIO
+    # ========================================================
+
+    def registrar_mensaje_usuario(
+        self,
+        mensaje,
+    ):
+
+        mensaje = str(
+            mensaje
+            or ""
+        ).strip()
+
+
+        if not mensaje:
+            return
+
+
+        nombre = str(
+
+            self.configuracion.get(
+                "nombre_usuario",
+                "",
+            )
+
+            or "USUARIO"
+
+        ).strip()
+
+
+        if not nombre:
+
+            nombre = "USUARIO"
+
+
+        bloque = (
+
+            '<div align="right" '
+            'style="margin-top:7px; margin-bottom:7px;">'
+
+            f'<span style="color:{VERDE_FLUORESCENTE}; '
+            'font-weight:900;">'
+
+            + self._texto_chat_html(
+                nombre
+            )
+
+            + '</span>'
+
+            '<br>'
+
+            f'<div class="texto-chat" '
+            f'style="color:{TEXTO};">'
+
+            + self._texto_chat_html(
+                mensaje
+            )
+
+            + '</div>'
+
+            '</div>'
+        )
+
+
+        self._agregar_bloque_historial_chat(
+            bloque
+        )
+
+
+    # ========================================================
+    # EVENTO NORMAL DE BIN
+    # ========================================================
 
     def registrar_evento_bin(
         self,
@@ -14048,24 +15155,29 @@ class BIN(QMainWindow):
         mensaje,
         detalle=None,
     ):
+
         categoria = str(
             categoria
             or "INFO"
         ).strip().upper()
+
 
         mensaje = str(
             mensaje
             or ""
         ).strip()
 
+
         detalle = str(
             detalle
             or ""
         ).strip()
 
+
         hora = datetime.now().strftime(
             "%H:%M:%S"
         )
+
 
         cuerpo = (
             self._texto_chat_html(
@@ -14073,85 +15185,315 @@ class BIN(QMainWindow):
             )
         )
 
+
         if detalle:
 
             cuerpo += (
-                "<br>"
+
+                "\n"
+
                 + self._texto_chat_html(
                     detalle
                 )
             )
 
+
         bloque = (
+
             '<div align="left" '
             'style="margin-top:7px; margin-bottom:7px;">'
 
             f'<span style="color:{AMARILLO_FLUORESCENTE}; '
             'font-weight:900;">'
+
             'BIN'
+
             '</span>'
 
             f'<span style="color:{TEXTO_SECUNDARIO};">'
+
             f' [{hora}] '
-            f'{self._texto_chat_html(categoria)}'
-            '</span>'
+
+            + self._texto_chat_html(
+                categoria
+            )
+
+            + '</span>'
 
             '<br>'
 
-            f'<span style="color:{TEXTO};">'
+            f'<div class="texto-chat" '
+            f'style="color:{TEXTO};">'
+
             f'{cuerpo}'
-            '</span>'
+
+            '</div>'
 
             '</div>'
         )
+
 
         self.ultimo_chat_sistema = (
             mensaje
         )
 
-        if not hasattr(
-            self,
-            "historial_chat_bin",
-        ):
-            self.historial_chat_bin = []
 
-        self.historial_chat_bin.append(
+        self._agregar_bloque_historial_chat(
             bloque
         )
 
-        limite = max(
-            50,
-            int(
-                getattr(
-                    self,
-                    "max_historial_chat_bin",
-                    500,
+
+    # ========================================================
+    # RESPUESTA ESTRUCTURADA DE BIN BOT
+    # ========================================================
+
+    def registrar_respuesta_ia_bot(
+        self,
+        respuesta,
+    ):
+
+        if not isinstance(
+            respuesta,
+            dict,
+        ):
+
+            respuesta = {
+
+                "texto": str(
+                    respuesta
+                    or ""
                 )
-                or 500
-            ),
-        )
+            }
 
-        if len(
-            self.historial_chat_bin
-        ) > limite:
 
-            self.historial_chat_bin = (
-                self.historial_chat_bin[
-                    -limite:
-                ]
+        # IMPORTANTE:
+        # aquí NO usamos .strip().
+        #
+        # Así se conservan espacios, saltos e indentación
+        # del código generado por futuras versiones IA.
+
+        texto = str(
+
+            respuesta.get(
+                "texto"
             )
 
-        self._renderizar_historial_chat()
-        
+            or respuesta.get(
+                "respuesta"
+            )
+
+            or respuesta.get(
+                "mensaje"
+            )
+
+            or ""
+        )
+
+
+        metadata = respuesta.get(
+            "metadata"
+        )
+
+
+        if not isinstance(
+            metadata,
+            dict,
+        ):
+
+            metadata = {}
+
+
+        origen = str(
+
+            respuesta.get(
+                "origen"
+            )
+
+            or "BOT"
+
+        ).strip().upper()
+
+
+        hora = datetime.now().strftime(
+            "%H:%M:%S"
+        )
+
+
+        cuerpo = (
+
+            '<div class="texto-chat">'
+
+            + self._texto_chat_html(
+                texto
+            )
+
+            + '</div>'
+        )
+
+
+        # ====================================================
+        # IMÁGENES DEL MANUAL
+        # ====================================================
+
+        imagenes = (
+
+            self._extraer_imagenes_metadata_manual(
+                metadata
+            )
+        )
+
+
+        # ====================================================
+        # LIMPIAR REFERENCIA TEXTUAL DE IMAGEN
+        # ====================================================
+        #
+        # BIN_Bot conserva algo como:
+        #
+        # Imagen de referencia:
+        # - src/captura (6).png
+        #
+        # Eso es útil en CMD.
+        #
+        # Pero BIN Light ya renderiza físicamente el PNG,
+        # así que ocultamos solamente esa representación
+        # textual en el chat.
+        #
+        # La ruta continúa disponible en metadata.
+        # ====================================================
+
+        if imagenes:
+
+            texto = re.sub(
+
+                (
+                    r"\n*"
+                    r"Imagen(?:es)?\s+de\s+referencia\s*:"
+                    r"\s*"
+                    r"(?:\n?\s*-\s*[^\n]+)+"
+                    r"\s*$"
+                ),
+
+                "",
+
+                texto,
+
+                flags=re.IGNORECASE,
+
+            )
+
+
+            texto = texto.rstrip()
+
+
+            # Reconstruimos el cuerpo usando el texto limpio.
+
+            cuerpo = (
+
+                '<div class="texto-chat">'
+
+                + self._texto_chat_html(
+                    texto
+                )
+
+                + '</div>'
+            )
+
+
+        cuerpo += (
+
+            self._html_imagenes_manual_chat(
+                imagenes
+            )
+        )
+
+
+        # ====================================================
+        # HTML DESCARGADO DE GOOGLE
+        # ====================================================
+        #
+        # El transcript continúa siendo QTextEdit.
+        #
+        # La página se entrega al QWebEngineView independiente
+        # que vive dentro del mismo panel del chat.
+        # ====================================================
+
+        ruta_google_html = str(
+
+            metadata.get(
+                "google_debug_html"
+            )
+
+            or ""
+
+        ).strip()
+
+
+        if ruta_google_html:
+
+            QTimer.singleShot(
+
+                0,
+
+                lambda ruta=ruta_google_html:
+                self._mostrar_google_en_chat(
+                    ruta
+                ),
+            )
+
+
+        bloque = (
+
+            '<div align="left" '
+            'style="margin-top:9px; margin-bottom:12px;">'
+
+            f'<span style="color:{AMARILLO_FLUORESCENTE}; '
+            'font-weight:900;">'
+
+            'BIN'
+
+            '</span>'
+
+            f'<span style="color:{TEXTO_SECUNDARIO};">'
+
+            f' [{hora}] '
+
+            + self._texto_chat_html(
+                origen
+            )
+
+            + '</span>'
+
+            '<br>'
+
+            f'<div style="color:{TEXTO}; margin-top:3px;">'
+
+            f'{cuerpo}'
+
+            '</div>'
+
+            '</div>'
+        )
+
+
+        self.ultimo_chat_sistema = (
+            texto
+        )
+
+
+        self._agregar_bloque_historial_chat(
+            bloque
+        )
+
+
     def actualizar_chat_bin(
         self,
         mensaje,
     ):
+
         self.registrar_evento_bin(
             "INFO",
             mensaje,
         )
-
     # ========================================================
     # PUENTE PARA IA BOT DE BIN
     # ========================================================
@@ -14233,20 +15575,25 @@ class BIN(QMainWindow):
         self,
         texto,
     ):
+
         proveedor = getattr(
             self,
             "proveedor_ia_bot",
             None,
         )
 
+
         if proveedor is None:
             return None
+
 
         contexto = (
             self.contexto_para_ia_bot()
         )
 
+
         try:
+
             if hasattr(
                 proveedor,
                 "responder",
@@ -14257,6 +15604,7 @@ class BIN(QMainWindow):
                     contexto,
                 )
 
+
             elif callable(
                 proveedor
             ):
@@ -14266,67 +15614,146 @@ class BIN(QMainWindow):
                     contexto,
                 )
 
+
             else:
+
                 return None
+
 
         except Exception as error:
 
             self.registrar_evento_bin(
+
                 "ERROR",
+
                 "La IA BOT de BIN produjo un error.",
+
                 str(
                     error
                 ),
             )
 
+
             return None
+
 
         if respuesta is None:
             return None
+
+
+        # ====================================================
+        # RESPUESTA ESTRUCTURADA
+        # ====================================================
 
         if isinstance(
             respuesta,
             dict,
         ):
 
-            respuesta = (
-                respuesta.get(
-                    "texto"
-                )
-                or respuesta.get(
-                    "respuesta"
-                )
-                or respuesta.get(
-                    "mensaje"
-                )
+            datos = dict(
+                respuesta
             )
 
-        respuesta = str(
+
+            # No hacemos strip:
+            # preservamos indentación del contenido generado.
+
+            texto_respuesta = str(
+
+                datos.get(
+                    "texto"
+                )
+
+                or datos.get(
+                    "respuesta"
+                )
+
+                or datos.get(
+                    "mensaje"
+                )
+
+                or ""
+            )
+
+
+            datos[
+                "texto"
+            ] = texto_respuesta
+
+
+            if not isinstance(
+                datos.get(
+                    "metadata"
+                ),
+                dict,
+            ):
+
+                datos[
+                    "metadata"
+                ] = {}
+
+
+            return datos
+
+
+        # ====================================================
+        # COMPATIBILIDAD CON PROVEEDORES DE TEXTO
+        # ====================================================
+
+        texto_respuesta = str(
             respuesta
             or ""
-        ).strip()
-
-        return (
-            respuesta
-            or None
         )
 
-    def procesar_chat(self):
-        if not hasattr(self, "entrada_chat"):
+
+        if not texto_respuesta.strip():
+            return None
+
+
+        return {
+
+            "texto": texto_respuesta,
+
+            "respuesta": texto_respuesta,
+
+            "origen": "BOT",
+
+            "metadata": {},
+        }
+
+
+    def procesar_chat(
+        self,
+    ):
+
+        if not hasattr(
+            self,
+            "entrada_chat",
+        ):
             return
 
-        texto = self.entrada_chat.text().strip()
+
+        texto = (
+            self.entrada_chat
+            .text()
+            .strip()
+        )
+
 
         if not texto:
             return
 
+
         self.entrada_chat.clear()
 
-        # Mostrar inmediatamente el mensaje del usuario
-        # a la derecha del chat.
+
+        # Mostrar inmediatamente
+        # el mensaje del usuario.
+
         self.registrar_mensaje_usuario(
             texto
         )
+
 
         respuesta_bot = (
             self.consultar_ia_bot(
@@ -14334,34 +15761,78 @@ class BIN(QMainWindow):
             )
         )
 
+
         if respuesta_bot is not None:
 
-            self.registrar_evento_bin(
-                "BOT",
-                respuesta_bot,
+            self.registrar_respuesta_ia_bot(
+                respuesta_bot
             )
 
             return
+
+
+        # ====================================================
+        # BIN BOT NO DISPONIBLE
+        # ====================================================
 
         if self.tarea_seleccionada_id is None:
-            self.actualizar_chat_bin(
-                "Recibí tu mensaje, pero primero selecciona "
-                "o crea una tarea para asociarle acciones. "
-                "La IA local todavía no está conectada."
+
+            detalle = str(
+
+                getattr(
+                    self,
+                    "error_ia_bot",
+                    "",
+                )
+
+                or ""
+
+            ).strip()
+
+
+            mensaje = (
+
+                "Recibí tu mensaje, pero BIN Bot no está "
+                "disponible en este momento."
             )
+
+
+            if detalle:
+
+                mensaje += (
+
+                    "\n\nDetalle: "
+
+                    + detalle
+                )
+
+
+            self.actualizar_chat_bin(
+                mensaje
+            )
+
+
             return
 
-        tarea = self.obtener_tarea(self.tarea_seleccionada_id)
+
+        tarea = self.obtener_tarea(
+            self.tarea_seleccionada_id
+        )
+
 
         if not tarea:
-            self.actualizar_chat_bin("La tarea seleccionada ya no existe.")
+
+            self.actualizar_chat_bin(
+                "La tarea seleccionada ya no existe."
+            )
+
             return
 
+
         self.actualizar_chat_bin(
+
             f"Guardé el contexto de tu indicación para "
-            f"'{tarea['nombre']}': “{texto}”. "
-            "La IA local que convertirá este texto en acciones "
-            "se conectará en una etapa posterior."
+            f"'{tarea['nombre']}': “{texto}”."
         )
 
     def guardar_contexto_tarea(
@@ -36123,55 +37594,113 @@ class BIN(QMainWindow):
         if sys.platform != "win32":
             return False
 
+
         try:
 
-            hwnd = int(self.winId())
-
-            resultado = ctypes.windll.user32.SetWindowDisplayAffinity(
-                hwnd,
-                WDA_EXCLUDEFROMCAPTURE,
+            hwnd = int(
+                self.winId()
             )
+
+
+            resultado = (
+                ctypes.windll.user32.SetWindowDisplayAffinity(
+                    hwnd,
+                    WDA_EXCLUDEFROMCAPTURE,
+                )
+            )
+
+
+            # =================================================
+            # EXCLUSIÓN CORRECTA
+            # =================================================
 
             if resultado:
 
                 self.bin_excluido_de_captura = True
 
+
+                # El chat ya no es un QLabel.
+                # Todos los mensajes deben pasar por el
+                # renderer central del chat.
+
                 if hasattr(
                     self,
-                    "mensaje_chat",
+                    "registrar_evento_bin",
                 ):
 
-                    self.mensaje_chat.setText(
-                        "BIN: Mi ventana fue excluida " "de la captura del escritorio."
+                    self.registrar_evento_bin(
+
+                        "SISTEMA",
+
+                        (
+                            "Mi ventana fue excluida "
+                            "de la captura del escritorio."
+                        ),
                     )
+
 
                 return True
 
+
+            # =================================================
+            # WINDOWS NO PERMITIÓ LA EXCLUSIÓN
+            # =================================================
+
             self.bin_excluido_de_captura = False
+
 
             if hasattr(
                 self,
-                "mensaje_chat",
+                "registrar_evento_bin",
             ):
 
-                self.mensaje_chat.setText(
-                    "BIN: Windows no permitió excluir " "mi ventana de la captura."
+                self.registrar_evento_bin(
+
+                    "AVISO",
+
+                    (
+                        "Windows no permitió excluir "
+                        "mi ventana de la captura."
+                    ),
                 )
 
+
             return False
+
 
         except Exception as error:
 
             self.bin_excluido_de_captura = False
 
+
             if hasattr(
                 self,
-                "mensaje_chat",
+                "registrar_evento_bin",
             ):
 
-                self.mensaje_chat.setText(
-                    "BIN: No pude excluir mi ventana " "de la captura.\n\n" f"{error}"
+                self.registrar_evento_bin(
+
+                    "ERROR",
+
+                    (
+                        "No pude excluir mi ventana "
+                        "de la captura."
+                    ),
+
+                    str(
+                        error
+                    ),
                 )
+
+
+            else:
+
+                print(
+                    "BIN: No pude excluir mi ventana "
+                    "de la captura:",
+                    error,
+                )
+
 
             return False
 
@@ -38880,11 +40409,24 @@ class BIN(QMainWindow):
         self,
         mensaje,
     ):
+
         self.actualizar_estado_cabecera_visor(
+
             "Error de captura",
+
             "",
+
             ROJO,
         )
+
+
+        # ====================================================
+        # VISOR IA
+        # ====================================================
+        #
+        # visor_imagen continúa siendo QLabel.
+        # Aquí setText() SÍ es correcto.
+        # ====================================================
 
         if hasattr(
             self,
@@ -38893,24 +40435,50 @@ class BIN(QMainWindow):
 
             self.visor_imagen.clear()
 
+
             self.visor_imagen.setText(
-                "ERROR EN LA CAPTURA DEL ESCRITORIO\n\n" f"{mensaje}"
+
+                "ERROR EN LA CAPTURA DEL ESCRITORIO\n\n"
+
+                + str(
+                    mensaje
+                    or ""
+                )
             )
+
+
+        # ====================================================
+        # CHAT
+        # ====================================================
+        #
+        # mensaje_chat ahora es QWebEngineView.
+        # No utilizar setText().
+        # ====================================================
 
         if hasattr(
             self,
-            "mensaje_chat",
+            "registrar_evento_bin",
         ):
 
-            self.mensaje_chat.setText(
-                "BIN: No pude iniciar correctamente "
-                "la captura del escritorio.\n\n"
-                f"{mensaje}"
+            self.registrar_evento_bin(
+
+                "ERROR",
+
+                (
+                    "No pude iniciar correctamente "
+                    "la captura del escritorio."
+                ),
+
+                str(
+                    mensaje
+                    or ""
+                ),
             )
 
     # ========================================================
     # DETENER CAPTURA
     # ========================================================
+
 
     def detener_captura_pantalla(self):
 
@@ -41118,7 +42686,7 @@ if __name__ == "__main__":
         try:
 
             ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
-                "BIN.IA.Asistem.Light.v1.6.16"
+                "BIN.IA.Asistem.Light.v1.6.18"
             )
 
         except Exception:
