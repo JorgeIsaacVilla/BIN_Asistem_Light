@@ -8945,30 +8945,1436 @@ class BIN(QMainWindow):
     # MANUAL DE BIN
     # ========================================================
 
+    # ========================================================
+    # MANUAL DE BIN
+    # ========================================================
+
+    def cargar_manual_bin_light_json(
+        self,
+    ):
+        """
+        Carga el manual oficial estructurado de BIN Light.
+
+        Fuente:
+            data/manual_bin_bot.json
+
+        No utiliza MANUAL_BIN_LIGHT como fuente principal.
+        """
+
+        ruta = (
+            self.directorio_datos
+            / "manual_bin_bot.json"
+        )
+
+
+        if not ruta.exists():
+
+            return (
+                None,
+                ruta,
+                (
+                    "No encontré el archivo del manual:\n\n"
+                    + str(
+                        ruta
+                    )
+                ),
+            )
+
+
+        try:
+
+            contenido = ruta.read_text(
+                encoding="utf-8"
+            )
+
+
+            data = json.loads(
+                contenido
+            )
+
+
+        except Exception as error:
+
+            return (
+                None,
+                ruta,
+                (
+                    "No pude leer manual_bin_bot.json.\n\n"
+                    + str(
+                        error
+                    )
+                ),
+            )
+
+
+        if not isinstance(
+            data,
+            dict,
+        ):
+
+            return (
+                None,
+                ruta,
+                (
+                    "manual_bin_bot.json no contiene "
+                    "un objeto JSON válido."
+                ),
+            )
+
+
+        tipo = str(
+
+            data.get(
+                "tipo"
+            )
+
+            or ""
+
+        ).strip()
+
+
+        if tipo != "BIN_MANUAL":
+
+            return (
+                None,
+                ruta,
+                (
+                    "El archivo encontrado no corresponde "
+                    "a un manual BIN_MANUAL."
+                ),
+            )
+
+
+        secciones = data.get(
+            "secciones"
+        )
+
+
+        if not isinstance(
+            secciones,
+            list,
+        ):
+
+            return (
+                None,
+                ruta,
+                (
+                    "El manual no contiene una lista "
+                    "válida de secciones."
+                ),
+            )
+
+
+        return (
+            data,
+            ruta,
+            "",
+        )
+
+
+    # ========================================================
+    # RESOLVER IMÁGENES DEL MANUAL
+    # ========================================================
+
+    def resolver_ruta_imagen_manual(
+        self,
+        ruta,
+    ):
+        """
+        Convierte una ruta del JSON en una ruta física.
+
+        Ejemplo JSON:
+            src/Captura1_numerada.png
+
+        También permite encontrar variantes como:
+            src/captura (1).png
+        """
+
+        ruta_original = str(
+            ruta
+            or ""
+        ).strip()
+
+
+        if not ruta_original:
+
+            return None
+
+
+        recurso = Path(
+            ruta_original
+        )
+
+
+        if not recurso.is_absolute():
+
+            recurso = (
+                self.directorio_bin
+                / recurso
+            )
+
+
+        try:
+
+            recurso = recurso.resolve(
+                strict=False
+            )
+
+        except Exception:
+
+            pass
+
+
+        # ====================================================
+        # RUTA EXACTA
+        # ====================================================
+
+        if recurso.exists():
+
+            return recurso
+
+
+        # ====================================================
+        # FALLBACK POR NÚMERO DE CAPTURA
+        # ====================================================
+        #
+        # Permite:
+        #
+        # JSON:
+        #   src/Captura1_numerada.png
+        #
+        # DISCO:
+        #   src/captura (1).png
+        # ====================================================
+
+        nombre_original = Path(
+            ruta_original
+        ).stem
+
+
+        coincidencia_numero = re.search(
+
+            r"(\d+)",
+
+            nombre_original,
+        )
+
+
+        if not coincidencia_numero:
+
+            return recurso
+
+
+        numero = coincidencia_numero.group(
+            1
+        )
+
+
+        carpeta = recurso.parent
+
+
+        if (
+            not carpeta.exists()
+            or not carpeta.is_dir()
+        ):
+
+            return recurso
+
+
+        candidatos = []
+
+
+        for candidato in carpeta.iterdir():
+
+            if not candidato.is_file():
+
+                continue
+
+
+            if candidato.suffix.lower() not in {
+
+                ".png",
+                ".jpg",
+                ".jpeg",
+                ".webp",
+
+            }:
+
+                continue
+
+
+            nombre = candidato.stem.lower()
+
+
+            if "captura" not in nombre:
+
+                continue
+
+
+            coincide = re.search(
+
+                r"\b"
+                + re.escape(
+                    numero
+                )
+                + r"\b",
+
+                nombre,
+            )
+
+
+            if coincide:
+
+                candidatos.append(
+                    candidato
+                )
+
+
+        if len(
+            candidatos
+        ) == 1:
+
+            try:
+
+                return candidatos[
+                    0
+                ].resolve()
+
+            except Exception:
+
+                return candidatos[
+                    0
+                ]
+
+
+        return recurso
+
+
+    # ========================================================
+    # ETIQUETA DE TEXTO DEL MANUAL
+    # ========================================================
+
+    def agregar_texto_manual(
+        self,
+        layout,
+        texto,
+        objeto="textoSecundario",
+    ):
+
+        texto = str(
+            texto
+            or ""
+        ).strip()
+
+
+        if not texto:
+
+            return None
+
+
+        etiqueta = QLabel(
+            texto
+        )
+
+
+        etiqueta.setWordWrap(
+            True
+        )
+
+
+        etiqueta.setTextInteractionFlags(
+            Qt.TextSelectableByMouse
+        )
+
+
+        if objeto:
+
+            etiqueta.setObjectName(
+                objeto
+            )
+
+
+        etiqueta.setSizePolicy(
+            QSizePolicy.Expanding,
+            QSizePolicy.Preferred,
+        )
+
+
+        layout.addWidget(
+            etiqueta
+        )
+
+
+        return etiqueta
+
+
+    # ========================================================
+    # RENDERIZAR IMAGEN
+    # ========================================================
+
+    def agregar_imagen_manual(
+        self,
+        layout,
+        imagen,
+    ):
+
+        if isinstance(
+            imagen,
+            str,
+        ):
+
+            imagen = {
+                "ruta": imagen
+            }
+
+
+        if not isinstance(
+            imagen,
+            dict,
+        ):
+
+            return False
+
+
+        ruta = str(
+
+            imagen.get(
+                "ruta"
+            )
+
+            or ""
+
+        ).strip()
+
+
+        if not ruta:
+
+            return False
+
+
+        ruta_real = (
+            self.resolver_ruta_imagen_manual(
+                ruta
+            )
+        )
+
+
+        if (
+            ruta_real is None
+            or not ruta_real.exists()
+        ):
+
+            aviso = QLabel(
+
+                "⚠ Imagen no encontrada:\n"
+                + ruta
+            )
+
+
+            aviso.setWordWrap(
+                True
+            )
+
+
+            aviso.setStyleSheet(
+                f"""
+                color: {AMARILLO};
+                font-weight: 700;
+                padding: 8px;
+                """
+            )
+
+
+            layout.addWidget(
+                aviso
+            )
+
+
+            return False
+
+
+        pixmap = QPixmap(
+            str(
+                ruta_real
+            )
+        )
+
+
+        if pixmap.isNull():
+
+            aviso = QLabel(
+
+                "⚠ No pude cargar la imagen:\n"
+                + str(
+                    ruta_real
+                )
+            )
+
+
+            aviso.setWordWrap(
+                True
+            )
+
+
+            aviso.setStyleSheet(
+                f"""
+                color: {AMARILLO};
+                font-weight: 700;
+                padding: 8px;
+                """
+            )
+
+
+            layout.addWidget(
+                aviso
+            )
+
+
+            return False
+
+
+        # ====================================================
+        # ESCALA
+        # ====================================================
+
+        ancho_maximo = 780
+
+
+        if pixmap.width() > ancho_maximo:
+
+            pixmap = pixmap.scaled(
+
+                ancho_maximo,
+
+                10000,
+
+                Qt.KeepAspectRatio,
+
+                Qt.SmoothTransformation,
+            )
+
+
+        etiqueta_imagen = QLabel()
+
+
+        etiqueta_imagen.setAlignment(
+            Qt.AlignCenter
+        )
+
+
+        etiqueta_imagen.setPixmap(
+            pixmap
+        )
+
+
+        etiqueta_imagen.setSizePolicy(
+            QSizePolicy.Expanding,
+            QSizePolicy.Preferred,
+        )
+
+
+        etiqueta_imagen.setStyleSheet(
+            """
+            QLabel {
+                padding: 8px;
+                background: #080a0f;
+                border: 1px solid #252a35;
+                border-radius: 6px;
+            }
+            """
+        )
+
+
+        layout.addWidget(
+            etiqueta_imagen
+        )
+
+
+        # ====================================================
+        # PIE DE IMAGEN
+        # ====================================================
+
+        alt = str(
+
+            imagen.get(
+                "alt"
+            )
+
+            or imagen.get(
+                "descripcion"
+            )
+
+            or ruta_real.name
+
+        ).strip()
+
+
+        descripcion = str(
+
+            imagen.get(
+                "descripcion"
+            )
+
+            or ""
+
+        ).strip()
+
+
+        texto_pie = alt
+
+
+        if (
+            descripcion
+            and descripcion != alt
+        ):
+
+            texto_pie += (
+                "\n"
+                + descripcion
+            )
+
+
+        pie = QLabel(
+            texto_pie
+        )
+
+
+        pie.setWordWrap(
+            True
+        )
+
+
+        pie.setAlignment(
+            Qt.AlignCenter
+        )
+
+
+        pie.setObjectName(
+            "textoSecundario"
+        )
+
+
+        pie.setTextInteractionFlags(
+            Qt.TextSelectableByMouse
+        )
+
+
+        layout.addWidget(
+            pie
+        )
+
+
+        return True
+
+
+    # ========================================================
+    # INTERACCIÓN NUMERADA
+    # ========================================================
+
+    def agregar_interaccion_manual(
+        self,
+        layout,
+        interaccion,
+    ):
+
+        if not isinstance(
+            interaccion,
+            dict,
+        ):
+
+            return
+
+
+        numero = interaccion.get(
+            "numero"
+        )
+
+
+        control = str(
+
+            interaccion.get(
+                "control"
+            )
+
+            or interaccion.get(
+                "nombre"
+            )
+
+            or "Control"
+
+        ).strip()
+
+
+        tipo = str(
+
+            interaccion.get(
+                "tipo"
+            )
+
+            or ""
+
+        ).strip()
+
+
+        descripcion = str(
+
+            interaccion.get(
+                "descripcion"
+            )
+
+            or ""
+
+        ).strip()
+
+
+        accion_usuario = str(
+
+            interaccion.get(
+                "accion_usuario"
+            )
+
+            or ""
+
+        ).strip()
+
+
+        resultado = str(
+
+            interaccion.get(
+                "resultado"
+            )
+
+            or ""
+
+        ).strip()
+
+
+        notas = str(
+
+            interaccion.get(
+                "notas"
+            )
+
+            or ""
+
+        ).strip()
+
+
+        tarjeta = QFrame()
+
+
+        tarjeta.setObjectName(
+            "tarjetaTarea"
+        )
+
+
+        tarjeta.setSizePolicy(
+            QSizePolicy.Expanding,
+            QSizePolicy.Preferred,
+        )
+
+
+        tarjeta_layout = QVBoxLayout(
+            tarjeta
+        )
+
+
+        tarjeta_layout.setContentsMargins(
+            12,
+            10,
+            12,
+            10,
+        )
+
+
+        tarjeta_layout.setSpacing(
+            6
+        )
+
+
+        # ====================================================
+        # CABECERA
+        # ====================================================
+
+        cabecera = QHBoxLayout()
+
+
+        texto_numero = (
+            f"[{numero}]"
+            if numero is not None
+            else "•"
+        )
+
+
+        label_numero = QLabel(
+            texto_numero
+        )
+
+
+        label_numero.setStyleSheet(
+
+            f"""
+            color: {AMARILLO_FLUORESCENTE};
+            font-size: 17px;
+            font-weight: 900;
+            """
+        )
+
+
+        label_control = QLabel(
+            control
+        )
+
+
+        label_control.setWordWrap(
+            True
+        )
+
+
+        label_control.setStyleSheet(
+            f"""
+            color: {TEXTO};
+            font-size: 15px;
+            font-weight: 900;
+            """
+        )
+
+
+        cabecera.addWidget(
+            label_numero
+        )
+
+
+        cabecera.addWidget(
+            label_control,
+            1,
+        )
+
+
+        tarjeta_layout.addLayout(
+            cabecera
+        )
+
+
+        if tipo:
+
+            tipo_label = QLabel(
+                "Tipo: " + tipo
+            )
+
+
+            tipo_label.setObjectName(
+                "textoSecundario"
+            )
+
+
+            tarjeta_layout.addWidget(
+                tipo_label
+            )
+
+
+        if descripcion:
+
+            self.agregar_texto_manual(
+
+                tarjeta_layout,
+
+                descripcion,
+
+                objeto=None,
+            )
+
+
+        if accion_usuario:
+
+            self.agregar_texto_manual(
+
+                tarjeta_layout,
+
+                (
+                    "Cómo se usa:\n"
+                    + accion_usuario
+                ),
+
+                objeto=None,
+            )
+
+
+        if resultado:
+
+            self.agregar_texto_manual(
+
+                tarjeta_layout,
+
+                (
+                    "Resultado:\n"
+                    + resultado
+                ),
+
+                objeto=None,
+            )
+
+
+        if notas:
+
+            nota = QLabel(
+
+                "Nota:\n"
+                + notas
+            )
+
+
+            nota.setWordWrap(
+                True
+            )
+
+
+            nota.setStyleSheet(
+                f"""
+                color: {AMARILLO};
+                font-weight: 700;
+                """
+            )
+
+
+            tarjeta_layout.addWidget(
+                nota
+            )
+
+
+        layout.addWidget(
+            tarjeta
+        )
+
+
+    # ========================================================
+    # BLOQUES ESTRUCTURADOS
+    # ========================================================
+
+    def agregar_bloques_manual(
+        self,
+        layout,
+        bloques,
+        hay_interacciones=False,
+    ):
+
+        if not isinstance(
+            bloques,
+            list,
+        ):
+
+            return
+
+
+        for bloque in bloques:
+
+            if not isinstance(
+                bloque,
+                dict,
+            ):
+
+                continue
+
+
+            tipo = str(
+
+                bloque.get(
+                    "tipo"
+                )
+
+                or ""
+
+            ).strip().lower()
+
+
+            contenido = str(
+
+                bloque.get(
+                    "contenido"
+                )
+
+                or ""
+
+            ).strip()
+
+
+            # =================================================
+            # IMAGEN
+            # =================================================
+
+            if tipo == "imagen":
+
+                self.agregar_imagen_manual(
+                    layout,
+                    bloque,
+                )
+
+                continue
+
+
+            # =================================================
+            # TEXTO
+            # =================================================
+
+            if contenido:
+
+                self.agregar_texto_manual(
+
+                    layout,
+
+                    contenido,
+
+                    objeto=None,
+                )
+
+
+            # =================================================
+            # LISTAS / PASOS
+            # =================================================
+
+            items = bloque.get(
+                "items"
+            )
+
+
+            # Evitamos mostrar dos veces las mismas
+            # interacciones si existen como objetos.
+            if (
+                tipo == "interacciones"
+                and hay_interacciones
+            ):
+
+                continue
+
+
+            if not isinstance(
+                items,
+                list,
+            ):
+
+                continue
+
+
+            for indice, item in enumerate(
+                items,
+                start=1,
+            ):
+
+                if isinstance(
+                    item,
+                    dict,
+                ):
+
+                    texto_item = str(
+
+                        item.get(
+                            "contenido"
+                        )
+
+                        or item.get(
+                            "texto"
+                        )
+
+                        or item.get(
+                            "descripcion"
+                        )
+
+                        or ""
+
+                    ).strip()
+
+                else:
+
+                    texto_item = str(
+                        item
+                        or ""
+                    ).strip()
+
+
+                if not texto_item:
+
+                    continue
+
+
+                if tipo == "pasos":
+
+                    prefijo = (
+                        f"{indice}. "
+                    )
+
+                else:
+
+                    prefijo = "• "
+
+
+                self.agregar_texto_manual(
+
+                    layout,
+
+                    prefijo
+                    + texto_item,
+
+                    objeto=None,
+                )
+
+
+    # ========================================================
+    # ELEMENTOS INFORMATIVOS
+    # ========================================================
+
+    def agregar_elementos_informativos_manual(
+        self,
+        layout,
+        elementos,
+    ):
+
+        if not isinstance(
+            elementos,
+            list,
+        ):
+
+            return
+
+
+        for elemento in elementos:
+
+            if isinstance(
+                elemento,
+                dict,
+            ):
+
+                nombre = str(
+
+                    elemento.get(
+                        "nombre"
+                    )
+
+                    or elemento.get(
+                        "control"
+                    )
+
+                    or ""
+
+                ).strip()
+
+
+                descripcion = str(
+
+                    elemento.get(
+                        "descripcion"
+                    )
+
+                    or ""
+
+                ).strip()
+
+
+                if nombre:
+
+                    texto = nombre
+
+
+                    if descripcion:
+
+                        texto += (
+                            "\n"
+                            + descripcion
+                        )
+
+                else:
+
+                    texto = descripcion
+
+            else:
+
+                texto = str(
+                    elemento
+                    or ""
+                ).strip()
+
+
+            if not texto:
+
+                continue
+
+
+            panel = QFrame()
+
+
+            panel.setObjectName(
+                "panel"
+            )
+
+
+            panel_layout = QVBoxLayout(
+                panel
+            )
+
+
+            panel_layout.setContentsMargins(
+                10,
+                8,
+                10,
+                8,
+            )
+
+
+            self.agregar_texto_manual(
+
+                panel_layout,
+
+                texto,
+
+                objeto=None,
+            )
+
+
+            layout.addWidget(
+                panel
+            )
+
+
+    # ========================================================
+    # PANTALLA VISUAL DEL MANUAL
+    # ========================================================
+
+    def agregar_pantalla_manual(
+        self,
+        layout,
+        pantalla,
+    ):
+
+        if not isinstance(
+            pantalla,
+            dict,
+        ):
+
+            return
+
+
+        titulo = str(
+
+            pantalla.get(
+                "titulo"
+            )
+
+            or ""
+
+        ).strip()
+
+
+        if titulo:
+
+            etiqueta_titulo = QLabel(
+                titulo
+            )
+
+
+            etiqueta_titulo.setWordWrap(
+                True
+            )
+
+
+            etiqueta_titulo.setObjectName(
+                "tituloPanel"
+            )
+
+
+            etiqueta_titulo.setStyleSheet(
+
+                etiqueta_titulo.styleSheet()
+
+                + f"""
+                margin-top: 14px;
+                color: {BORGONA_CLARO};
+                """
+            )
+
+
+            layout.addWidget(
+                etiqueta_titulo
+            )
+
+
+        resumen = str(
+
+            pantalla.get(
+                "resumen"
+            )
+
+            or pantalla.get(
+                "descripcion"
+            )
+
+            or ""
+
+        ).strip()
+
+
+        if resumen:
+
+            self.agregar_texto_manual(
+
+                layout,
+
+                resumen,
+            )
+
+
+        # ====================================================
+        # IMAGEN PRINCIPAL DE LA PANTALLA
+        # ====================================================
+
+        imagen = pantalla.get(
+            "imagen"
+        )
+
+
+        if imagen:
+
+            self.agregar_imagen_manual(
+                layout,
+                imagen,
+            )
+
+
+        # ====================================================
+        # OTRAS IMÁGENES
+        # ====================================================
+
+        imagenes = pantalla.get(
+            "imagenes"
+        )
+
+
+        if isinstance(
+            imagenes,
+            list,
+        ):
+
+            for imagen_extra in imagenes:
+
+                self.agregar_imagen_manual(
+                    layout,
+                    imagen_extra,
+                )
+
+
+        interacciones = pantalla.get(
+            "interacciones"
+        )
+
+
+        hay_interacciones = isinstance(
+            interacciones,
+            list,
+        )
+
+
+        self.agregar_bloques_manual(
+
+            layout,
+
+            pantalla.get(
+                "bloques"
+            ),
+
+            hay_interacciones=(
+                hay_interacciones
+            ),
+        )
+
+
+        if hay_interacciones:
+
+            for interaccion in interacciones:
+
+                self.agregar_interaccion_manual(
+
+                    layout,
+
+                    interaccion,
+                )
+
+
+        self.agregar_elementos_informativos_manual(
+
+            layout,
+
+            pantalla.get(
+                "elementos_informativos"
+            ),
+        )
+
+
+    # ========================================================
+    # ABRIR MANUAL
+    # ========================================================
+
     def abrir_manual(
         self,
     ):
+
+        data, ruta_manual, error = (
+            self.cargar_manual_bin_light_json()
+        )
+
+
+        # ====================================================
+        # ERROR DE CARGA
+        # ====================================================
+
+        if data is None:
+
+            QMessageBox.critical(
+
+                self,
+
+                "Manual de BIN",
+
+                (
+                    "No pude cargar el manual oficial "
+                    "de BIN Light.\n\n"
+                    + str(
+                        error
+                        or ruta_manual
+                    )
+                ),
+            )
+
+            return
+
+
+        # ====================================================
+        # DIÁLOGO
+        # ====================================================
+
         dialogo = QDialog(
             self
         )
+
 
         dialogo.setWindowTitle(
             "Manual · BIN IA Asistem Light"
         )
 
+
         dialogo.resize(
-            860,
-            720,
+            920,
+            760,
         )
 
+
         dialogo.setMinimumSize(
-            620,
-            520,
+            680,
+            540,
         )
+
 
         principal = QVBoxLayout(
             dialogo
         )
+
 
         principal.setContentsMargins(
             14,
@@ -8977,86 +10383,453 @@ class BIN(QMainWindow):
             14,
         )
 
+
         principal.setSpacing(
             10
         )
 
+
+        titulo_manual = str(
+
+            data.get(
+                "titulo"
+            )
+
+            or "BIN IA ASISTEM — LIGHT"
+
+        ).strip()
+
+
+        version = str(
+
+            data.get(
+                "bin_version"
+            )
+
+            or ""
+
+        ).strip()
+
+
+        if version:
+
+            titulo_visible = (
+                titulo_manual
+                + " · v"
+                + version.lstrip(
+                    "vV"
+                )
+            )
+
+        else:
+
+            titulo_visible = (
+                titulo_manual
+            )
+
+
         titulo = QLabel(
-            "MANUAL DE BIN IA ASISTEM — LIGHT"
+            titulo_visible
         )
+
 
         titulo.setObjectName(
             "tituloDialogo"
         )
 
+
+        titulo.setWordWrap(
+            True
+        )
+
+
         principal.addWidget(
             titulo
         )
 
+
         descripcion = QLabel(
-            "Guía de uso, recomendaciones y consideraciones "
-            "para automatizaciones con BIN Light."
+
+            "Manual oficial de BIN Light. "
+            "El contenido se carga desde "
+            "data/manual_bin_bot.json."
         )
+
 
         descripcion.setWordWrap(
             True
         )
 
+
         descripcion.setObjectName(
             "textoSecundario"
         )
+
 
         principal.addWidget(
             descripcion
         )
 
-        manual = QTextEdit()
 
-        manual.setReadOnly(
+        # ====================================================
+        # SCROLL PRINCIPAL
+        # ====================================================
+
+        scroll = QScrollArea()
+
+
+        scroll.setWidgetResizable(
             True
         )
 
-        manual.setPlainText(
-            MANUAL_BIN_LIGHT
-        )
 
-        manual.setLineWrapMode(
-            QTextEdit.WidgetWidth
-        )
-
-        manual.setHorizontalScrollBarPolicy(
+        scroll.setHorizontalScrollBarPolicy(
             Qt.ScrollBarAlwaysOff
         )
 
-        manual.setVerticalScrollBarPolicy(
+
+        scroll.setVerticalScrollBarPolicy(
             Qt.ScrollBarAsNeeded
         )
 
-        manual.setSizePolicy(
-            QSizePolicy.Expanding,
-            QSizePolicy.Expanding,
+
+        scroll.setFrameShape(
+            QFrame.NoFrame
         )
 
+
+        contenedor = QWidget()
+
+
+        contenido = QVBoxLayout(
+            contenedor
+        )
+
+
+        contenido.setContentsMargins(
+            12,
+            12,
+            12,
+            18,
+        )
+
+
+        contenido.setSpacing(
+            10
+        )
+
+
+        contenido.setAlignment(
+            Qt.AlignTop
+        )
+
+
+        secciones = data.get(
+            "secciones"
+        ) or []
+
+
+        # ====================================================
+        # RENDERIZAR SECCIONES
+        # ====================================================
+
+        for numero_seccion, seccion in enumerate(
+            secciones,
+            start=1,
+        ):
+
+            if not isinstance(
+                seccion,
+                dict,
+            ):
+
+                continue
+
+
+            titulo_seccion = str(
+
+                seccion.get(
+                    "titulo"
+                )
+
+                or f"Sección {numero_seccion}"
+
+            ).strip()
+
+
+            # =================================================
+            # SEPARADOR
+            # =================================================
+
+            if numero_seccion > 1:
+
+                separador = QFrame()
+
+
+                separador.setFrameShape(
+                    QFrame.HLine
+                )
+
+
+                separador.setStyleSheet(
+
+                    f"""
+                    color: {BORGONA_OSCURO};
+                    background: {BORGONA_OSCURO};
+                    max-height: 1px;
+                    """
+                )
+
+
+                contenido.addWidget(
+                    separador
+                )
+
+
+            # =================================================
+            # TÍTULO DE SECCIÓN
+            # =================================================
+
+            label_titulo = QLabel(
+                titulo_seccion
+            )
+
+
+            label_titulo.setWordWrap(
+                True
+            )
+
+
+            label_titulo.setObjectName(
+                "tituloPanel"
+            )
+
+
+            label_titulo.setStyleSheet(
+
+                label_titulo.styleSheet()
+
+                + f"""
+                margin-top: 12px;
+                color: {AMARILLO_FLUORESCENTE};
+                """
+            )
+
+
+            contenido.addWidget(
+                label_titulo
+            )
+
+
+            # =================================================
+            # RESUMEN
+            # =================================================
+
+            resumen = str(
+
+                seccion.get(
+                    "resumen"
+                )
+
+                or ""
+
+            ).strip()
+
+
+            if resumen:
+
+                self.agregar_texto_manual(
+
+                    contenido,
+
+                    resumen,
+
+                    objeto=None,
+                )
+
+
+            # =================================================
+            # IMAGEN DIRECTA EN LA SECCIÓN
+            # =================================================
+
+            if seccion.get(
+                "imagen"
+            ):
+
+                self.agregar_imagen_manual(
+
+                    contenido,
+
+                    seccion.get(
+                        "imagen"
+                    ),
+                )
+
+
+            imagenes_seccion = seccion.get(
+                "imagenes"
+            )
+
+
+            if isinstance(
+                imagenes_seccion,
+                list,
+            ):
+
+                for imagen in imagenes_seccion:
+
+                    self.agregar_imagen_manual(
+
+                        contenido,
+
+                        imagen,
+                    )
+
+
+            # =================================================
+            # BLOQUES
+            # =================================================
+
+            interacciones = seccion.get(
+                "interacciones"
+            )
+
+
+            hay_interacciones = isinstance(
+                interacciones,
+                list,
+            )
+
+
+            self.agregar_bloques_manual(
+
+                contenido,
+
+                seccion.get(
+                    "bloques"
+                ),
+
+                hay_interacciones=(
+                    hay_interacciones
+                ),
+            )
+
+
+            # =================================================
+            # INTERACCIONES NUMERADAS
+            # =================================================
+
+            if hay_interacciones:
+
+                for interaccion in interacciones:
+
+                    self.agregar_interaccion_manual(
+
+                        contenido,
+
+                        interaccion,
+                    )
+
+
+            # =================================================
+            # ELEMENTOS INFORMATIVOS
+            # =================================================
+
+            self.agregar_elementos_informativos_manual(
+
+                contenido,
+
+                seccion.get(
+                    "elementos_informativos"
+                ),
+            )
+
+
+            # =================================================
+            # PANTALLAS / CAPTURAS ANIDADAS
+            # =================================================
+
+            pantallas = seccion.get(
+                "pantallas"
+            )
+
+
+            if isinstance(
+                pantallas,
+                list,
+            ):
+
+                for pantalla in pantallas:
+
+                    self.agregar_pantalla_manual(
+
+                        contenido,
+
+                        pantalla,
+                    )
+
+
+        contenido.addStretch()
+
+
+        scroll.setWidget(
+            contenedor
+        )
+
+
         principal.addWidget(
-            manual,
+            scroll,
             1,
         )
+
+
+        # ====================================================
+        # PIE
+        # ====================================================
+
+        pie = QLabel(
+
+            "Fuente: "
+            + str(
+                ruta_manual
+            )
+        )
+
+
+        pie.setObjectName(
+            "textoSecundario"
+        )
+
+
+        pie.setWordWrap(
+            True
+        )
+
+
+        principal.addWidget(
+            pie
+        )
+
 
         boton_cerrar = QPushButton(
             "CERRAR MANUAL"
         )
 
+
         boton_cerrar.setObjectName(
             "botonPrincipal"
         )
+
 
         boton_cerrar.clicked.connect(
             dialogo.accept
         )
 
+
         principal.addWidget(
             boton_cerrar
         )
+
 
         dialogo.exec()
 
