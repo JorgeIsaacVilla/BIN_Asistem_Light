@@ -1,12 +1,12 @@
 {
   "tipo": "BIN_MANUAL",
   "schema_version": 1,
-  "manual_version": "1.1-numerado",
-  "bin_version": "1.6.16",
-  "estado": "base estable + documentación visual inicial",
+  "manual_version": "1.2-entrenamientos",
+  "bin_version": "1.6.18",
+  "estado": "base estable + documentación visual + entrenamientos portables JSON",
   "titulo": "Manual de BIN IA Asistem — Light",
   "descripcion": "Fuente estructurada compartida para consultas de BIN_Bot y renderizado del manual/chat en BIN_Light.",
-  "ruta_recomendada": "data/manual_bin.json",
+  "ruta_recomendada": "data/manual_bin_bot.json",
   "recursos": {
     "base": "src",
     "rutas_relativas": true,
@@ -23,7 +23,7 @@
   "arquitectura": {
     "BIN_Bot": "Consulta, indexa y recupera contenido del manual. No necesita renderizar imágenes para comprender el texto asociado.",
     "BIN_Light": "Renderiza títulos, texto, listas, imágenes y futuras acciones/botones usando la misma fuente JSON.",
-    "principio": "Una sola fuente de verdad para el manual: data/manual_bin.json."
+    "principio": "Una sola fuente de verdad para el manual: data/manual_bin_bot.json."
   },
   "compatibilidad_render": {
     "tipos_bloque": [
@@ -43,14 +43,14 @@
   "secciones": [
     {
       "id": "introduccion",
-      "titulo": "BIN IA ASISTEM — LIGHT v1.6.16",
+      "titulo": "BIN IA ASISTEM — LIGHT v1.6.18",
       "aliases": [
         "qué es BIN Light",
         "que es bin",
         "bin light",
         "versión estable",
         "version estable",
-        "v1.6.16"
+        "v1.6.18"
       ],
       "resumen": "Descripción general y prioridades de la versión estable.",
       "bloques": [
@@ -108,7 +108,7 @@
       "bloques": [
         {
           "tipo": "texto",
-          "contenido": "BIN Light v1.6.16 no incorpora un modelo de inteligencia artificial local. Las decisiones durante una automatización son realizadas por el propio motor de BIN utilizando contexto de las acciones, estado de las ventanas, procesos activos, posición y dimensiones de ventanas, rutas de archivos y carpetas, URL del navegador, perfil del navegador, cuenta asociada cuando puede ser identificada, historial de la demostración, reglas y parámetros condicionales, verificaciones antes y después de las acciones y sistemas de corrección y recuperación. El objetivo es que BIN pueda adaptarse a pequeñas diferencias entre la demostración original y el entorno encontrado durante la ejecución."
+          "contenido": "BIN Light v1.6.18 no incorpora un modelo de inteligencia artificial local. Las decisiones durante una automatización son realizadas por el propio motor de BIN utilizando contexto de las acciones, estado de las ventanas, procesos activos, posición y dimensiones de ventanas, rutas de archivos y carpetas, URL del navegador, perfil del navegador, cuenta asociada cuando puede ser identificada, historial de la demostración, reglas y parámetros condicionales, verificaciones antes y después de las acciones y sistemas de corrección y recuperación. El objetivo es que BIN pueda adaptarse a pequeñas diferencias entre la demostración original y el entorno encontrado durante la ejecución."
         }
       ]
     },
@@ -211,6 +211,139 @@
       ]
     },
     {
+      "id": "entrenamientos_portables",
+      "titulo": "ENTRENAMIENTOS PORTABLES — DESCARGAR, COMPARTIR Y CARGAR RUTINAS",
+      "aliases": [
+        "entrenamientos",
+        "entrenamiento portable",
+        "descargar entrenamiento",
+        "descargar rutina",
+        "compartir entrenamiento",
+        "compartir rutina",
+        "enviar rutina",
+        "cargar entrenamiento",
+        "cargar rutina",
+        "importar entrenamiento",
+        "archivo json de entrenamiento",
+        "entrenamiento json",
+        "rutina json"
+      ],
+      "resumen": "BIN Light permite descargar una tarea o rutina como un entrenamiento en formato JSON, conservarlo como respaldo o enviarlo a otro usuario de BIN. Para obtener resultados equivalentes, el equipo receptor debe disponer de los mismos programas y se recomienda utilizar las mismas versiones con las que fue creada la rutina.",
+      "bloques": [
+        {
+          "tipo": "texto",
+          "contenido": "¿QUÉ ES UN ENTRENAMIENTO DE BIN?\n\nUn entrenamiento es una tarea o rutina de BIN preparada para conservarse, trasladarse a otro equipo o compartirse con otro usuario de BIN sin tener que repetir toda la demostración desde cero.\n\nActualmente BIN Light descarga los entrenamientos en formato .json. El archivo conserva la información de la rutina que BIN necesita para reconstruir la tarea en otro equipo compatible."
+        },
+        {
+          "tipo": "lista",
+          "items": [
+            "Las acciones que forman parte de la rutina.",
+            "Los tiempos de espera configurados entre acciones.",
+            "El contexto operativo guardado en las acciones.",
+            "Las acciones manuales añadidas a la tarea.",
+            "La información de ventanas, programas, procesos, rutas o recursos utilizada por la rutina cuando corresponda.",
+            "Las coordenadas absolutas guardadas durante el entrenamiento.",
+            "Las coordenadas portables o adaptables disponibles para ayudar a trabajar con otras resoluciones.",
+            "La configuración funcional necesaria para volver a incorporar la rutina a la Lista de tareas."
+          ]
+        },
+        {
+          "tipo": "texto",
+          "contenido": "COMPATIBILIDAD ENTRE EQUIPOS\n\nPara que BIN pueda reproducir la misma tarea en otro equipo, ese equipo debe tener instalados los programas que utiliza la rutina. También se recomienda utilizar las mismas versiones de esos programas.\n\nUna versión diferente puede cambiar botones, menús, posiciones, diálogos, tamaños de ventana, rutas o comportamientos. Cuando eso ocurre, una rutina que funcionaba en el equipo original puede necesitar ajustes antes de funcionar correctamente en el equipo receptor.\n\nBIN conserva información portable para mejorar la adaptación entre equipos y resoluciones diferentes, pero la compatibilidad final también depende del software, su versión, la configuración del equipo y el estado real de las ventanas y sesiones."
+        },
+        {
+          "tipo": "pasos",
+          "items": [
+            "1. Abre la Lista de tareas de BIN.",
+            "2. Localiza la tarea o rutina que deseas conservar o compartir.",
+            "3. Pulsa el símbolo de descarga que aparece en la tarjeta de la tarea.",
+            "4. BIN mostrará una advertencia de seguridad antes de generar el archivo.",
+            "5. Lee la advertencia y pulsa SI ESTOY SEGURO únicamente si comprobaste que la rutina puede compartirse.",
+            "6. Selecciona la ubicación donde deseas guardar el archivo.",
+            "7. BIN generará el entrenamiento en formato .json.",
+            "8. Puedes conservar ese archivo como respaldo o enviarlo a otro usuario de BIN."
+          ]
+        },
+        {
+          "tipo": "texto",
+          "contenido": "ADVERTENCIA ANTES DE DESCARGAR\n\nSe recomienda, antes de descargar el entrenamiento, asegurarse de no haber digitado cuentas con contraseñas ni otros datos privados de autenticación dentro de la rutina.\n\nActualmente el modo repetición no está diseñado como una bóveda segura de credenciales. Por esta razón, una rutina destinada a compartirse no debe utilizarse para respaldar, transportar o reproducir contraseñas."
+        },
+        {
+          "tipo": "lista",
+          "items": [
+            "No incluyas contraseñas.",
+            "No incluyas PIN.",
+            "No incluyas códigos de verificación.",
+            "No incluyas códigos de autenticación multifactor o 2FA.",
+            "No incluyas passkeys.",
+            "No incluyas frases de recuperación.",
+            "No incluyas tokens.",
+            "No incluyas API keys.",
+            "No incluyas secretos de acceso u otros datos privados de autenticación."
+          ]
+        },
+        {
+          "tipo": "texto",
+          "contenido": "Si una tarea necesita una cuenta autenticada, inicia sesión manualmente antes de ejecutar la rutina. Si la sesión ha expirado, realiza nuevamente la autenticación de manera manual.\n\nNunca utilices un entrenamiento de BIN como método para guardar o enviar una contraseña."
+        },
+        {
+          "tipo": "texto",
+          "contenido": "COMPARTIR UN ENTRENAMIENTO\n\nUna vez creado el archivo JSON, puedes enviarlo a otro usuario de BIN utilizando el medio que prefieras. El archivo transporta la rutina, pero no instala los programas utilizados por ella y tampoco transporta licencias, cuentas autenticadas, permisos ni configuraciones externas del software.\n\nEl usuario que recibe el entrenamiento debe preparar su equipo con los programas necesarios antes de intentar ejecutar la tarea."
+        },
+        {
+          "tipo": "pasos",
+          "items": [
+            "1. Obtén el archivo .json del entrenamiento.",
+            "2. Abre BIN Light.",
+            "3. Arrastra el archivo .json directamente al área del Chat con BIN.",
+            "4. BIN comprobará que el archivo corresponde a un entrenamiento válido.",
+            "5. BIN leerá los programas registrados por la rutina.",
+            "6. Aparecerá una ventana con los programas que necesitas tener instalados en tu equipo.",
+            "7. Comprueba la lista de programas y verifica que dispones de las versiones necesarias.",
+            "8. Lee completamente la advertencia de seguridad.",
+            "9. Pulsa CARGAR ENTRENAMIENTO A LISTA DE TAREAS si deseas incorporarlo.",
+            "10. Pulsa CANCELAR CARGA si no reconoces el entrenamiento, no confías en su origen o no deseas incorporarlo.",
+            "11. BIN añadirá el entrenamiento como una nueva tarea en la Lista de tareas.",
+            "12. Revisa sus acciones antes de activarla o ejecutarla por primera vez."
+          ]
+        },
+        {
+          "tipo": "texto",
+          "contenido": "PROGRAMAS NECESARIOS\n\nAl cargar un entrenamiento, BIN muestra los programas que pudo identificar dentro de la rutina y comprueba su disponibilidad en el equipo cuando puede reconocerlos.\n\nQue BIN detecte un programa instalado no garantiza por sí solo que la rutina sea totalmente compatible. Verifica también la versión instalada. Para obtener el comportamiento más parecido al entrenamiento original, se recomienda utilizar la misma versión del programa con la que se creó la rutina."
+        },
+        {
+          "tipo": "texto",
+          "contenido": "SEGURIDAD DE LOS ENTRENAMIENTOS\n\nUn entrenamiento puede contener acciones de mouse, teclado, escritura, ventanas, apertura de programas, navegación y otras acciones automatizadas. Por esta razón debes tratar un entrenamiento recibido como un archivo capaz de ejecutar acciones en tu equipo.\n\nVerifica siempre la fuente que te suministró el entrenamiento. Verifica también las acciones durante la primera carga para asegurarte de que la rutina realiza las tareas que esperas y no ejecuta acciones no autorizadas o ataques."
+        },
+        {
+          "tipo": "lista",
+          "items": [
+            "Confirma quién creó o te envió el archivo.",
+            "No cargues entrenamientos de procedencia desconocida o sospechosa.",
+            "Comprueba los programas que BIN indica como necesarios.",
+            "Verifica, siempre que sea posible, que sean las mismas versiones utilizadas durante la creación de la rutina.",
+            "Revisa la tarea desde la Lista de tareas antes de ejecutarla.",
+            "Utiliza VER y el Panel de acciones para inspeccionar sus pasos cuando sea necesario.",
+            "Comprueba aperturas de programas, sitios web, escritura de texto, clics y comandos.",
+            "Supervisa personalmente la primera ejecución.",
+            "Detén la tarea inmediatamente si realiza una acción diferente a la esperada."
+          ]
+        },
+        {
+          "tipo": "texto",
+          "contenido": "Un entrenamiento no debe considerarse seguro únicamente porque tenga formato JSON o porque BIN pueda abrirlo. La confianza debe establecerse por la procedencia del archivo y por la revisión de las acciones que contiene."
+        },
+        {
+          "tipo": "texto",
+          "contenido": "PRIMERA EJECUCIÓN\n\nLa primera ejecución de un entrenamiento compartido debe realizarse bajo supervisión del usuario. Comprueba que los programas correctos se abren, que las ventanas son las esperadas y que cada acción corresponde con la tarea que deseas realizar.\n\nSi la rutina funciona correctamente en el nuevo equipo, podrá utilizarse posteriormente como cualquier otra tarea de BIN. Si existen diferencias de versión, resolución, disposición de ventanas, interfaz del programa o tiempos de carga, puede ser necesario ajustar acciones o tiempos antes de utilizarla de forma programada."
+        },
+        {
+          "tipo": "texto",
+          "contenido": "IMPORTANTE\n\nDescargar una rutina permite transportar el procedimiento aprendido por BIN. No transporta los programas utilizados por la tarea, no instala dependencias externas, no garantiza que las sesiones estén iniciadas y no sustituye licencias, cuentas, permisos ni configuraciones necesarias en el equipo receptor."
+        }
+      ]
+    },
+    {
       "id": "automatizaciones_web",
       "titulo": "CONSIDERACIONES PARA AUTOMATIZACIONES WEB",
       "aliases": [
@@ -255,14 +388,14 @@
       "aliases": [
         "versión",
         "version",
-        "v1.6.16",
+        "v1.6.18",
         "estable"
       ],
-      "resumen": "BIN IA Asistem — Light, versión estable v1.6.16.",
+      "resumen": "BIN IA Asistem — Light, versión estable v1.6.18.",
       "bloques": [
         {
           "tipo": "texto",
-          "contenido": "BIN IA Asistem — Light. Versión estable: v1.6.16."
+          "contenido": "BIN IA Asistem — Light. Versión estable: v1.6.18."
         }
       ]
     },
@@ -294,13 +427,13 @@
         "botones",
         "manual de interfaz"
       ],
-      "resumen": "Vista principal de BIN IA Asistem — Light v1.6.16 con Lista de tareas, Visor IA, Panel de acciones y Chat con BIN.",
+      "resumen": "Vista principal de BIN IA Asistem — Light v1.6.18 con Lista de tareas, Visor IA, Panel de acciones y Chat con BIN.",
       "bloques": [
         {
           "tipo": "imagen",
           "ruta": "src/Captura1_numerada.png",
           "alt": "Interfaz principal de BIN Light — controles numerados",
-          "descripcion": "Vista principal de BIN IA Asistem — Light v1.6.16 con Lista de tareas, Visor IA, Panel de acciones y Chat con BIN. Los círculos amarillos numerados se explican en la lista de interacciones de esta sección."
+          "descripcion": "Vista principal de BIN IA Asistem — Light v1.6.18 con Lista de tareas, Visor IA, Panel de acciones y Chat con BIN. Los círculos amarillos numerados se explican en la lista de interacciones de esta sección."
         },
         {
           "tipo": "interacciones",
@@ -1848,13 +1981,47 @@
         "sin_ia_local",
         "filosofia_bin_light"
       ]
+    },
+    {
+      "consulta": "¿Cómo descargo un entrenamiento?",
+      "secciones": [
+        "entrenamientos_portables",
+        "recomendaciones_uso"
+      ]
+    },
+    {
+      "consulta": "¿Cómo comparto una rutina de BIN?",
+      "secciones": [
+        "entrenamientos_portables"
+      ]
+    },
+    {
+      "consulta": "¿Cómo cargo un entrenamiento?",
+      "secciones": [
+        "entrenamientos_portables",
+        "chat_bin"
+      ]
+    },
+    {
+      "consulta": "¿Qué programas necesito para usar un entrenamiento?",
+      "secciones": [
+        "entrenamientos_portables",
+        "requisitos"
+      ]
+    },
+    {
+      "consulta": "¿Es seguro cargar un entrenamiento recibido?",
+      "secciones": [
+        "entrenamientos_portables",
+        "recomendaciones_uso"
+      ]
     }
   ],
   "conteo_interacciones_documentadas": 120,
   "imagenes_raiz": "src",
   "convencion_interacciones": {
     "descripcion": "Cada captura del manual contiene círculos amarillos numerados. El número visible en la imagen corresponde directamente al campo 'numero' de una interacción documentada en la misma sección.",
-    "regla": "numero visible en imagen = numero en manual_bin.json",
+    "regla": "numero visible en imagen = numero en manual_bin_bot.json",
     "uso_bin_bot": "BIN_Bot puede responder por nombre del control, por pantalla o por número. Ejemplo: “¿Qué hace el número 25 de la pantalla principal?”",
     "uso_bin_light": "BIN Light puede renderizar la captura numerada y, debajo o junto a ella, la explicación del número consultado."
   },

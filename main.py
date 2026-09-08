@@ -973,6 +973,119 @@ class Panel(QFrame):
         super().__init__()
 
         self.setObjectName("panel")
+# ============================================================
+# CHAT — ARRASTRAR ENTRENAMIENTOS JSON
+# ============================================================
+
+
+def ruta_json_desde_drop(event):
+    try:
+        mime = event.mimeData()
+
+        if not mime or not mime.hasUrls():
+            return ""
+
+        for url in mime.urls():
+            if not url.isLocalFile():
+                continue
+
+            ruta = str(url.toLocalFile() or "").strip()
+
+            if ruta and Path(ruta).suffix.lower() == ".json":
+                return ruta
+
+    except Exception:
+        pass
+
+    return ""
+
+
+class ChatTrainingDropLineEdit(QLineEdit):
+
+    archivo_json_arrastrado = Signal(str)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self.setAcceptDrops(
+            True
+        )
+
+    def dragEnterEvent(
+        self,
+        event,
+    ):
+        if ruta_json_desde_drop(event):
+
+            event.acceptProposedAction()
+
+            return
+
+        event.ignore()
+
+    def dropEvent(
+        self,
+        event,
+    ):
+        ruta = ruta_json_desde_drop(
+            event
+        )
+
+        if not ruta:
+
+            event.ignore()
+
+            return
+
+        self.archivo_json_arrastrado.emit(
+            ruta
+        )
+
+        event.acceptProposedAction()
+
+
+class ChatTrainingDropTextEdit(QTextEdit):
+
+    archivo_json_arrastrado = Signal(str)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self.setAcceptDrops(
+            True
+        )
+
+    def dragEnterEvent(
+        self,
+        event,
+    ):
+        if ruta_json_desde_drop(event):
+
+            event.acceptProposedAction()
+
+            return
+
+        event.ignore()
+
+    def dropEvent(
+        self,
+        event,
+    ):
+        ruta = ruta_json_desde_drop(
+            event
+        )
+
+        if not ruta:
+
+            event.ignore()
+
+            return
+
+        self.archivo_json_arrastrado.emit(
+            ruta
+        )
+
+        event.acceptProposedAction()
 
 
 class ConflictDialog(QDialog):
@@ -5116,6 +5229,7 @@ class TaskCard(QFrame):
     seleccion_solicitada = Signal(int)
 
     reset_solicitado = Signal(int)
+    descargar_entrenamiento_solicitado = Signal(int)
 
     contexto_guardado = Signal(
         int,
@@ -5392,13 +5506,37 @@ class TaskCard(QFrame):
 
         self.boton_copiar = QPushButton("COPIAR")
 
+        self.boton_descargar_entrenamiento = QPushButton("⇩")
+
+        self.boton_descargar_entrenamiento.setObjectName(
+            "botonDescargarEntrenamiento"
+        )
+
+        self.boton_descargar_entrenamiento.setFixedWidth(
+            38
+        )
+
+        self.boton_descargar_entrenamiento.setToolTip(
+            "Descargar entrenamiento"
+        )
+
         self.boton_pausa = QPushButton()
 
-        botones.addWidget(self.boton_ver)
+        botones.addWidget(
+            self.boton_ver
+        )
 
-        botones.addWidget(self.boton_copiar)
+        botones.addWidget(
+            self.boton_copiar
+        )
 
-        botones.addWidget(self.boton_pausa)
+        botones.addWidget(
+            self.boton_descargar_entrenamiento
+        )
+
+        botones.addWidget(
+            self.boton_pausa
+        )
 
         layout.addLayout(botones)
 
@@ -5442,6 +5580,12 @@ class TaskCard(QFrame):
 
         self.boton_copiar.clicked.connect(
             lambda: self.copiar_solicitado.emit(self.tarea["id"])
+        )
+
+        self.boton_descargar_entrenamiento.clicked.connect(
+            lambda: self.descargar_entrenamiento_solicitado.emit(
+                self.tarea["id"]
+            )
         )
 
         self.boton_eliminar.clicked.connect(
@@ -11929,7 +12073,7 @@ class BIN(QMainWindow):
             0,
         )
 
-        self.entrada_chat = QLineEdit()
+        self.entrada_chat = ChatTrainingDropLineEdit()
 
         self.entrada_chat.setPlaceholderText(
             "Escribe una indicación para BIN..."
@@ -11945,6 +12089,10 @@ class BIN(QMainWindow):
 
         self.entrada_chat.returnPressed.connect(
             self.procesar_chat
+        )
+
+        self.entrada_chat.archivo_json_arrastrado.connect(
+            self.procesar_entrenamiento_json_arrastrado
         )
 
         entrada_chat_layout.addWidget(
@@ -12160,6 +12308,10 @@ class BIN(QMainWindow):
             tarjeta.seleccion_solicitada.connect(self.seleccionar_tarea)
             tarjeta.reset_solicitado.connect(self.resetear_tarea)
 
+            tarjeta.descargar_entrenamiento_solicitado.connect(
+            self.descargar_entrenamiento_json
+        )
+
             tarjeta.contexto_guardado.connect(
                 self.guardar_contexto_tarea
             )
@@ -12173,6 +12325,692 @@ class BIN(QMainWindow):
         # todavía puede no existir.
         if hasattr(self, "layout_acciones"):
             self.refrescar_panel_acciones()
+
+    # ========================================================
+    # ENTRENAMIENTOS PORTABLES JSON
+    # ========================================================
+
+    def _nombre_programa_desde_proceso(
+        self,
+        proceso,
+    ):
+        proceso = str(
+            proceso
+            or ""
+        ).strip()
+
+        mapa = {
+            "chrome.exe": "Google Chrome",
+            "msedge.exe": "Microsoft Edge",
+            "firefox.exe": "Mozilla Firefox",
+            "brave.exe": "Brave",
+            "opera.exe": "Opera",
+            "winword.exe": "Microsoft Word",
+            "excel.exe": "Microsoft Excel",
+            "powerpnt.exe": "Microsoft PowerPoint",
+            "msaccess.exe": "Microsoft Access",
+            "outlook.exe": "Microsoft Outlook",
+            "onenote.exe": "Microsoft OneNote",
+            "soffice.exe": "LibreOffice",
+            "notepad.exe": "Bloc de notas",
+        }
+
+        return (
+            mapa.get(
+                proceso.lower()
+            )
+            or Path(proceso).stem
+            or "Programa"
+        )
+
+    def obtener_programas_entrenamiento(
+        self,
+        tarea,
+    ):
+        encontrados = {}
+
+        procesos_ignorar = {
+            "",
+            "explorer.exe",
+            "dwm.exe",
+            "shellexperiencehost.exe",
+            "startmenuexperiencehost.exe",
+            "searchhost.exe",
+            "searchapp.exe",
+            "applicationframehost.exe",
+        }
+
+        def recorrer(
+            valor,
+        ):
+            if isinstance(
+                valor,
+                dict,
+            ):
+                proceso = str(
+                    valor.get(
+                        "proceso",
+                        "",
+                    )
+                    or ""
+                ).strip()
+
+                ejecutable = str(
+                    valor.get(
+                        "ejecutable",
+                        "",
+                    )
+                    or ""
+                ).strip()
+
+                nombre = str(
+                    valor.get(
+                        "software_nombre",
+                        "",
+                    )
+                    or ""
+                ).strip()
+
+                if (
+                    not proceso
+                    and ejecutable
+                ):
+                    proceso = Path(
+                        ejecutable
+                    ).name
+
+                if (
+                    proceso
+                    and proceso.lower()
+                    not in procesos_ignorar
+                ):
+                    clave = proceso.lower()
+
+                    if clave not in encontrados:
+
+                        encontrados[
+                            clave
+                        ] = {
+                            "nombre": (
+                                nombre
+                                or self._nombre_programa_desde_proceso(
+                                    proceso
+                                )
+                            ),
+                            "proceso": proceso,
+                            "ejecutable": ejecutable,
+                        }
+
+                    elif (
+                        ejecutable
+                        and not encontrados[
+                            clave
+                        ].get(
+                            "ejecutable"
+                        )
+                    ):
+                        encontrados[
+                            clave
+                        ][
+                            "ejecutable"
+                        ] = ejecutable
+
+                for subvalor in valor.values():
+                    recorrer(
+                        subvalor
+                    )
+
+            elif isinstance(
+                valor,
+                list,
+            ):
+                for subvalor in valor:
+                    recorrer(
+                        subvalor
+                    )
+
+        recorrer(
+            tarea.get(
+                "acciones",
+                [],
+            )
+        )
+
+        recorrer(
+            tarea.get(
+                "acciones_semanticas",
+                [],
+            )
+        )
+
+        resultado = list(
+            encontrados.values()
+        )
+
+        resultado.sort(
+            key=lambda item: item.get(
+                "nombre",
+                "",
+            ).lower()
+        )
+
+        return resultado
+
+    def construir_tarea_entrenamiento_portable(
+        self,
+        tarea,
+    ):
+        claves_permitidas = [
+            "nombre",
+            "hora",
+            "veces",
+            "intervalo_valor",
+            "intervalo_unidad",
+            "dias",
+            "duracion",
+            "limpieza_ventanas",
+            "contexto",
+            "acciones",
+            "acciones_semanticas",
+        ]
+
+        portable = {}
+
+        for clave in claves_permitidas:
+
+            if clave not in tarea:
+                continue
+
+            portable[
+                clave
+            ] = json.loads(
+                json.dumps(
+                    tarea.get(
+                        clave
+                    ),
+                    ensure_ascii=False,
+                )
+            )
+
+        return portable
+
+    def descargar_entrenamiento_json(
+        self,
+        tarea_id,
+    ):
+        tarea = self.obtener_tarea(
+            tarea_id
+        )
+
+        if tarea is None:
+            return
+
+        dialogo = QMessageBox(
+            self
+        )
+
+        dialogo.setWindowTitle(
+            "Descargar entrenamiento"
+        )
+
+        dialogo.setIcon(
+            QMessageBox.Warning
+        )
+
+        dialogo.setText(
+            "Se recomienda antes de descargar el entrenamiento, "
+            "asegurarse de no digitar cuentas con contraseñas, ya que "
+            "actualmente el modo repetición no respalda esas acciones, "
+            "si necesitas pasarlo a otro usuario."
+        )
+
+        boton_seguro = dialogo.addButton(
+            "SI ESTOY SEGURO",
+            QMessageBox.AcceptRole,
+        )
+
+        boton_cancelar = dialogo.addButton(
+            "CANCELAR",
+            QMessageBox.RejectRole,
+        )
+
+        dialogo.setDefaultButton(
+            boton_cancelar
+        )
+
+        dialogo.exec()
+
+        if (
+            dialogo.clickedButton()
+            is not boton_seguro
+        ):
+            return
+
+        nombre_tarea = str(
+            tarea.get(
+                "nombre",
+                "entrenamiento",
+            )
+            or "entrenamiento"
+        )
+
+        nombre_seguro = re.sub(
+            r'[<>:"/\\|?*]+',
+            "_",
+            nombre_tarea,
+        ).strip(
+            " ."
+        )
+
+        if not nombre_seguro:
+            nombre_seguro = "entrenamiento"
+
+        ruta_sugerida = (
+            Path.home()
+            / f"{nombre_seguro}_BIN_entrenamiento.json"
+        )
+
+        ruta_destino, _ = QFileDialog.getSaveFileName(
+            self,
+            "Guardar entrenamiento BIN",
+            str(
+                ruta_sugerida
+            ),
+            "Entrenamiento BIN (*.json);;JSON (*.json)",
+        )
+
+        if not ruta_destino:
+            return
+
+        ruta = Path(
+            ruta_destino
+        )
+
+        if ruta.suffix.lower() != ".json":
+
+            ruta = ruta.with_suffix(
+                ".json"
+            )
+
+        paquete = {
+            "tipo": "BIN_ENTRENAMIENTO",
+            "schema_version": 1,
+            "bin": "BIN IA Asistem — Light",
+            "version_bin": "1.6.18",
+            "exportado_en": datetime.now().isoformat(),
+            "programas_requeridos": (
+                self.obtener_programas_entrenamiento(
+                    tarea
+                )
+            ),
+            "tarea": (
+                self.construir_tarea_entrenamiento_portable(
+                    tarea
+                )
+            ),
+        }
+
+        try:
+            ruta.write_text(
+                json.dumps(
+                    paquete,
+                    ensure_ascii=False,
+                    indent=4,
+                ),
+                encoding="utf-8",
+            )
+
+        except Exception as error:
+
+            QMessageBox.critical(
+                self,
+                "Descargar entrenamiento",
+                (
+                    "BIN no pudo guardar el entrenamiento.\n\n"
+                    + str(
+                        error
+                    )
+                ),
+            )
+
+            return
+
+        QMessageBox.information(
+            self,
+            "Descargar entrenamiento",
+            (
+                "Entrenamiento guardado correctamente.\n\n"
+                + str(
+                    ruta
+                )
+            ),
+        )
+
+    def _programa_instalado_para_entrenamiento(
+        self,
+        programa,
+    ):
+        programa = (
+            programa
+            or {}
+        )
+
+        proceso = str(
+            programa.get(
+                "proceso",
+                "",
+            )
+            or ""
+        ).strip()
+
+        ejecutable = str(
+            programa.get(
+                "ejecutable",
+                "",
+            )
+            or ""
+        ).strip()
+
+        try:
+            ruta = (
+                self.resolver_ruta_aplicacion_windows(
+                    proceso,
+                    ejecutable,
+                )
+            )
+
+            return bool(
+                ruta
+            )
+
+        except Exception:
+            return False
+
+    def procesar_entrenamiento_json_arrastrado(
+        self,
+        ruta_archivo,
+    ):
+        ruta = Path(
+            str(
+                ruta_archivo
+                or ""
+            )
+        )
+
+        if (
+            not ruta.exists()
+            or not ruta.is_file()
+        ):
+            return
+
+        if ruta.suffix.lower() != ".json":
+
+            QMessageBox.warning(
+                self,
+                "Cargar entrenamiento",
+                (
+                    "BIN sólo puede cargar entrenamientos "
+                    "en formato .json."
+                ),
+            )
+
+            return
+
+        try:
+            if (
+                ruta.stat().st_size
+                > 20 * 1024 * 1024
+            ):
+                raise ValueError(
+                    "El archivo supera el tamaño permitido "
+                    "para un entrenamiento."
+                )
+
+            datos = json.loads(
+                ruta.read_text(
+                    encoding="utf-8"
+                )
+            )
+
+        except Exception as error:
+
+            QMessageBox.warning(
+                self,
+                "Cargar entrenamiento",
+                (
+                    "No pude leer este archivo JSON "
+                    "como entrenamiento BIN.\n\n"
+                    + str(
+                        error
+                    )
+                ),
+            )
+
+            return
+
+        if (
+            not isinstance(
+                datos,
+                dict,
+            )
+            or str(
+                datos.get(
+                    "tipo",
+                    "",
+                )
+                or ""
+            ).strip()
+            != "BIN_ENTRENAMIENTO"
+            or not isinstance(
+                datos.get(
+                    "tarea"
+                ),
+                dict,
+            )
+        ):
+            QMessageBox.warning(
+                self,
+                "Cargar entrenamiento",
+                (
+                    "Este archivo JSON no corresponde "
+                    "a un entrenamiento de BIN."
+                ),
+            )
+
+            return
+
+        tarea_importada = datos.get(
+            "tarea"
+        )
+
+        if not isinstance(
+            tarea_importada.get(
+                "acciones",
+                [],
+            ),
+            list,
+        ):
+            QMessageBox.warning(
+                self,
+                "Cargar entrenamiento",
+                (
+                    "El entrenamiento no contiene "
+                    "una lista válida de acciones."
+                ),
+            )
+
+            return
+
+        programas = (
+            self.obtener_programas_entrenamiento(
+                tarea_importada
+            )
+        )
+
+        lineas_programas = []
+
+        for programa in programas:
+
+            nombre = str(
+                programa.get(
+                    "nombre"
+                )
+                or programa.get(
+                    "proceso"
+                )
+                or "Programa"
+            ).strip()
+
+            if self._programa_instalado_para_entrenamiento(
+                programa
+            ):
+                estado = "✓ Instalado"
+
+            else:
+                estado = "⚠ No detectado"
+
+            lineas_programas.append(
+                f"• {nombre} — {estado}"
+            )
+
+        if lineas_programas:
+
+            lista_programas = "\n".join(
+                lineas_programas
+            )
+
+        else:
+            lista_programas = (
+                "• El entrenamiento no registró "
+                "programas externos."
+            )
+
+        dialogo = QMessageBox(
+            self
+        )
+
+        dialogo.setWindowTitle(
+            "Cargar entrenamiento"
+        )
+
+        dialogo.setIcon(
+            QMessageBox.Warning
+        )
+
+        dialogo.setText(
+            "Necesitas tener estos programas Instalados en tu equipo.\n\n"
+            + lista_programas
+            + "\n\n"
+            "Verifique siempre la fuente que le suministró el entrenamiento, "
+            "verifique siempre las acciones en la primera carga, para "
+            "asegurarce que está realizando las tareas que espera, y no está "
+            "ejecutando ataques.."
+        )
+
+        boton_cargar = dialogo.addButton(
+            "CARGAR ENTRENAMIENTO A LISTA DE TAREAS",
+            QMessageBox.AcceptRole,
+        )
+
+        boton_cancelar = dialogo.addButton(
+            "CANCELAR CARGA",
+            QMessageBox.RejectRole,
+        )
+
+        dialogo.setDefaultButton(
+            boton_cancelar
+        )
+
+        dialogo.exec()
+
+        if (
+            dialogo.clickedButton()
+            is not boton_cargar
+        ):
+            return
+
+        nueva = (
+            self.construir_tarea_entrenamiento_portable(
+                tarea_importada
+            )
+        )
+
+        nuevo_id = (
+            max(
+                [
+                    int(
+                        tarea.get(
+                            "id",
+                            0,
+                        )
+                        or 0
+                    )
+                    for tarea in self.tareas
+                ],
+                default=0,
+            )
+            + 1
+        )
+
+        nueva[
+            "id"
+        ] = nuevo_id
+
+        nueva[
+            "estado"
+        ] = "DETENIDA"
+
+        nueva[
+            "transcurrido"
+        ] = "00:00:00"
+
+        nueva[
+            "progreso"
+        ] = 0
+
+        nueva[
+            "elapsed_seconds"
+        ] = 0
+
+        nueva[
+            "detalle_estado"
+        ] = (
+            "Entrenamiento importado. "
+            "Revise sus acciones antes de activarlo."
+        )
+
+        self.tareas.append(
+            nueva
+        )
+
+        self.normalizar_tareas()
+
+        self.guardar_tareas_en_disco()
+
+        self.refrescar_lista_tareas()
+
+        self.seleccionar_tarea(
+            nuevo_id
+        )
+
+        self.registrar_evento_bin(
+            "ENTRENA",
+            "Entrenamiento cargado a la lista de tareas.",
+            (
+                f"Archivo: {ruta.name}\n"
+                f"Tarea: {nueva.get('nombre', 'Tarea')}"
+            ),
+        )
+
+        QMessageBox.information(
+            self,
+            "Cargar entrenamiento",
+            (
+                "Entrenamiento cargado a la lista de tareas.\n\n"
+                "La tarea quedó DETENIDA para que puedas revisar "
+                "sus acciones antes de activarla."
+            ),
+        )
 
     # ========================================================
     # OBTENER TAREA
@@ -13189,7 +14027,7 @@ class BIN(QMainWindow):
         entrada_layout = QHBoxLayout()
 
 
-        self.entrada_chat_expandida = QLineEdit()
+        self.entrada_chat_expandida = ChatTrainingDropLineEdit()
 
 
         self.entrada_chat_expandida.setPlaceholderText(
@@ -13209,6 +14047,10 @@ class BIN(QMainWindow):
 
         self.entrada_chat_expandida.returnPressed.connect(
             self.procesar_chat_expandido
+        )
+
+        self.entrada_chat_expandida.archivo_json_arrastrado.connect(
+            self.procesar_entrenamiento_json_arrastrado
         )
 
 
@@ -13388,7 +14230,11 @@ class BIN(QMainWindow):
         # descargado de Google.
         # ====================================================
 
-        visor = QTextEdit()
+        visor = ChatTrainingDropTextEdit()
+
+        visor.archivo_json_arrastrado.connect(
+            self.procesar_entrenamiento_json_arrastrado
+        )
 
 
         visor.setReadOnly(
@@ -41735,6 +42581,35 @@ code {{
                     #ff6979;
 
             }}
+
+            QPushButton#botonDescargarEntrenamiento {{
+
+                color:
+                    {AZUL};
+
+                font-size:
+                    18px;
+
+                font-weight:
+                    900;
+
+                padding:
+                    4px 8px;
+
+            }}
+
+
+            QPushButton#botonDescargarEntrenamiento:hover {{
+
+                color:
+                    #ffffff;
+
+                border:
+                    1px solid
+                    {AZUL};
+
+            }}
+
 
 
             /* =================================================
