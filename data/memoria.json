@@ -1,7 +1,7 @@
 {
     "tipo": "BIN_MEMORIA",
     "schema_version": 1,
-    "actualizado_en": "2026-09-07T23:01:00.813141+00:00",
+    "actualizado_en": "2026-09-08T02:44:02.441288+00:00",
     "memorias": [
         {
             "respuesta": "Todo muy bien por aquí , ¿y tú qué tal estás?",
@@ -161,6 +161,16 @@
             "fuente": "GOOGLE",
             "creado_en": "2026-09-07T23:01:00.811257+00:00",
             "actualizado_en": "2026-09-07T23:01:00.812277+00:00",
+            "veces_aprendida": 1
+        },
+        {
+            "respuesta": "Sí, los perros tienen conciencia",
+            "consultas": [
+                "los perros tienen conciencia?"
+            ],
+            "fuente": "GOOGLE",
+            "creado_en": "2026-09-08T02:44:02.441288+00:00",
+            "actualizado_en": "2026-09-08T02:44:02.441288+00:00",
             "veces_aprendida": 1
         }
     ]
