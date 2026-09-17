@@ -1,0 +1,467 @@
+BIN IA ASISTEM — LIGHT
+PLAN DE CORRECCIONES / ACTUALIZACIONES
+Base de trabajo: main.py v1.6.18
+Método de trabajo: el usuario aplicará manualmente cada corrección. ChatGPT entregará únicamente cambios quirúrgicos, con ancla exacta de búsqueda, bloque a agregar/reemplazar, indentación y prueba posterior.
+
+1. DIAGNÓSTICO COMPLETO Y LEGIBLE DEL SUPERVISOR
+- Dejar de mostrar únicamente resultados genéricos como COMPATIBLE / NO COMPATIBLE.
+- Mostrar todo lo que BIN está comparando antes de decidir READY, WAIT, CORREGIR o ERROR.
+- Para WEB mostrar, como mínimo:
+  * URL almacenada original.
+  * URL detectada/actual.
+  * URL normalizada o parte realmente usada para comparar.
+  * Dominio esperado / actual.
+  * Ruta esperada / actual.
+  * Parámetros y fragmentos detectados, indicando si se ignoran o participan.
+  * Cuenta esperada.
+  * Cuenta detectada.
+  * Perfil esperado / detectado cuando aplique.
+  * Resultado individual de cada comparación.
+- Para VENTANAS / GEOMETRÍA mostrar:
+  * X esperada / X actual / diferencia / margen permitido / resultado.
+  * Y esperada / Y actual / diferencia / margen permitido / resultado.
+  * Ancho esperado / ancho actual / diferencia / margen / resultado.
+  * Alto esperado / alto actual / diferencia / margen / resultado.
+  * Estado esperado/actual: normal, maximizada o minimizada.
+- Mostrar proceso, tipo de recurso, HWND/localizador cuando formen parte de la decisión.
+- Mostrar la razón exacta por la que BIN aprueba, espera, intenta corregir o rechaza el contexto.
+- El objetivo es que el desarrollador pueda leer toda la evaluación, no una conclusión opaca.
+
+2. VALIDACIÓN WEB FLEXIBLE (Desarrollado)
+- Sustituir la igualdad estricta de URL por una comparación práctica.
+- Priorizar la identidad útil de la página: dominio + ruta principal/relevante.
+- No generar falsos WAIT por diferencias secundarias como:
+  * http / https.
+  * www.
+  * barra final.
+  * parámetros ?query secundarios.
+  * fragmentos #fragment secundarios.
+- No hacer la validación tan flexible que confunda dos páginas realmente distintas.
+- La URL almacenada y la URL actual siempre deben mostrarse en el diagnóstico.
+
+3. FLEXIBILIDAD Y CORRECCIÓN REAL DE CUENTAS WEB (Desarrollado)
+- Si durante la demostración o un MicroPrompt NO se registró una cuenta:
+  * y durante la ejecución BIN detecta una cuenta,
+  * esa cuenta encontrada NO debe provocar incompatibilidad.
+  * Se considera contexto flexible porque no existía una cuenta esperada que exigir.
+- Si durante la demostración SÍ se registró una cuenta:
+  * la cuenta sí es autoritativa.
+  * si BIN detecta otra cuenta, debe intentar corregir la cuenta/perfil, no limitarse a corregir la URL.
+- Corregir específicamente el caso de trabajos web con dos o más cuentas donde BIN actualmente detecta bien la cuenta al grabar pero en replay sólo corrige URL.
+- Apertura, búsqueda y corrección deben usar la misma identidad de cuenta/perfil.
+
+4. SINCRONIZACIÓN ADAPTATIVA POR ESTADO REAL (Desarrollado)
+- Reducir la dependencia de tiempos fijos para decidir que una aplicación/ventana ya está lista.
+- Después de abrir o cambiar una ventana, BIN debe comprobar que el estado esperado realmente apareció antes de continuar.
+- Confirmaciones posibles según la acción:
+  * proceso presente.
+  * ventana/HWND disponible.
+  * ventana activa cuando corresponda.
+  * URL correcta/compatible.
+  * cuenta correcta cuando haya una esperada.
+  * geometría dentro de margen.
+  * estado normal/maximizado/minimizado correcto.
+- Usar timeout + reintentos adaptativos.
+- Mantener las esperas antes/después que el usuario haya configurado expresamente como parte de la rutina; lo que se reemplaza son las esperas internas usadas como sustituto de una confirmación real.
+- Esta corrección busca evitar desfases en equipos lentos, saturados o con thermal throttling, como el Pentium Gold.
+
+5. PORTABILIDAD ENTRE USUARIOS DE WINDOWS (Desarrollado)
+- La identidad de programas y navegadores no debe depender de rutas absolutas del usuario que grabó el entrenamiento.
+- No considerar C:\Users\UsuarioOriginal\... como identidad autoritativa de Chrome, Edge u otro software.
+- Para SOFTWARE:
+  * priorizar proceso/nombre de aplicación.
+  * resolver la ruta real localmente en el equipo receptor.
+- Para WEB:
+  * resolver localmente el navegador.
+  * abrir/navegar directamente a la URL.
+  * una ruta antigua del ejecutable será sólo referencia/fallback, no requisito de identidad.
+- Para rutas dentro del perfil de usuario utilizar, cuando corresponda:
+  * %USERPROFILE%
+  * %LOCALAPPDATA%
+  * %APPDATA%
+  * otras variables estándar seguras.
+- Las rutas realmente específicas de archivos/carpetas locales pueden conservarse cuando la tarea dependa explícitamente de ese recurso.
+
+6. CUENTA DE ADMINISTRADOR / PRIVILEGIOS DE WINDOWS (Desarrollado)
+- Incluir el frente que ya se había planteado sobre la cuenta de administrador del sistema operativo Windows.
+- Revisar el comportamiento de BIN cuando:
+  * se ejecuta desde una cuenta estándar.
+  * se ejecuta desde una cuenta administradora.
+  * el entrenamiento proviene de otro usuario de Windows.
+  * una aplicación objetivo trabaja con un nivel de privilegio distinto al de BIN.
+- Evitar que rutas, perfiles o permisos propios de la cuenta que creó el entrenamiento se vuelvan requisitos en el equipo receptor.
+- Detectar y reportar de forma clara cuando una diferencia de privilegios de Windows impida interacción, activación o entrada sobre una aplicación, en vez de convertirla en un error ambiguo de contexto.
+- Este punto se trabajará de forma separada y quirúrgica para no obligar a BIN a ejecutarse elevado sin necesidad.
+
+//***Posibles problemas de punto 6****////
+Claro. Únicamente los 3 problemas pendientes del punto 6 son estos:
+
+PRIVILEGIO_INSUFICIENTE puede terminar tratado como un error recuperable.
+procesar_checkpoint_accion_real() detecta correctamente cuando BIN tiene menor integridad que la aplicación objetivo, pero luego llama a finalizar_ejecucion_con_error(). Esa función puede iniciar la auditoría contextual de recuperación. Como esa auditoría trabaja con activar=False, puede comprobar que la ventana “coincide” sin intentar controlarla y terminar considerando recuperable un error de privilegios que en realidad es permanente para esa ejecución.
+
+El riesgo es:
+
+BIN medio
+→ aplicación alta
+→ PRIVILEGIO_INSUFICIENTE
+→ auditoría
+→ ventana parece correcta
+→ READY
+→ BIN podría continuar
+
+Ese error debe ser terminal y no entrar en auditoría de recuperación.
+
+Una ventana elevada que ya está en foreground puede evitar la comprobación de integridad.
+En buscar_ventana_contexto_replay() existe un camino temprano que acepta la ventana actualmente activa si el proceso coincide. Como esa rama devuelve éxito sin pasar por activar_hwnd_operativo() ni por diagnosticar_privilegios_hwnd(), una aplicación abierta como administrador puede quedar aceptada simplemente porque ya estaba delante. Existe un caso relacionado en resolver_contexto_teclado_replay(), que también puede aceptar el foreground sin comprobar primero su integridad.
+
+El riesgo es:
+
+BIN medio
+→ programa alto ya está foreground
+→ proceso coincide
+→ CONFIRMADO
+→ BIN intenta teclado/clic
+
+La integridad debe comprobarse aunque la ventana ya sea la activa.
+
+ejecutar_comando_ventana() ignora fallos de geometría y activación al reutilizar una ventana WEB.
+Cuando ya encuentra una ventana WEB existente, todavía puede ejecutar:
+
+self.aplicar_geometria_contexto(...)
+self.activar_hwnd_operativo(...)
+
+sin comprobar el False de ninguna de las dos. Después puede registrar READY y devolver "ok": True.
+
+El riesgo es:
+
+encuentra Chrome correcto
+→ SetWindowPos falla por privilegios
+→ SetForegroundWindow falla
+→ BIN ignora ambos resultados
+→ registra READY
+
+Esa rama debe respetar PRIVILEGIO_INSUFICIENTE, FOCO_NO_CONFIRMADO y los fallos de geometría igual que el supervisor principal.
+
+Esos son los tres únicos problemas del punto 6 que señalé en la revisión anterior.
+
+
+
+
+
+7. VISOR IA DESACTIVABLE EN BIN LIGHT (Desarrollado)
+- Añadir en Configuración una opción: Habilitar Visor IA.
+- BIN Light:
+  * desactivado por defecto.
+  * el usuario podrá activarlo cuando quiera.
+- Desactivar debe ser REAL, no sólo ocultar el widget:
+  * no iniciar/detener ScreenCaptureThread.
+  * no capturar continuamente con MSS.
+  * no crear/copiar QImage continuamente.
+  * no mantener frame_actual sin necesidad.
+  * no convertir a QPixmap.
+  * no escalar ni repintar continuamente el visor.
+- Conservar intactas las capacidades de Windows necesarias para procesos, HWND, ventanas, posiciones, dimensiones, URL, cuenta, mouse, teclado y replay.
+- No eliminar el motor visual del código porque se reutilizará en la versión con IA.
+- Versión IA:
+  * visor/captura habilitados por defecto.
+  * opción bloqueada/deshabilitada porque la IA visual sí necesita los frames.
+
+8. CARA ANIMADA DE BIN EN PYTHON / PYSIDE6
+- Sustituir visualmente el espacio del Visor IA desactivado por la cara de BIN.
+- Tomar como referencia el BOT adjunto.
+- Reproducir en Python/PySide6 los comportamientos visuales relevantes, sin añadir otro WebEngine sólo para la cara:
+  * ojos que siguen la dirección del mouse.
+  * boca que reacciona cuando el puntero se acerca.
+  * posibilidad de relacionar expresiones con estados de BIN en el futuro.
+- Mantener la implementación ligera para no perder el ahorro obtenido al apagar la captura continua.
+- El BOT adjunto contiene al menos:
+  * templates/index.html
+  * static/style.css
+  * static/chatBot.js
+  Estos archivos serán la referencia visual/comportamental al implementar la versión PySide6.
+
+9. MICROPRONTS: URL LARGA ROMPE EL CONTENEDOR (Desarrollado)
+- Corregir los contenedores del Panel de acciones/MicroPrompts para que una URL larga no expanda la tarjeta horizontalmente.
+- Ningún texto debe empujar botones o contenido fuera del área visible.
+- Aplicar:
+  * ancho mínimo 0 en contenedores afectados.
+  * políticas de tamaño adecuadas.
+  * wrap o elisión visual para cadenas largas.
+  * sin scroll horizontal invasivo.
+- Mantener la URL completa accesible mediante tooltip, detalle o edición cuando sea necesario.
+
+10. ORDEN AUTOMÁTICO DE LA LISTA DE TAREAS
+- Al crear o editar una tarea, la lista debe reorganizarse automáticamente por horario.
+- Una nueva tarea temprana debe aparecer antes de una tarea posterior aunque haya sido creada después.
+- Reordenar visualmente sin perder ID, estado, acciones, contexto o datos persistentes.
+- Aplicar el mismo orden al cargar/refrescar las tareas.
+
+11. BOTÓN “LÍNEA DE TIEMPO DEL DÍA”
+- Crear botón con el texto exacto: “LÍNEA DE TIEMPO DEL DÍA”.
+- Mostrar las tareas del día en orden cronológico.
+- Permitir arrastrar una tarea hacia antes o después.
+- Al moverla:
+  * cambiar su horario para ese día.
+  * guardar el cambio.
+  * recalcular conflictos.
+  * refrescar lista y vistas.
+- El movimiento de un día no debe modificar automáticamente los demás días de la tarea.
+
+12. HORARIOS DIFERENTES POR DÍA EN UNA MISMA TAREA
+- Evolucionar el modelo actual de una sola “hora” para permitir un horario distinto por día.
+- La tarjeta de tarea debe mostrar los días y sus respectivos horarios, por ejemplo:
+  L 08:00 · M 09:30 · X 08:00 · J 10:00 · V 08:00
+- La Línea de tiempo del día podrá modificar sólo el horario del día seleccionado.
+- Conservar compatibilidad con tareas antiguas que sólo tengan el campo hora: inicialmente ese horario podrá aplicarse a todos sus días configurados hasta que se personalicen.
+
+13. VISTA SEMANAL DE TAREAS
+- Añadir un acceso a una vista semanal.
+- Mostrar un cuadro de Lunes a Viernes con las 24 horas.
+- Permitir ver cómo se distribuirán las tareas a lo largo de la semana.
+- Al pulsar un día, abrir/entrar en la Línea de tiempo del día correspondiente.
+- Mantener sincronizadas:
+  * vista semanal.
+  * línea de tiempo diaria.
+  * lista normal de tareas.
+  * horarios guardados.
+  * detector de colisiones.
+
+14. “AGREGAR COMANDO VENTANA” — NUEVO TIPO “CARPETA”
+- Añadir “Carpeta” en Tipo de ventana.
+- Permitir elegir una carpeta con selector de directorios, no únicamente archivos.
+- Guardar la ruta de la carpeta como recurso autoritativo.
+- Abrirla mediante Explorer durante replay.
+- Supervisar que Explorer corresponda a la carpeta esperada.
+- Conservar soporte de rutas portables cuando estén dentro del perfil del usuario.
+
+15. ESTILOS DE “AGREGAR TEXTO” Y CHECKBOX DE DÍAS
+- Corregir estilos que dependen del tema/PC y pueden aparecer blancos.
+- Definir explícitamente QSS para los campos de texto utilizados por “Agregar texto”.
+- Definir explícitamente estilos legibles para QCheckBox y sus indicadores de los días de ejecución.
+- Verificar contraste en Windows 10 y Windows 11, tema claro y oscuro.
+- El texto nunca debe desaparecer por fondo blanco/texto blanco.
+
+16. ENTER EN EL PANEL/MENÚ QUE APARECE CON CLIC DERECHO
+- Corregir replay para que Enter funcione sobre el menú/panel desplegado por clic derecho.
+- Asegurar que BIN no pierda el foco o descarte la superficie transitoria antes de enviar Enter.
+- Mantener el tratamiento especial de menús contextuales/superficies transitorias para que el supervisor no las confunda con una nueva ventana de trabajo.
+
+17. ARRASTRAR MICROPRONTS
+- Mantener las flechas actuales para subir/bajar acciones.
+- Añadir drag & drop para reorganizar MicroPrompts/acciones directamente con el mouse.
+- Al soltar:
+  * actualizar el orden visual.
+  * actualizar el orden persistido.
+  * mantener coherencia entre acciones y cualquier representación semántica asociada.
+- No perder datos de contexto, tiempos ni configuraciones al moverlos.
+
+18. MINIMIZAR BIN AL EJECUTAR UNA TAREA
+- Corregir el comportamiento para que BIN se minimice al comenzar una ejecución real.
+- Aplicar tanto a:
+  * EJECUTAR AHORA.
+  * ejecución automática/programada.
+- La barra flotante de ejecución y “DETENER ACCIÓN” debe permanecer disponible.
+- Evitar que la ventana principal de BIN interfiera con coordenadas, foco o ventana activa de la automatización.
+
+19. ACTUALIZAR .GITIGNORE / LIMPIEZA DEL REPOSITORIO
+- Mantener fuera de Git los artefactos de compilación/instalación y cachés.
+- Añadir/revisar al menos:
+  build/
+  dist/
+  installer/
+  __pycache__/
+  *.pyc
+  *.pyo
+- Revisar si BIN_Light.spec se conservará como archivo reproducible o se ignorará; no borrarlo automáticamente.
+- No ignorar por accidente código fuente, assets, manuales o configuraciones base necesarias.
+- El instalador .exe generado no debe subirse como código fuente.
+
+ORDEN DE TRABAJO PROPUESTO
+A. Primero estabilidad y observabilidad:
+   1) diagnóstico completo,
+   2) URL flexible,
+   3) cuenta web/corrección multicuenta,
+   4) sincronización por estado,
+   5) portabilidad Windows,
+   6) cuenta administrador/privilegios.
+
+B. Después optimización:
+   7) Visor IA desactivable,
+   8) cara de BIN PySide6.
+
+C. Después interfaz y productividad:
+   9) URLs largas en MicroPrompts,
+   10) orden automático de tareas,
+   11) línea de tiempo diaria,
+   12) horarios por día,
+   13) vista semanal,
+   14) tipo Carpeta,
+   15) estilos,
+   16) Enter en menú derecho,
+   17) drag & drop de MicroPrompts,
+   18) minimizar al ejecutar.
+
+D. Cierre:
+   19) .gitignore,
+   pruebas,
+   compilación,
+   instalador,
+   prueba cruzada entre equipos/usuarios.
+
+REGLA DE IMPLEMENTACIÓN
+- main.py v1.6.18 aportado por el usuario será la fuente de verdad.
+- No reconstruir ni simplificar el archivo.
+- No reemplazar el programa completo.
+- Hacer una corrección a la vez.
+- Para cada corrección, ChatGPT entregará:
+  1) texto exacto que buscar,
+  2) bloque exacto a agregar/reemplazar,
+  3) ubicación e indentación,
+  4) qué debe ocurrir después,
+  5) prueba concreta antes de pasar al siguiente punto.
+- El usuario realizará manualmente los cambios.
+
+
+20. PROBLEMAS TÉCNICOS ADICIONALES ENCONTRADOS EN LA REVISIÓN DE v1.6.18(Desarrollado)
+
+20.1. LA CORRECCIÓN DE GEOMETRÍA PUEDE QUEDAR BLOQUEADA POR OTRAS VALIDACIONES
+- BIN puede detectar que una ventana está en una posición o tamaño incorrectos, pero no llegar a corregirla si antes considera que existe conflicto de cuenta, perfil, URL, proceso o localizador.
+- Esto puede explicar casos donde en un equipo la ventana se acomoda correctamente y en otro no, aun cuando la rutina se haya creado desde cero en ese mismo equipo.
+- La corrección de geometría no debe depender innecesariamente de dimensiones de identidad que no sean necesarias para reconocer con suficiente certeza la ventana objetivo.
+
+20.2. PROFILE N / DEFAULT TIENE DEMASIADO PESO EN LA IDENTIDAD DE CHROME
+- `Profile 1`, `Profile 2`, `Default`, etc. son datos locales del equipo.
+- El mismo correo puede estar en `Profile 2` en un PC y en `Profile 7` en otro.
+- BIN no debe utilizar ese número/directorio como identidad portable.
+- Debe considerarlo únicamente como localizador interno resuelto en el equipo actual.
+
+20.3. BIN PUEDE DEDUCIR UNA CUENTA EQUIVOCADA A PARTIR DE UN PERFIL
+- Si BIN no logra leer con certeza el correo de una ventana concreta, puede caer a la detección del perfil y posteriormente consultar Local State.
+- Si el perfil asociado al proceso/ventana fue identificado incorrectamente, BIN puede terminar asignando una cuenta incorrecta a esa ventana.
+- Cuando no exista certeza suficiente, BIN debe devolver “cuenta no identificada” y no fabricar una identidad mediante un fallback ambiguo.
+
+20.4. UNA CUENTA/PERFIL DETECTADOS INCORRECTAMENTE PUEDEN QUEDAR PERSISTIDOS
+- Una detección errónea puede terminar guardándose dentro de `contexto_despues`.
+- En ejecuciones posteriores esa identidad aprendida puede convertirse en parte del contexto esperado.
+- Esto puede hacer que el error parezca “pegado” a la rutina.
+
+20.5. BIN PUEDE CONVERTIR UNA CUENTA NO REQUERIDA EN REQUISITO POSTERIOR
+- Si una demostración o MicroPrompt no tenía una cuenta explícitamente registrada, una cuenta encontrada posteriormente no debe transformarse automáticamente en una obligación para futuras ejecuciones.
+- Actualmente existe lógica que puede aprender y reutilizar cuenta/perfil.
+- Debe conservarse la diferencia entre:
+  * cuenta explícitamente requerida por el entrenamiento;
+  * cuenta observada incidentalmente durante una ejecución.
+
+20.6. LAS RUTAS ABSOLUTAS DE EJECUTABLES PUEDEN ROMPER PORTABILIDAD
+- Una aplicación puede quedar identificada mediante una ruta absoluta como:
+  `C:\Users\Usuario\AppData\...\programa.exe`
+- En otro usuario o equipo la misma aplicación puede estar en otra ruta.
+- Esto puede provocar un falso conflicto de identidad aun cuando el proceso/aplicación sea el correcto.
+- La ruta exacta no debe ser identidad primaria para software portable entre usuarios.
+
+20.7. UNA RUTA ABSOLUTA INCORRECTA PUEDE BLOQUEAR INDIRECTAMENTE LA GEOMETRÍA
+- Aunque las coordenadas no están ligadas directamente a `C:\Users\<usuario>`, una ruta absoluta distinta puede hacer que BIN rechace primero la identidad de la ventana.
+- Al rechazarla, puede no llegar a ejecutar la corrección de posición/tamaño.
+- Por tanto, el problema de portabilidad de rutas puede manifestarse visualmente como un fallo de geometría.
+
+20.8. LA VALIDACIÓN WEB SIGUE SIENDO DEMASIADO ESTRICTA
+- URL, cuenta, perfil y otros campos pueden bloquear la identificación antes de que BIN intente corregir la ventana.
+- Diferencias secundarias de URL no deberían impedir identificar una ventana si dominio/ruta útil y cuenta requerida coinciden.
+- La comparación web debe mostrar y evaluar cada dimensión por separado.
+
+20.9. LA TOLERANCIA DE GEOMETRÍA ES DEMASIADO RÍGIDA
+- BIN utiliza una tolerancia fija pequeña para X, Y, ancho y alto.
+- Un margen universal en píxeles no es suficiente para:
+  * diferentes DPI;
+  * escalado 100%, 125%, 150% o superior;
+  * bordes de ventanas;
+  * distintas versiones de Windows;
+  * diferentes gestores/comportamientos de aplicaciones.
+- Los márgenes deben ser visibles en diagnóstico y diseñarse de forma más adaptable.
+
+20.10. LA VERIFICACIÓN DESPUÉS DE MOVER UNA VENTANA ES DEMASIADO RÁPIDA
+- Después de ordenar un cambio de geometría, BIN vuelve a comprobar el estado tras una espera muy corta.
+- En hardware lento, equipos bajo carga o con thermal throttling, Windows puede no haber terminado de aplicar el cambio.
+- Debe sustituirse por verificación de estado con timeout y reintentos.
+
+20.11. NO HAY TRATAMIENTO EXPLÍCITO SUFICIENTE DE DPI / ESCALADO
+- La geometría adaptable existe, pero el código no modela de forma explícita las diferencias de DPI/escalado de Windows.
+- Un equipo al 100% y otro al 125%/150% pueden producir diferencias legítimas.
+- Antes de modificar las fórmulas de geometría debe instrumentarse y probarse el impacto real del DPI.
+
+20.12. SETWINDOWPOS PUEDE FALLAR O TARDAR SIN UN DIAGNÓSTICO SUFICIENTE
+- BIN necesita registrar claramente:
+  * HWND objetivo;
+  * geometría solicitada;
+  * resultado de la llamada;
+  * geometría observada después;
+  * número de reintentos;
+  * motivo de fallo si Windows no aplica el cambio.
+- Actualmente un fallo o retraso puede convertirse en un error ambiguo.
+
+20.13. LOS PARÁMETROS DE POSICIÓN/TAMAÑO AL ABRIR CHROME NO SON GARANTÍA
+- Argumentos como `--window-position` y `--window-size` pueden no comportarse igual si Chrome ya está ejecutándose o reutiliza procesos/instancias.
+- BIN no debe asumir que la ventana quedó correctamente ubicada solo porque envió esos parámetros.
+- Debe esperar el HWND real, identificarlo y aplicar/verificar su geometría directamente.
+
+20.14. IDENTIDAD, ESTADO Y GEOMETRÍA ESTÁN DEMASIADO ACOPLADOS
+- Un error en URL, cuenta o perfil puede bloquear una corrección geométrica independiente.
+- El supervisor debe separar:
+  * identidad: qué ventana/aplicación es;
+  * estado: qué contenido/URL/cuenta tiene;
+  * geometría: dónde está y cuánto mide;
+  * entorno local: perfil, ruta, DPI, monitor, privilegios.
+- Cada dimensión debe poder informar su resultado sin contaminar innecesariamente las demás.
+
+20.15. BIN NO DISTINGUE SIEMPRE “CUENTA DESCONOCIDA” DE “CUENTA INCORRECTA”
+- Cuando no puede identificar una cuenta con certeza, algunos fallbacks pueden producir una cuenta inferida.
+- Una identidad desconocida debe permanecer como desconocida.
+- Sólo una cuenta realmente observada/resuelta con suficiente evidencia debe considerarse distinta o correcta.
+
+20.16. LA BÚSQUEDA DE VENTANAS WEB PUEDE DESCARTAR UNA CANDIDATA DEMASIADO PRONTO
+- Una ventana que potencialmente es la correcta puede ser marcada como conflictiva antes de intentar corregir URL, cuenta o geometría.
+- La estrategia debe distinguir:
+  * candidato imposible;
+  * candidato probable pero corregible;
+  * candidato confirmado.
+
+20.17. EL DIAGNÓSTICO ACTUAL NO PERMITE SABER DE DÓNDE SALIÓ CADA IDENTIDAD
+- Se necesita mostrar el origen de:
+  * cuenta: UIA / Local State / otro;
+  * perfil: UIA / `--profile-directory` / otro;
+  * URL: barra confirmada / otro;
+  * proceso y PID;
+  * HWND;
+  * ejecutable/localizador.
+- Sin esta trazabilidad es difícil distinguir un error de detección de un error de comparación.
+
+20.18. EL NIVEL DE PRIVILEGIOS DE WINDOWS PUEDE PRODUCIR FALLOS AMBIGUOS
+- Una cuenta de Windows puede pertenecer al grupo Administradores y, aun así, BIN ejecutarse sin elevación.
+- Si la aplicación objetivo está elevada y BIN no, Windows puede impedir determinadas interacciones/observaciones.
+- Ese caso debe detectarse específicamente y no mostrarse como un simple conflicto de contexto, ventana o clic.
+
+20.19. LA TAREA PROGRAMADA DE PREPARACIÓN USA RUNLEVEL LIMITED
+- La programación de Windows actualmente usa `RunLevel Limited`.
+- Esto confirma que no se puede asumir que BIN está elevado solo porque el usuario tenga una cuenta administradora.
+- El nivel de privilegio efectivo debe entrar en el diagnóstico técnico cuando afecte una acción.
+
+20.20. EL FALLO OBSERVADO EN EL PORTÁTIL PUEDE TENER UNA CAUSA COMÚN
+- Los síntomas:
+  * cuenta de Chrome incorrecta;
+  * URL correcta;
+  * ventana que no se acomoda;
+  pueden provenir de un mismo fallo de identificación previa.
+- Si BIN identifica mal la cuenta/perfil, puede marcar la ventana como conflicto y no llegar a aplicar su geometría.
+- Esta hipótesis debe comprobarse con el diagnóstico completo antes de modificar las fórmulas de coordenadas.
+
+PRIORIDAD TÉCNICA PARA ESTOS HALLAZGOS
+1) instrumentar el comparador completo;
+2) corregir identidad cuenta ↔ perfil local de Chrome;
+3) impedir que cuentas no requeridas se vuelvan obligatorias;
+4) corregir portabilidad de rutas de software;
+5) desacoplar identidad, estado y geometría;
+6) cambiar comprobaciones temporales por confirmación adaptativa;
+7) incorporar diagnóstico de DPI y privilegios;
+8) sólo después modificar fórmulas geométricas si las pruebas demuestran que es necesario.
+
+21. PERMITIR AGREGAR ACCIONES CORRECTIVAS.

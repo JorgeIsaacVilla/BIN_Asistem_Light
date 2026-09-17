@@ -4,6 +4,7 @@
     "nombre_usuario": "usuario",
     "idioma": "ES",
     "interfaz": "Invisible",
+    "habilitar_visor_ia": false,
     "correo": "",
     "whatsapp": "",
     "whatsapp_web_cuenta_chrome": "",
