@@ -19,7 +19,6 @@ import re
 import psutil
 import ctypes
 import time
-import math
 import shutil
 import subprocess
 import html
@@ -44,7 +43,7 @@ except ImportError:
 
 from pathlib import Path
 from datetime import datetime, timedelta
-from urllib.parse import urlsplit, unquote, quote, parse_qsl
+from urllib.parse import urlsplit, unquote, quote
 
 from PySide6.QtCore import Qt, QTimer, Signal, QTime, QThread, QUrl
 from PySide6.QtGui import QImage, QPixmap, QIcon
@@ -348,12 +347,8 @@ UMBRAL_PROXIMA_SEGUNDOS = 15 * 60
 # no cambiaban la URL. Eso podía confundir contenido accesible de la
 # página con identidad real del navegador.
 #
-# La identidad web portable queda en:
-#   proceso + URL útil + cuenta explícita cuando fue requerida.
-#
-# Profile/Default es un localizador técnico del equipo actual.
-# Puede ayudar a resolver el navegador local, pero no es una
-# identidad portable entre equipos o usuarios de Windows.
+# La identidad web autoritativa queda en:
+#   proceso + Profile/Default + cuenta de Local State.
 #
 # La URL sólo se lee desde un control confirmado como barra de
 # direcciones / omnibox.
@@ -2716,21 +2711,6 @@ class CommandLibraryDialog(QDialog):
         }
 
         padre = self.parent()
-
-        if (
-            padre is not None
-            and hasattr(
-                padre,
-                "portableizar_ruta_windows",
-            )
-        ):
-            ejecutable = padre.portableizar_ruta_windows(
-                ejecutable
-            )
-
-            ruta_recurso = padre.portableizar_ruta_windows(
-                ruta_recurso
-            )
 
         if (
             padre is not None
@@ -6066,20 +6046,7 @@ class BIN(QMainWindow):
         self.inicio_espera_supervisor_monotonic = None
         self.espera_supervisor_acumulada_ms = 0
         self.intentos_supervisor = 0
-        # El supervisor confirma estado real. Estos valores son límites
-        # de espera, no tiempos que BIN deba consumir obligatoriamente.
-        self.timeout_supervisor_ms = 30_000
-        self.timeout_supervisor_web_cuenta_ms = 60_000
-
-        # Gracia máxima para que navegadores lentos expongan estado.
-        # Durante estas ventanas BIN sigue observando; si READY aparece
-        # antes, continúa inmediatamente.
-        self.gracia_apertura_web_ms = 20_000
-        self.gracia_url_web_ms = 30_000
-        self.gracia_reapertura_web_ms = 20_000
-
-        # Compatibilidad con código antiguo. Las nuevas reobservaciones
-        # usan intervalo_supervision_adaptativo_ms().
+        self.timeout_supervisor_ms = 20_000
         self.intervalo_supervisor_ms = 500
         self.ultima_decision_supervisor = None
         self.ultimo_motivo_supervisor = ""
@@ -6278,10 +6245,11 @@ class BIN(QMainWindow):
             tarea.setdefault("ultima_ejecucion", tarea.get("completed_at"))
             tarea.setdefault("acciones", [])
 
-            # Las acciones manuales se reconstruyen únicamente desde
-            # la configuración que el usuario guardó. Una cuenta/perfil
-            # observados durante un replay anterior son estado local de
-            # ejecución y NO pueden convertirse en identidad persistente.
+            # Mantener coherentes las acciones manuales de ventana
+            # creadas por versiones anteriores. Si una ejecucion previa
+            # ya aprendio una cuenta/perfil real, se conserva y, cuando
+            # Cuenta asociada estaba vacia, se reutiliza como identidad
+            # para las siguientes ejecuciones.
             for accion in tarea.get("acciones", []):
                 if str(accion.get("tipo", "") or "").lower() != "comando_ventana":
                     continue
@@ -6290,9 +6258,32 @@ class BIN(QMainWindow):
                 if not isinstance(ventana, dict):
                     continue
 
+                contexto_anterior = accion.get("contexto_despues") or {}
+
+                if (
+                    str(ventana.get("tipo_ventana", "") or "").lower() == "web"
+                    and not str(ventana.get("cuenta_asociada", "") or "").strip()
+                ):
+                    cuenta_aprendida = str(
+                        contexto_anterior.get("cuenta_navegador", "") or ""
+                    ).strip()
+
+                    if cuenta_aprendida:
+                        ventana["cuenta_asociada"] = cuenta_aprendida
+
                 contexto_manual = self.contexto_desde_configuracion_ventana(
                     ventana
                 )
+
+                if not contexto_manual.get("cuenta_navegador"):
+                    contexto_manual["cuenta_navegador"] = str(
+                        contexto_anterior.get("cuenta_navegador", "") or ""
+                    ).strip()
+
+                if not contexto_manual.get("perfil_navegador"):
+                    contexto_manual["perfil_navegador"] = str(
+                        contexto_anterior.get("perfil_navegador", "") or ""
+                    ).strip()
 
                 accion["contexto_despues"] = contexto_manual
                 accion["ventana"] = ventana
@@ -6841,10 +6832,13 @@ class BIN(QMainWindow):
                     ),
                 )
 
-                # No bloqueamos el hilo principal con una espera fija.
-                # El margen configurable de limpieza se programa después
-                # mediante QTimer, sin congelar BIN.
+                # Dar un margen corto a Windows para procesar
+                # los cierres antes de continuar la rutina.
                 QApplication.processEvents()
+
+                time.sleep(
+                    0.45
+                )
 
             return cerradas
 
@@ -7958,8 +7952,7 @@ class BIN(QMainWindow):
 
         for contexto in candidatos:
 
-            # La cuenta explícita es autoritativa cuando fue requerida.
-            # Profile N / Default sólo son localizadores técnicos locales.
+            # Cuenta/perfil siguen siendo autoritativos.
             if (
                 self.identidad_contextos_operativos(
                     esperado,
@@ -8219,37 +8212,11 @@ class BIN(QMainWindow):
             "hwnd"
         )
 
-        if (
-            not hwnd
-            or not self.activar_hwnd_operativo(
+        if hwnd:
+
+            self.activar_hwnd_operativo(
                 hwnd
             )
-        ):
-            fallo_activacion = (
-                getattr(
-                    self,
-                    "ultimo_error_activacion_hwnd",
-                    None,
-                )
-                or {}
-            )
-
-            self._terminar_canal_notificacion(
-                notificacion_id,
-                "whatsapp",
-                False,
-                (
-                    fallo_activacion.get(
-                        "detalle"
-                    )
-                    or (
-                        "No pude confirmar el foco de "
-                        "WhatsApp Web antes de pulsar Enter."
-                    )
-                ),
-            )
-
-            return
 
         if not self._pulsar_enter_notificacion():
 
@@ -8308,19 +8275,11 @@ class BIN(QMainWindow):
             "hwnd"
         )
 
-        if (
-            not hwnd
-            or not self.activar_hwnd_operativo(
+        if hwnd:
+
+            self.activar_hwnd_operativo(
                 hwnd
             )
-        ):
-            self._iniciar_envio_whatsapp_web(
-                notificacion_id,
-                telefono,
-                mensaje,
-            )
-
-            return
 
         if not self._pulsar_enter_notificacion():
 
@@ -8528,37 +8487,11 @@ class BIN(QMainWindow):
             "hwnd"
         )
 
-        if (
-            not hwnd
-            or not self.activar_hwnd_operativo(
+        if hwnd:
+
+            self.activar_hwnd_operativo(
                 hwnd
             )
-        ):
-            fallo_activacion = (
-                getattr(
-                    self,
-                    "ultimo_error_activacion_hwnd",
-                    None,
-                )
-                or {}
-            )
-
-            self._terminar_canal_notificacion(
-                notificacion_id,
-                "correo",
-                False,
-                (
-                    fallo_activacion.get(
-                        "detalle"
-                    )
-                    or (
-                        "No pude confirmar el foco de Gmail "
-                        "antes de ejecutar Ctrl+Enter."
-                    )
-                ),
-            )
-
-            return
 
         if not self.ejecutar_atajo_replay(
             [
@@ -12338,19 +12271,7 @@ class BIN(QMainWindow):
         self.scroll_acciones.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
         self.contenedor_acciones = QWidget()
-
-        self.contenedor_acciones.setMinimumWidth(
-            0
-        )
-
-        self.contenedor_acciones.setSizePolicy(
-            QSizePolicy.Ignored,
-            QSizePolicy.Preferred,
-        )
-
-        self.layout_acciones = QVBoxLayout(
-            self.contenedor_acciones
-        )
+        self.layout_acciones = QVBoxLayout(self.contenedor_acciones)
         self.layout_acciones.setAlignment(Qt.AlignTop)
         self.layout_acciones.setSpacing(6)
 
@@ -16432,90 +16353,6 @@ code {{
 
         return tarea.setdefault("acciones", [])
 
-    def texto_accion_panel_portable(
-        self,
-        accion,
-        indice,
-        limite=320,
-    ):
-        """
-        Prepara sólo la representación visual de un MicroPrompt/acción.
-        Nunca modifica la descripción persistida en tareas.json.
-        """
-        descripcion = str(
-            (accion or {}).get(
-                "descripcion",
-                "Acción",
-            )
-            or "Acción"
-        ).replace(
-            "\r",
-            " ",
-        ).strip()
-
-        texto_completo = (
-            f"{indice + 1:02}. "
-            + descripcion
-        )
-
-        texto_visible = texto_completo
-
-        try:
-            limite = max(
-                80,
-                int(limite),
-            )
-        except Exception:
-            limite = 320
-
-        if len(texto_visible) > limite:
-            texto_visible = (
-                texto_visible[: limite - 1]
-                + "…"
-            )
-
-        def quebrar_url(
-            coincidencia,
-        ):
-            url = str(
-                coincidencia.group(0)
-                or ""
-            )
-
-            salida = []
-            tramo = 0
-
-            for caracter in url:
-                salida.append(
-                    caracter
-                )
-                tramo += 1
-
-                if (
-                    caracter in "/?&=#._-"
-                    or tramo >= 28
-                ):
-                    salida.append(
-                        "\u200b"
-                    )
-                    tramo = 0
-
-            return "".join(
-                salida
-            )
-
-        texto_visible = re.sub(
-            r"https?://[^\s]+",
-            quebrar_url,
-            texto_visible,
-            flags=re.IGNORECASE,
-        )
-
-        return (
-            texto_visible,
-            texto_completo,
-        )
-
     def refrescar_panel_acciones(self):
         if not hasattr(self, "layout_acciones"):
             return
@@ -16624,11 +16461,6 @@ code {{
         for indice, accion in enumerate(acciones):
             tarjeta = QFrame()
             tarjeta.setObjectName("tarjetaTarea")
-            tarjeta.setMinimumWidth(0)
-            tarjeta.setSizePolicy(
-                QSizePolicy.Expanding,
-                QSizePolicy.Preferred,
-            )
 
             activa = indice_activo is not None and indice == indice_activo
 
@@ -16641,38 +16473,10 @@ code {{
             layout.setContentsMargins(7, 6, 7, 6)
             layout.setSpacing(5)
 
-            (
-                texto_descripcion,
-                texto_descripcion_completo,
-            ) = self.texto_accion_panel_portable(
-                accion,
-                indice,
-            )
-
             descripcion = QLabel(
-                texto_descripcion
+                f"{indice + 1:02}. " f"{accion.get('descripcion', 'Acción')}"
             )
-
-            descripcion.setWordWrap(
-                True
-            )
-
-            descripcion.setMinimumWidth(
-                0
-            )
-
-            descripcion.setSizePolicy(
-                QSizePolicy.Ignored,
-                QSizePolicy.Preferred,
-            )
-
-            descripcion.setTextFormat(
-                Qt.PlainText
-            )
-
-            descripcion.setToolTip(
-                texto_descripcion_completo
-            )
+            descripcion.setWordWrap(True)
 
             if activa:
                 descripcion.setText("▶ " + descripcion.text())
@@ -19300,424 +19104,6 @@ code {{
             for clave_vieja, _ in ordenadas[:-60]:
                 cache.pop(clave_vieja, None)
 
-
-    def obtener_dpi_ventana_windows(
-        self,
-        hwnd=None,
-    ):
-        """
-        Lee DPI sólo para diagnóstico/tolerancias. No cambia la conciencia DPI
-        del proceso ni reinterpreta las coordenadas existentes.
-        """
-        respuesta = {
-            "dpi": 96,
-            "escala": 1.0,
-            "origen": "fallback_96",
-        }
-
-        if sys.platform != "win32":
-            return respuesta
-
-        try:
-            user32 = ctypes.WinDLL("user32", use_last_error=True)
-
-            if hwnd and hasattr(user32, "GetDpiForWindow"):
-                user32.GetDpiForWindow.argtypes = [wintypes.HWND]
-                user32.GetDpiForWindow.restype = wintypes.UINT
-                dpi = int(user32.GetDpiForWindow(wintypes.HWND(int(hwnd))) or 0)
-                if dpi > 0:
-                    return {
-                        "dpi": dpi,
-                        "escala": float(dpi) / 96.0,
-                        "origen": "GetDpiForWindow",
-                    }
-
-            if hasattr(user32, "GetDpiForSystem"):
-                user32.GetDpiForSystem.argtypes = []
-                user32.GetDpiForSystem.restype = wintypes.UINT
-                dpi = int(user32.GetDpiForSystem() or 0)
-                if dpi > 0:
-                    return {
-                        "dpi": dpi,
-                        "escala": float(dpi) / 96.0,
-                        "origen": "GetDpiForSystem",
-                    }
-        except Exception:
-            pass
-
-        try:
-            pantalla = QApplication.primaryScreen()
-            if pantalla is not None:
-                dpi = int(round(float(pantalla.logicalDotsPerInch() or 96.0)))
-                if dpi > 0:
-                    return {
-                        "dpi": dpi,
-                        "escala": float(dpi) / 96.0,
-                        "origen": "Qt.logicalDotsPerInch",
-                    }
-        except Exception:
-            pass
-
-        return respuesta
-
-    def obtener_conciencia_dpi_ventana_windows(
-        self,
-        hwnd=None,
-    ):
-        """
-        Diagnóstico únicamente.
-
-        No cambia la conciencia DPI del proceso en caliente, porque hacerlo
-        después de crear QApplication/ventanas puede producir coordenadas
-        inconsistentes. Sólo informa cómo Windows está tratando ese HWND.
-        """
-
-        respuesta = {
-            "codigo": None,
-            "conciencia": "desconocida",
-            "origen": "no_disponible",
-        }
-
-        if (
-            sys.platform != "win32"
-            or not hwnd
-        ):
-            return respuesta
-
-        try:
-            user32 = ctypes.WinDLL(
-                "user32",
-                use_last_error=True,
-            )
-
-            obtener_contexto = getattr(
-                user32,
-                "GetWindowDpiAwarenessContext",
-                None,
-            )
-
-            obtener_conciencia = getattr(
-                user32,
-                "GetAwarenessFromDpiAwarenessContext",
-                None,
-            )
-
-            if (
-                obtener_contexto is None
-                or obtener_conciencia is None
-            ):
-                return respuesta
-
-            obtener_contexto.argtypes = [
-                wintypes.HWND,
-            ]
-
-            obtener_contexto.restype = (
-                wintypes.HANDLE
-            )
-
-            obtener_conciencia.argtypes = [
-                wintypes.HANDLE,
-            ]
-
-            obtener_conciencia.restype = (
-                ctypes.c_int
-            )
-
-            contexto_dpi = obtener_contexto(
-                wintypes.HWND(
-                    int(hwnd)
-                )
-            )
-
-            if not contexto_dpi:
-                return respuesta
-
-            codigo = int(
-                obtener_conciencia(
-                    contexto_dpi
-                )
-            )
-
-            mapa = {
-                -1: "invalida",
-                0: "no_consciente",
-                1: "sistema",
-                2: "por_monitor",
-            }
-
-            return {
-                "codigo": codigo,
-                "conciencia": mapa.get(
-                    codigo,
-                    f"codigo_{codigo}",
-                ),
-                "origen": (
-                    "GetWindowDpiAwarenessContext"
-                ),
-            }
-
-        except Exception as error:
-            respuesta[
-                "error"
-            ] = str(
-                error
-            )
-
-            return respuesta
-
-    def obtener_monitor_ventana_windows(
-        self,
-        hwnd,
-    ):
-        if sys.platform != "win32" or not hwnd:
-            return {}
-
-        try:
-            user32 = ctypes.WinDLL("user32", use_last_error=True)
-            MONITOR_DEFAULTTONEAREST = 2
-
-            class MONITORINFOEXW(ctypes.Structure):
-                _fields_ = [
-                    ("cbSize", wintypes.DWORD),
-                    ("rcMonitor", wintypes.RECT),
-                    ("rcWork", wintypes.RECT),
-                    ("dwFlags", wintypes.DWORD),
-                    ("szDevice", wintypes.WCHAR * 32),
-                ]
-
-            user32.MonitorFromWindow.argtypes = [wintypes.HWND, wintypes.DWORD]
-            user32.MonitorFromWindow.restype = wintypes.HANDLE
-            user32.GetMonitorInfoW.argtypes = [wintypes.HANDLE, wintypes.LPVOID]
-            user32.GetMonitorInfoW.restype = wintypes.BOOL
-
-            monitor = user32.MonitorFromWindow(
-                wintypes.HWND(int(hwnd)),
-                MONITOR_DEFAULTTONEAREST,
-            )
-            if not monitor:
-                return {}
-
-            info = MONITORINFOEXW()
-            info.cbSize = ctypes.sizeof(MONITORINFOEXW)
-            if not user32.GetMonitorInfoW(monitor, ctypes.byref(info)):
-                return {}
-
-            return {
-                "dispositivo": str(info.szDevice or "").strip(),
-                "primario": bool(int(info.dwFlags) & 1),
-                "monitor": {
-                    "x": int(info.rcMonitor.left),
-                    "y": int(info.rcMonitor.top),
-                    "ancho": int(info.rcMonitor.right - info.rcMonitor.left),
-                    "alto": int(info.rcMonitor.bottom - info.rcMonitor.top),
-                },
-                "trabajo": {
-                    "x": int(info.rcWork.left),
-                    "y": int(info.rcWork.top),
-                    "ancho": int(info.rcWork.right - info.rcWork.left),
-                    "alto": int(info.rcWork.bottom - info.rcWork.top),
-                },
-            }
-        except Exception:
-            return {}
-
-    def tolerancias_geometria_contexto_bin(
-        self,
-        actual=None,
-        tolerancia_base=8,
-    ):
-        actual = actual or {}
-        try:
-            base = max(1, int(tolerancia_base or 8))
-        except Exception:
-            base = 8
-
-        try:
-            dpi = int(actual.get("dpi", 0) or 0)
-        except Exception:
-            dpi = 0
-
-        if dpi <= 0:
-            hwnd = actual.get("hwnd")
-            dpi = int(self.obtener_dpi_ventana_windows(hwnd).get("dpi", 96) or 96)
-
-        escala = max(1.0, float(dpi) / 96.0)
-
-        # No cambiamos las fórmulas de geometría. Sólo reconocemos que
-        # bordes/DPI legítimamente pueden producir unos píxeles adicionales.
-        margen_posicion = min(24, max(base, int(math.ceil(base * escala))))
-        margen_tamano = min(32, max(base + 2, int(math.ceil((base + 4) * escala))))
-
-        return {
-            "dpi": dpi,
-            "escala": escala,
-            "x": margen_posicion,
-            "y": margen_posicion,
-            "ancho": margen_tamano,
-            "alto": margen_tamano,
-        }
-
-    def evaluar_geometria_contextos_bin(
-        self,
-        esperado,
-        actual,
-        tolerancia_base=8,
-    ):
-        esperado = esperado or {}
-        actual = actual or {}
-
-        geo_original = esperado.get("geometria") or {}
-        geo_esperada = self.resolver_geometria_portable(geo_original)
-        geo_actual = actual.get("geometria") or {}
-        tolerancias = self.tolerancias_geometria_contexto_bin(
-            actual,
-            tolerancia_base=tolerancia_base,
-        )
-
-        resultado = {
-            "coincide": True,
-            "observable": True,
-            "esperada_original": geo_original,
-            "esperada_resuelta": geo_esperada,
-            "actual": geo_actual,
-            "tolerancias": tolerancias,
-            "ejes": {},
-            "estado": {},
-            "dpi": int(actual.get("dpi", tolerancias.get("dpi", 96)) or 96),
-            "dpi_origen": str(actual.get("dpi_origen", "") or ""),
-        }
-
-        if not geo_esperada:
-            return resultado
-
-        if not geo_actual:
-            resultado["coincide"] = False
-            resultado["observable"] = False
-            return resultado
-
-        esperado_max = bool(geo_esperada.get("maximizada"))
-        actual_max = bool(geo_actual.get("maximizada"))
-        esperado_min = bool(geo_esperada.get("minimizada"))
-        actual_min = bool(geo_actual.get("minimizada"))
-
-        resultado["estado"] = {
-            "maximizada_esperada": esperado_max,
-            "maximizada_actual": actual_max,
-            "minimizada_esperada": esperado_min,
-            "minimizada_actual": actual_min,
-            "coincide": (
-                esperado_max == actual_max
-                and esperado_min == actual_min
-            ),
-        }
-
-        if not resultado["estado"]["coincide"]:
-            resultado["coincide"] = False
-
-        if esperado_max:
-            return resultado
-
-        for clave in ("x", "y", "ancho", "alto"):
-            if clave not in geo_esperada:
-                continue
-
-            try:
-                valor_e = int(geo_esperada[clave])
-                valor_a = int(geo_actual.get(clave))
-                diferencia = abs(valor_e - valor_a)
-                margen = int(tolerancias.get(clave, tolerancia_base))
-                coincide = diferencia <= margen
-            except Exception:
-                valor_e = geo_esperada.get(clave)
-                valor_a = geo_actual.get(clave)
-                diferencia = None
-                margen = int(tolerancias.get(clave, tolerancia_base))
-                coincide = False
-                resultado["observable"] = False
-
-            resultado["ejes"][clave] = {
-                "esperado": valor_e,
-                "actual": valor_a,
-                "diferencia": diferencia,
-                "margen": margen,
-                "coincide": coincide,
-            }
-
-            if not coincide:
-                resultado["coincide"] = False
-
-        return resultado
-
-    def formatear_evaluacion_geometria_bin(
-        self,
-        evaluacion,
-    ):
-        evaluacion = evaluacion or {}
-        lineas = []
-
-        estado = evaluacion.get("estado") or {}
-        if estado:
-            lineas.append(
-                "Estado ventana: "
-                + ("OK" if estado.get("coincide") else "DIFERENTE")
-                + " · max "
-                + f"{estado.get('maximizada_esperada')}→{estado.get('maximizada_actual')}"
-                + " · min "
-                + f"{estado.get('minimizada_esperada')}→{estado.get('minimizada_actual')}"
-            )
-
-        for clave in ("x", "y", "ancho", "alto"):
-            dato = (evaluacion.get("ejes") or {}).get(clave)
-            if not dato:
-                continue
-            lineas.append(
-                f"{clave.upper()}: esperado={dato.get('esperado')} · "
-                f"actual={dato.get('actual')} · diff={dato.get('diferencia')} · "
-                f"margen={dato.get('margen')} · "
-                + ("OK" if dato.get("coincide") else "FUERA")
-            )
-
-        lineas.append(
-            f"DPI: {evaluacion.get('dpi') or '--'} "
-            f"({evaluacion.get('dpi_origen') or 'origen no disponible'})"
-        )
-        lineas.append(
-            "Geometría: "
-            + ("COMPATIBLE" if evaluacion.get("coincide") else "NO COMPATIBLE")
-        )
-        return "\n".join(lineas)
-
-    def siguiente_intento_geometria_bin(
-        self,
-        hwnd,
-        geometria,
-    ):
-        cache = self._cache_operativo_bin("geometry_attempts")
-        firma = (
-            int(hwnd or 0),
-            int(geometria.get("x", 0) or 0),
-            int(geometria.get("y", 0) or 0),
-            int(geometria.get("ancho", 0) or 0),
-            int(geometria.get("alto", 0) or 0),
-            bool(geometria.get("maximizada")),
-            bool(geometria.get("minimizada")),
-        )
-        ahora = time.monotonic()
-        registro = cache.get(firma) or {}
-        try:
-            anterior = float(registro.get("momento", 0.0) or 0.0)
-            contador = int(registro.get("contador", 0) or 0)
-        except Exception:
-            anterior = 0.0
-            contador = 0
-
-        if ahora - anterior > 30.0:
-            contador = 0
-        contador += 1
-        cache[firma] = {"momento": ahora, "contador": contador}
-        return contador
-
     def obtener_geometria_ventana(self, hwnd):
         if sys.platform != "win32" or not hwnd:
             return None
@@ -20140,310 +19526,6 @@ code {{
         return texto.rstrip(
             "/"
         ).lower()
-
-    def descomponer_url_identidad_bin(
-        self,
-        url,
-    ):
-        """
-        Descompone una URL para comparar identidad web sin perder
-        parámetros que realmente pueden identificar contenido.
-
-        La navegación/original NO se modifica. Esta estructura se usa
-        únicamente para comparar contextos.
-        """
-        texto = str(
-            url
-            or ""
-        ).strip()
-
-        if not texto:
-            return None
-
-        if (
-            self.parece_url_o_dominio(
-                texto
-            )
-            and "://" not in texto
-        ):
-            texto = (
-                "https://"
-                + texto
-            )
-
-        try:
-            partes = urlsplit(
-                texto
-            )
-
-            esquema = str(
-                partes.scheme
-                or ""
-            ).strip().lower()
-
-            # Los esquemas internos/especiales se mantienen estrictos.
-            if esquema not in {
-                "http",
-                "https",
-            }:
-                return {
-                    "modo": "especial",
-                    "firma": self.normalizar_url_bin(
-                        texto
-                    ).lower(),
-                }
-
-            host = str(
-                partes.hostname
-                or ""
-            ).strip().lower()
-
-            if not host:
-                return {
-                    "modo": "especial",
-                    "firma": self.normalizar_url_bin(
-                        texto
-                    ).lower(),
-                }
-
-            if host.startswith(
-                "www."
-            ):
-                host = host[4:]
-
-            try:
-                puerto = partes.port
-            except Exception:
-                puerto = None
-
-            # Los puertos estándar no cambian la identidad HTTP/HTTPS.
-            if (
-                puerto
-                and int(puerto) not in {
-                    80,
-                    443,
-                }
-            ):
-                host = (
-                    f"{host}:{int(puerto)}"
-                )
-
-            ruta = unquote(
-                partes.path
-                or ""
-            )
-
-            if ruta == "/":
-                ruta = ""
-            else:
-                ruta = ruta.rstrip(
-                    "/"
-                )
-
-            # Sólo ignoramos parámetros conocidos como seguimiento
-            # o presentación. Un parámetro desconocido sigue siendo
-            # significativo para no confundir páginas diferentes.
-            parametros_secundarios = {
-                "gclid",
-                "dclid",
-                "fbclid",
-                "msclkid",
-                "mc_cid",
-                "mc_eid",
-                "_ga",
-                "_gl",
-                "igshid",
-                "srsltid",
-                "ogimg",
-            }
-
-            consulta_significativa = []
-
-            for clave, valor in parse_qsl(
-                partes.query
-                or "",
-                keep_blank_values=True,
-            ):
-                clave_normalizada = str(
-                    clave
-                    or ""
-                ).strip().lower()
-
-                if (
-                    clave_normalizada.startswith(
-                        "utm_"
-                    )
-                    or clave_normalizada
-                    in parametros_secundarios
-                ):
-                    continue
-
-                consulta_significativa.append(
-                    (
-                        str(clave),
-                        str(valor),
-                    )
-                )
-
-            # a=1&b=2 y b=2&a=1 representan la misma consulta.
-            consulta_significativa.sort()
-
-            fragmento = unquote(
-                partes.fragment
-                or ""
-            ).strip()
-
-            # Fragmentos normales (#tab, #seccion) son estado visual.
-            # Las rutas hash de SPA (#/ruta o #!/ruta) sí pueden
-            # identificar una vista diferente y se conservan.
-            if not fragmento.startswith(
-                (
-                    "/",
-                    "!/",
-                )
-            ):
-                fragmento = ""
-
-            return {
-                "modo": "http",
-                "host": host,
-                "ruta": ruta,
-                "consulta": tuple(
-                    consulta_significativa
-                ),
-                "fragmento": fragmento,
-            }
-
-        except Exception:
-            return {
-                "modo": "especial",
-                "firma": self.normalizar_url_bin(
-                    texto
-                ).lower(),
-            }
-
-    def firma_url_web_bin(
-        self,
-        url,
-    ):
-        partes = self.descomponer_url_identidad_bin(
-            url
-        )
-
-        if not partes:
-            return ""
-
-        if partes.get(
-            "modo"
-        ) != "http":
-            return str(
-                partes.get(
-                    "firma",
-                    "",
-                )
-                or ""
-            )
-
-        firma = (
-            "https://"
-            + str(
-                partes.get(
-                    "host",
-                    "",
-                )
-                or ""
-            )
-            + str(
-                partes.get(
-                    "ruta",
-                    "",
-                )
-                or ""
-            )
-        )
-
-        consulta = tuple(
-            partes.get(
-                "consulta",
-                (),
-            )
-            or ()
-        )
-
-        if consulta:
-            firma += (
-                "?"
-                + "&".join(
-                    f"{quote(clave, safe='')}={quote(valor, safe='')}"
-                    for clave, valor
-                    in consulta
-                )
-            )
-
-        fragmento = str(
-            partes.get(
-                "fragmento",
-                "",
-            )
-            or ""
-        )
-
-        if fragmento:
-            firma += (
-                "#"
-                + fragmento
-            )
-
-        return firma
-
-    def comparar_urls_web_bin(
-        self,
-        esperada,
-        actual,
-    ):
-        """
-        True  -> misma identidad web práctica.
-        False -> página/recurso web diferente.
-        None  -> la URL actual todavía no es observable.
-        """
-        esperada = str(
-            esperada
-            or ""
-        ).strip()
-
-        actual = str(
-            actual
-            or ""
-        ).strip()
-
-        if not esperada:
-            return True
-
-        if not actual:
-            return None
-
-        partes_esperada = (
-            self.descomponer_url_identidad_bin(
-                esperada
-            )
-        )
-
-        partes_actual = (
-            self.descomponer_url_identidad_bin(
-                actual
-            )
-        )
-
-        if (
-            not partes_esperada
-            or not partes_actual
-        ):
-            return None
-
-        return (
-            partes_esperada
-            == partes_actual
-        )
 
     def observar_navegador_uia(
         self,
@@ -20998,7 +20080,6 @@ code {{
             "user_data_dir": user_data_dir,
         }
 
-
     def observar_identidad_navegador_nativa_uia(
         self,
         hwnd,
@@ -21018,8 +20099,6 @@ code {{
             "perfil": "",
             "cuenta": "",
             "origen": "",
-            "evidencia": "",
-            "confianza": "",
         }
 
         if (
@@ -21227,7 +20306,6 @@ code {{
             )
 
         mejor = None
-        empate_mejor = False
 
         for boton in botones or []:
 
@@ -21346,49 +20424,36 @@ code {{
 
                 puntos = 0
 
-                correo_visible = False
-                nombre_visible = False
-                directorio_visible = False
-
-                # El correo visible es evidencia fuerte de cuenta.
+                # Correo exacto observado en botón.
                 if (
                     cuenta_perfil
                     and cuenta_perfil in firma
                 ):
                     puntos += 1400
-                    correo_visible = True
 
-                # El nombre visible localiza un perfil, pero no demuestra
-                # por sí solo qué cuenta pertenece a este HWND.
+                # Nombre visible del perfil.
                 if nombre_perfil:
-                    if nombre_boton == nombre_perfil:
-                        puntos += 1200
-                        nombre_visible = True
-                    elif nombre_perfil in nombre_boton:
-                        puntos += 1000
-                        nombre_visible = True
 
-                # Profile N / Default es un localizador técnico local.
-                #
-                # IMPORTANTE:
-                # "Profile 1" no puede coincidir por substring con
-                # "Profile 10". Exigimos límites de token.
-                if directorio_n:
-                    patron_directorio = (
-                        r"(?<![a-z0-9_])"
-                        + re.escape(directorio_n)
-                        + r"(?![a-z0-9_])"
-                    )
-
-                    if re.search(
-                        patron_directorio,
-                        firma,
-                        flags=re.IGNORECASE,
+                    if (
+                        nombre_boton
+                        == nombre_perfil
                     ):
-                        puntos += 900
-                        directorio_visible = True
+                        puntos += 1200
 
-                # Sólo refuerzo semántico; nunca decide identidad solo.
+                    elif (
+                        nombre_perfil
+                        in nombre_boton
+                    ):
+                        puntos += 1000
+
+                # Profile 1 / Profile 35 / Default.
+                if (
+                    directorio_n
+                    and directorio_n in firma
+                ):
+                    puntos += 900
+
+                # Sólo como refuerzo, nunca suficiente por sí solo.
                 if any(
                     token in firma
                     for token in (
@@ -21407,59 +20472,55 @@ code {{
 
                 candidato = {
                     "puntos": puntos,
-                    "perfil": str(directorio or "").strip(),
-                    "cuenta": str(info.get("cuenta", "") or "").strip(),
-                    "correo_visible": correo_visible,
-                    "nombre_visible": nombre_visible,
-                    "directorio_visible": directorio_visible,
+                    "perfil": str(
+                        directorio
+                        or ""
+                    ).strip(),
+                    "cuenta": str(
+                        info.get(
+                            "cuenta",
+                            "",
+                        )
+                        or ""
+                    ).strip(),
                 }
 
                 if (
                     mejor is None
-                    or candidato["puntos"] > mejor["puntos"]
+                    or candidato[
+                        "puntos"
+                    ]
+                    > mejor[
+                        "puntos"
+                    ]
                 ):
                     mejor = candidato
-                    empate_mejor = False
-                elif (
-                    mejor is not None
-                    and candidato["puntos"] == mejor["puntos"]
-                    and candidato.get("perfil") != mejor.get("perfil")
-                ):
-                    empate_mejor = True
 
         # ====================================================
-        # CLASIFICAR EVIDENCIA NATIVA
+        # EXIGIR COINCIDENCIA FUERTE
         # ====================================================
 
         if (
             mejor
-            and not empate_mejor
-            and mejor.get("puntos", 0) >= 900
+            and mejor.get(
+                "puntos",
+                0,
+            )
+            >= 900
         ):
-            if mejor.get("correo_visible"):
-                respuesta = {
-                    "perfil": mejor.get("perfil", ""),
-                    "cuenta": mejor.get("cuenta", ""),
-                    "origen": "uia_nativa_correo",
-                    "evidencia": "correo_visible",
-                    "confianza": "alta",
-                }
-            elif mejor.get("nombre_visible"):
-                respuesta = {
-                    "perfil": mejor.get("perfil", ""),
-                    "cuenta": "",
-                    "origen": "uia_nativa_nombre_perfil",
-                    "evidencia": "nombre_perfil_visible",
-                    "confianza": "media",
-                }
-            else:
-                respuesta = {
-                    "perfil": mejor.get("perfil", ""),
-                    "cuenta": "",
-                    "origen": "uia_nativa_directorio_perfil",
-                    "evidencia": "directorio_perfil_visible",
-                    "confianza": "baja",
-                }
+            respuesta = {
+                "perfil": mejor.get(
+                    "perfil",
+                    "",
+                ),
+                "cuenta": mejor.get(
+                    "cuenta",
+                    "",
+                ),
+                "origen": (
+                    "uia_nativa_perfil"
+                ),
+            }
 
         self._cache_operativo_guardar(
             "browser_identity_native",
@@ -21470,129 +20531,307 @@ code {{
         return dict(
             respuesta
         )
-
-
     def resolver_identidad_navegador(
         self,
         pid,
         proceso,
         cuenta_uia="",
         perfil_uia="",
-        origen_uia="",
-        evidencia_uia="",
-        confianza_uia="",
     ):
         """
-        Resuelve la identidad local del navegador sin convertir una pista
-        ambigua de Profile N/Default en una cuenta autoritativa.
+        Resuelve exclusivamente la identidad DEL NAVEGADOR.
 
-        La cuenta sólo se devuelve cuando existe correo observado en la
-        interfaz nativa de ESTE HWND. El perfil puede existir como localizador
-        local con confianza media/baja o como pista de proceso.
+        Resultado:
+
+            perfil:
+                Default / Profile 1 / Profile 35...
+
+            cuenta:
+                correo Google asociado al perfil.
+
+        Prioridad:
+
+            1. Correo observado en la interfaz nativa
+               del navegador.
+
+            2. Profile N observado en la interfaz nativa
+               del navegador.
+
+            3. --profile-directory detectado en procesos.
+
+        Después siempre se verifica la relación contra
+        Local State.
         """
-        proceso = str(proceso or "").strip().lower()
-        perfiles = self.obtener_info_perfiles_navegador(proceso)
-        datos_proceso = self.resolver_perfil_desde_proceso(pid)
 
-        perfil_proceso = str(datos_proceso.get("perfil", "") or "").strip()
-        pista_cuenta = str(cuenta_uia or "").strip()
-        pista_perfil = str(perfil_uia or "").strip()
-        origen_uia = str(origen_uia or "").strip()
-        evidencia_uia = str(evidencia_uia or "").strip()
-        confianza_uia = str(confianza_uia or "").strip().lower()
+        proceso = str(
+            proceso
+            or ""
+        ).strip().lower()
+
+        perfiles = (
+            self.obtener_info_perfiles_navegador(
+                proceso
+            )
+        )
+
+        datos_proceso = (
+            self.resolver_perfil_desde_proceso(
+                pid
+            )
+        )
+
+        perfil_proceso = str(
+            datos_proceso.get(
+                "perfil",
+                "",
+            )
+            or ""
+        ).strip()
+
+        pista_cuenta = str(
+            cuenta_uia
+            or ""
+        ).strip()
+
+        pista_perfil = str(
+            perfil_uia
+            or ""
+        ).strip()
+
+        # ====================================================
+        # NORMALIZAR CORREO UIA
+        # ====================================================
 
         coincidencia_correo = re.search(
             r"[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}",
             pista_cuenta,
         )
+
         correo_uia = (
-            coincidencia_correo.group(0).lower()
+            coincidencia_correo
+            .group(0)
+            .lower()
             if coincidencia_correo
             else ""
         )
 
         perfil = ""
+
         cuenta = ""
-        perfil_origen = ""
-        perfil_confianza = ""
-        cuenta_origen = ""
-        cuenta_confianza = ""
 
-        # Correo visible en UIA: evidencia fuerte y vinculada a ESTE HWND.
+        origen = ""
+
+        # ====================================================
+        # 1. CORREO UIA → PERFIL LOCAL
+        # ====================================================
+        #
+        # Es la pista más específica de una ventana concreta.
+        # ====================================================
+
         if correo_uia:
-            cuenta = correo_uia
-            cuenta_origen = origen_uia or "uia_nativa_correo"
-            cuenta_confianza = "alta"
+            for (
+                directorio,
+                info,
+            ) in perfiles.items():
 
-            for directorio, info in perfiles.items():
-                cuenta_local = str(info.get("cuenta", "") or "").strip().lower()
-                if cuenta_local and cuenta_local == correo_uia:
-                    perfil = str(directorio or "").strip()
-                    perfil_origen = "local_state_por_correo_uia"
-                    perfil_confianza = "alta"
+                cuenta_local = str(
+                    info.get(
+                        "cuenta",
+                        "",
+                    )
+                    or ""
+                ).strip().lower()
+
+                if (
+                    cuenta_local
+                    and cuenta_local
+                    == correo_uia
+                ):
+                    perfil = str(
+                        directorio
+                    ).strip()
+
+                    cuenta = str(
+                        info.get(
+                            "cuenta",
+                            "",
+                        )
+                        or ""
+                    ).strip()
+
+                    origen = "uia_correo"
+
                     break
 
-        # Perfil observado en la interfaz nativa: localizador, no cuenta.
-        if not perfil and pista_perfil:
-            pista_normalizada = " ".join(
-                pista_perfil.strip().lower().split()
+        # ====================================================
+        # 2. PROFILE N UIA → PERFIL LOCAL
+        # ====================================================
+
+        if (
+            not perfil
+            and pista_perfil
+        ):
+            pista_perfil_normalizada = (
+                " ".join(
+                    pista_perfil
+                    .strip()
+                    .lower()
+                    .split()
+                )
             )
 
-            for directorio, info in perfiles.items():
-                directorio_n = " ".join(
-                    str(directorio or "").strip().lower().split()
+            # -----------------------------------------------
+            # Comparar directamente con directorio
+            # -----------------------------------------------
+
+            for (
+                directorio,
+                info,
+            ) in perfiles.items():
+
+                directorio_normalizado = (
+                    " ".join(
+                        str(
+                            directorio
+                        )
+                        .strip()
+                        .lower()
+                        .split()
+                    )
                 )
-                nombre_n = " ".join(
-                    str(info.get("nombre", "") or "").strip().lower().split()
+
+                nombre_normalizado = (
+                    " ".join(
+                        str(
+                            info.get(
+                                "nombre",
+                                "",
+                            )
+                            or ""
+                        )
+                        .strip()
+                        .lower()
+                        .split()
+                    )
                 )
 
                 if (
-                    pista_normalizada == directorio_n
-                    or (nombre_n and pista_normalizada == nombre_n)
-                ):
-                    perfil = str(directorio or "").strip()
-                    perfil_origen = origen_uia or "uia_nativa_perfil"
-                    perfil_confianza = (
-                        confianza_uia
-                        if confianza_uia in {"alta", "media", "baja"}
-                        else "media"
+                    pista_perfil_normalizada
+                    == directorio_normalizado
+                    or (
+                        nombre_normalizado
+                        and pista_perfil_normalizada
+                        == nombre_normalizado
                     )
+                ):
+                    perfil = str(
+                        directorio
+                    ).strip()
+
+                    origen = "uia_perfil"
+
                     break
+
+            # -----------------------------------------------
+            # "Perfil 35" → "Profile 35"
+            # -----------------------------------------------
 
             if not perfil:
                 coincidencia_perfil = re.search(
                     r"(?i)^(?:profile|perfil)\s+(\d+)\b",
                     pista_perfil,
                 )
+
                 if coincidencia_perfil:
-                    perfil_convertido = "Profile " + coincidencia_perfil.group(1)
+                    perfil_convertido = (
+                        "Profile "
+                        + coincidencia_perfil.group(1)
+                    )
+
                     for directorio in perfiles:
-                        if str(directorio).strip().lower() == perfil_convertido.lower():
-                            perfil = str(directorio).strip()
-                            perfil_origen = origen_uia or "uia_nativa_directorio_perfil"
-                            perfil_confianza = "baja"
+                        if (
+                            str(
+                                directorio
+                            ).strip().lower()
+                            == perfil_convertido.lower()
+                        ):
+                            perfil = str(
+                                directorio
+                            ).strip()
+
+                            origen = "uia_perfil"
+
                             break
 
-        # Pista de proceso: útil para abrir/corregir localmente, pero nunca
-        # suficiente para fabricar una cuenta de ESTE HWND.
-        if not perfil and perfil_proceso:
-            perfil = perfil_proceso
-            perfil_origen = "proceso_pista"
-            perfil_confianza = "baja"
+        # ====================================================
+        # 3. PERFIL DESDE EL PROCESO
+        # ====================================================
+
+        if (
+            not perfil
+            and perfil_proceso
+        ):
+            perfil = (
+                perfil_proceso
+            )
+
+            origen = "proceso"
+
+        # ====================================================
+        # PERFIL → CORREO DE LOCAL STATE
+        # ====================================================
+
+        if (
+            perfil
+            and perfil in perfiles
+        ):
+            cuenta_local = str(
+                perfiles[
+                    perfil
+                ].get(
+                    "cuenta",
+                    "",
+                )
+                or ""
+            ).strip()
+
+            if (
+                cuenta_local
+                and "@" in cuenta_local
+            ):
+                cuenta = (
+                    cuenta_local
+                )
+
+        # ====================================================
+        # SI UIA DIO CORREO PERO LOCAL STATE NO LO DEVOLVIÓ
+        #
+        # Solo se conserva si el correo fue relacionado con
+        # un perfil local.
+        # ====================================================
+
+        if (
+            not cuenta
+            and correo_uia
+            and perfil
+        ):
+            cuenta = (
+                correo_uia
+            )
 
         return {
             "perfil": perfil,
             "cuenta": cuenta,
-            "user_data_dir": str(datos_proceso.get("user_data_dir", "") or ""),
-            # Compatibilidad: origen conserva el origen más relevante.
-            "origen": cuenta_origen or perfil_origen,
-            "perfil_origen": perfil_origen,
-            "perfil_confianza": perfil_confianza,
-            "cuenta_origen": cuenta_origen,
-            "cuenta_confianza": cuenta_confianza,
-            "evidencia_uia": evidencia_uia,
-        }     
-
+            "user_data_dir": str(
+                datos_proceso.get(
+                    "user_data_dir",
+                    "",
+                )
+                or ""
+            ),
+            "origen": origen,
+        }
+      
     def resolver_recurso_software(self, pid, titulo, ejecutable=""):
         """
         Acepta un archivo como recurso solo cuando su nombre coincide
@@ -21635,7 +20874,6 @@ code {{
 
         return ""
 
-
     def enriquecer_contexto_operativo(self, contexto):
         if not contexto:
             return contexto
@@ -21649,11 +20887,6 @@ code {{
         clase = str(resultado.get("clase", "") or "").strip()
         ejecutable = str(resultado.get("ejecutable", "") or "").strip()
 
-        if ejecutable:
-            resultado["ejecutable"] = self.portableizar_ruta_windows(
-                ejecutable
-            )
-
         geometria = self.obtener_geometria_ventana(hwnd)
 
         if geometria:
@@ -21664,10 +20897,6 @@ code {{
                     geometria
                 )
             )
-
-            resultado[
-                "geometria_origen"
-            ] = "GetWindowRect"
 
         clave_cache = (int(hwnd or 0), proceso_l, titulo)
         caro = self._cache_operativo_obtener(
@@ -21693,10 +20922,6 @@ code {{
             "cuenta_web_observada": "",
 
             "cuenta_navegador_origen": "",
-            "cuenta_navegador_confianza": "",
-            "perfil_navegador_origen": "",
-            "perfil_navegador_confianza": "",
-            "identidad_navegador_evidencia": "",
         }
 
         if self.es_navegador_proceso(
@@ -21709,26 +20934,9 @@ code {{
             # No usamos textos observados dentro de la página.
             # La identidad se resuelve exclusivamente desde:
             #
-            # =================================================
-            # IDENTIDAD LOCAL DEL NAVEGADOR CON PROCEDENCIA
-            # =================================================
+            #   proceso -> --profile-directory -> Local State
             #
-            # Correo visible en UIA nativa:
-            #   evidencia alta de cuenta para ESTE HWND.
-            #
-            # Nombre de perfil visible:
-            #   localizador local con confianza media.
-            #
-            # Profile N / Default visible:
-            #   localizador local con confianza baja.
-            #
-            # --profile-directory del proceso:
-            #   pista local únicamente.
-            #
-            # Local State permite resolver una cuenta ESPERADA al
-            # perfil local de ESTE equipo, pero nunca fabricar una
-            # cuenta actual a partir de Profile N por sí solo.
-            # =================================================
+            # Esto conserva la asociación Profile/Default -> Gmail.
             # =================================================
 
             pista_identidad_nativa = (
@@ -21751,24 +20959,6 @@ code {{
                     perfil_uia=(
                         pista_identidad_nativa.get(
                             "perfil",
-                            "",
-                        )
-                    ),
-                    origen_uia=(
-                        pista_identidad_nativa.get(
-                            "origen",
-                            "",
-                        )
-                    ),
-                    evidencia_uia=(
-                        pista_identidad_nativa.get(
-                            "evidencia",
-                            "",
-                        )
-                    ),
-                    confianza_uia=(
-                        pista_identidad_nativa.get(
-                            "confianza",
                             "",
                         )
                     ),
@@ -21797,26 +20987,6 @@ code {{
                     "",
                 )
                 or ""
-            ).strip()
-
-            perfil_origen = str(
-                identidad.get("perfil_origen", "") or ""
-            ).strip()
-
-            perfil_confianza = str(
-                identidad.get("perfil_confianza", "") or ""
-            ).strip()
-
-            cuenta_origen = str(
-                identidad.get("cuenta_origen", "") or origen_identidad or ""
-            ).strip()
-
-            cuenta_confianza = str(
-                identidad.get("cuenta_confianza", "") or ""
-            ).strip()
-
-            evidencia_identidad = str(
-                identidad.get("evidencia_uia", "") or ""
             ).strip()
 
             # =================================================
@@ -21852,20 +21022,14 @@ code {{
                     "perfil_navegador": perfil_resuelto,
                     "cuenta_navegador": cuenta_resuelta,
                     "cuenta_web_observada": "",
-                    "cuenta_navegador_origen": cuenta_origen,
-                    "cuenta_navegador_confianza": cuenta_confianza,
-                    "perfil_navegador_origen": perfil_origen,
-                    "perfil_navegador_confianza": perfil_confianza,
-                    "identidad_navegador_evidencia": evidencia_identidad,
-                    "user_data_dir_navegador": self.portableizar_ruta_windows(
-                        str(
-                            identidad.get(
-                                "user_data_dir",
-                                "",
-                            )
-                            or ""
-                        ).strip()
-                    ),
+                    "cuenta_navegador_origen": origen_identidad,
+                    "user_data_dir_navegador": str(
+                        identidad.get(
+                            "user_data_dir",
+                            "",
+                        )
+                        or ""
+                    ).strip(),
                     "url_observable": bool(
                         url
                     ),
@@ -21881,31 +21045,19 @@ code {{
 
         elif proceso_l == "explorer.exe":
             if clase in {"CabinetWClass", "ExploreWClass"}:
-                ruta = self.obtener_ruta_explorer_hwnd(
-                    hwnd,
-                    titulo,
-                )
-
+                ruta = self.obtener_ruta_explorer_hwnd(hwnd, titulo)
                 if ruta:
-                    ruta_portable = self.portableizar_ruta_windows(
-                        ruta
-                    )
-
                     extra.update(
                         {
                             "tipo_recurso": (
-                                "carpeta"
-                                if Path(ruta).is_dir()
-                                else "recurso_windows"
+                                "carpeta" if Path(ruta).is_dir() else "recurso_windows"
                             ),
-                            "ruta_recurso": ruta_portable,
-                            "localizador": ruta_portable,
+                            "ruta_recurso": ruta,
+                            "localizador": ruta,
                         }
                     )
-
                 else:
                     extra["tipo_recurso"] = "explorador"
-
             else:
                 extra["tipo_recurso"] = "windows"
 
@@ -21915,38 +21067,19 @@ code {{
                 titulo,
                 ejecutable,
             )
-
             if ruta_archivo:
-                ruta_portable = self.portableizar_ruta_windows(
-                    ruta_archivo
-                )
-
                 extra.update(
                     {
                         "tipo_recurso": "archivo",
-                        "ruta_recurso": ruta_portable,
-                        "localizador": ruta_portable,
+                        "ruta_recurso": ruta_archivo,
+                        "localizador": ruta_archivo,
                     }
                 )
-
-            elif ejecutable or proceso:
-                identidad_aplicacion = self.normalizar_proceso_aplicacion(
-                    proceso=proceso
-                )
-
-                if not identidad_aplicacion and ejecutable:
-                    try:
-                        identidad_aplicacion = Path(
-                            ejecutable
-                        ).name.lower()
-
-                    except Exception:
-                        identidad_aplicacion = ""
-
+            elif ejecutable:
                 extra.update(
                     {
                         "tipo_recurso": "aplicacion",
-                        "localizador": identidad_aplicacion,
+                        "localizador": ejecutable,
                     }
                 )
 
@@ -21957,7 +21090,6 @@ code {{
         )
         resultado.update(extra)
         return resultado
-    
 
     def formatear_contexto_operativo(self, contexto):
         if not contexto:
@@ -21965,99 +21097,55 @@ code {{
 
         geometria = contexto.get("geometria") or {}
         lineas = [
-            (
-                f"HWND: {contexto.get('hwnd') or '--'} "
-                f"· origen: {contexto.get('hwnd_origen') or '--'} "
-                f"· PID: {contexto.get('pid') or '--'} "
-                f"· origen: {contexto.get('pid_origen') or '--'}"
-            ),
-            f"Proceso: {contexto.get('proceso') or '--'} · origen: {contexto.get('proceso_origen') or '--'}",
-            f"Ejecutable: {contexto.get('ejecutable') or '--'} · origen: {contexto.get('ejecutable_origen') or '--'}",
-            (
-                f"Clase: {contexto.get('clase') or '--'} "
-                f"· origen: {contexto.get('clase_origen') or '--'}"
-            ),
-            (
-                f"Ventana: {contexto.get('titulo') or '--'} "
-                f"· origen: {contexto.get('titulo_origen') or '--'}"
-            ),
+            f"Proceso: {contexto.get('proceso') or '--'}",
+            f"Ventana: {contexto.get('titulo') or '--'}",
             f"Tipo: {contexto.get('tipo_recurso') or '--'}",
         ]
 
         if contexto.get("tipo_recurso") == "web":
-            url = str(contexto.get("url", "") or "").strip()
-            partes = self.descomponer_url_identidad_bin(url) if url else None
-            lineas.append(f"URL: {url or 'no observable'}")
-            lineas.append(f"URL origen: {contexto.get('url_origen') or '--'}")
-            lineas.append(f"URL firma: {self.firma_url_web_bin(url) or '--'}")
-
-            if partes and partes.get("modo") == "http":
-                lineas.append(
-                    "URL partes: "
-                    f"host={partes.get('host') or '--'} · "
-                    f"ruta={partes.get('ruta') or '/'} · "
-                    f"query={partes.get('consulta') or ()} · "
-                    f"fragmento={partes.get('fragmento') or '--'}"
-                )
-
+            lineas.append(f"URL: {contexto.get('url') or 'no observable'}")
             lineas.append(
-                "Perfil local: "
-                f"{contexto.get('perfil_navegador') or 'no identificado'} · "
-                f"origen={contexto.get('perfil_navegador_origen') or '--'} · "
-                f"confianza={contexto.get('perfil_navegador_confianza') or '--'}"
+                "Perfil navegador: "
+                f"{contexto.get('perfil_navegador') or 'no identificado'}"
             )
             lineas.append(
-                "Cuenta: "
-                f"{contexto.get('cuenta_asociada_manual') or contexto.get('cuenta_navegador') or 'no identificada'} · "
-                f"origen={contexto.get('cuenta_navegador_origen') or '--'} · "
-                f"confianza={contexto.get('cuenta_navegador_confianza') or '--'}"
+                "Cuenta asociada: "
+                f"{contexto.get('cuenta_asociada_manual') or contexto.get('cuenta_navegador') or 'no identificada'}"
             )
             if contexto.get("cuenta_web_manual"):
-                lineas.append(f"Cuenta web manual: {contexto.get('cuenta_web_manual')}")
+                lineas.append(
+                    "Cuenta web: "
+                    f"{contexto.get('cuenta_web_manual')}"
+                )
         else:
             if contexto.get("url"):
                 lineas.append(f"URL: {contexto.get('url')}")
             if contexto.get("ruta_recurso"):
                 lineas.append(f"Ruta: {contexto.get('ruta_recurso')}")
-            if contexto.get("localizador"):
-                lineas.append(f"Localizador: {contexto.get('localizador')}")
-
-        lineas.append(
-            f"DPI: {contexto.get('dpi') or '--'} · "
-            f"escala={contexto.get('escala_dpi') or '--'} · "
-            f"origen={contexto.get('dpi_origen') or '--'}"
-        )
-
-        lineas.append(
-            "Conciencia DPI: "
-            f"{contexto.get('conciencia_dpi') or '--'} · "
-            f"código={contexto.get('conciencia_dpi_codigo')} · "
-            f"origen={contexto.get('conciencia_dpi_origen') or '--'}"
-        )
-
-        monitor = contexto.get("monitor") or {}
-        if monitor:
-            lineas.append(
-                f"Monitor: {monitor.get('dispositivo') or '--'} · "
-                f"primario={monitor.get('primario')} · "
-                f"trabajo={monitor.get('trabajo') or {}} · "
-                f"origen={contexto.get('monitor_origen') or '--'}"
-            )
-
-            lineas.append(
-                "Geometría origen: "
-                f"{contexto.get('geometria_origen') or '--'}"
-            )
+            if contexto.get("ejecutable") and not contexto.get("ruta_recurso"):
+                lineas.append(f"Ejecutable: {contexto.get('ejecutable')}")
+            if contexto.get("perfil_navegador"):
+                lineas.append(
+                    f"Perfil navegador: {contexto.get('perfil_navegador')}"
+                )
+            if contexto.get("cuenta_navegador"):
+                lineas.append(
+                    f"Cuenta asociada: {contexto.get('cuenta_navegador')}"
+                )
 
         if geometria:
             lineas.extend(
                 [
-                    f"Posición: X={geometria.get('x', '--')} Y={geometria.get('y', '--')}",
-                    f"Tamaño: {geometria.get('ancho', '--')}×{geometria.get('alto', '--')}",
+                    "Posición: "
+                    f"X={geometria.get('x', '--')} Y={geometria.get('y', '--')}",
+                    "Tamaño: "
+                    f"{geometria.get('ancho', '--')}×{geometria.get('alto', '--')}",
                     "Estado ventana: "
                     + (
-                        "maximizada" if geometria.get("maximizada")
-                        else "minimizada" if geometria.get("minimizada")
+                        "maximizada"
+                        if geometria.get("maximizada")
+                        else "minimizada"
+                        if geometria.get("minimizada")
                         else "normal"
                     ),
                 ]
@@ -22089,33 +21177,13 @@ code {{
         if tipo == "windows":
             return False
 
+        # Para web no usamos solo geometría: debe existir al menos
+        # URL, perfil o cuenta para no confundir dos ventanas del navegador.
         if tipo == "web":
-            # URL o cuenta observada sí representan estado web real.
-            if contexto.get("url") or contexto.get("cuenta_navegador"):
-                return True
-
-            # Profile N / Default sólo cuentan como pista de estado si fueron
-            # observados en la interfaz nativa con evidencia suficiente.
-            # Una pista obtenida únicamente desde --profile-directory no basta.
-            perfil = str(
-                contexto.get("perfil_navegador", "")
-                or ""
-            ).strip()
-
-            perfil_origen = str(
-                contexto.get("perfil_navegador_origen", "")
-                or ""
-            ).strip().lower()
-
-            perfil_confianza = str(
-                contexto.get("perfil_navegador_confianza", "")
-                or ""
-            ).strip().lower()
-
             return bool(
-                perfil
-                and perfil_confianza in {"alta", "media"}
-                and perfil_origen != "proceso_pista"
+                contexto.get("url")
+                or contexto.get("perfil_navegador")
+                or contexto.get("cuenta_navegador")
             )
 
         # Para Explorer exigimos la ruta concreta de la carpeta.
@@ -22127,7 +21195,7 @@ code {{
             or contexto.get("ruta_recurso")
             or contexto.get("geometria")
         )
-        
+
     def localizador_contexto_bin(self, contexto):
         if not contexto:
             return ""
@@ -22141,641 +21209,339 @@ code {{
 
     def normalizar_localizador_bin(self, contexto):
         valor = self.localizador_contexto_bin(contexto)
+        if not valor:
+            return ""
 
-        tipo = str(
-            contexto.get(
+        if str(contexto.get("tipo_recurso", "") or "").lower() == "web":
+            return self.normalizar_url_bin(valor).lower()
+
+        try:
+            return os.path.normcase(os.path.normpath(valor))
+        except Exception:
+            return valor.lower()
+
+    def identidad_contextos_operativos(self, esperado, actual):
+        """
+        True: coincide.
+        False: es otra identidad/estado obligatorio.
+        None: todavía no es observable con certeza.
+
+        Para WEB la regla es estricta:
+
+            cuenta esperada + URL esperada
+
+        deben coincidir conjuntamente cuando ambas fueron
+        registradas. Si hay cuenta esperada y la lectura actual no
+        expone cuenta, un perfil coincidente NO convierte el estado
+        en READY; BIN espera/corrige y vuelve a verificar.
+        """
+        if not esperado or not actual:
+            return False
+
+        proceso_e = str(
+            esperado.get(
+                "proceso",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        proceso_a = str(
+            actual.get(
+                "proceso",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        if (
+            proceso_e
+            and proceso_a
+            and proceso_e != proceso_a
+        ):
+            return False
+
+        tipo_e = str(
+            esperado.get(
                 "tipo_recurso",
                 "",
             )
             or ""
         ).strip().lower()
 
-        if tipo == "web":
-            if not valor:
-                return ""
+        cuenta_e = ""
+        comparacion_cuenta = None
 
-            return self.normalizar_url_bin(
-                valor
-            ).lower()
-
-        # Una aplicación se identifica por su proceso estable, no por
-        # C:\Users\...\programa.exe del equipo que grabó la rutina.
-        if tipo == "aplicacion":
-            proceso = self.normalizar_proceso_aplicacion(
-                proceso=contexto.get(
-                    "proceso",
-                    "",
-                )
+        if tipo_e == "web":
+            cuenta_e = self.cuenta_web_estricta_esperada(
+                esperado
             )
 
-            if proceso:
-                return proceso.lower()
-
-            ejecutable = str(
-                contexto.get(
-                    "ejecutable",
-                    "",
-                )
-                or valor
-                or ""
-            ).strip()
-
-            if ejecutable:
-                ruta_local = self.resolver_ruta_portable_windows(
-                    ejecutable
+            if cuenta_e:
+                comparacion_cuenta = (
+                    self.comparar_cuenta_web_estricta(
+                        esperado,
+                        actual,
+                    )
                 )
 
-                try:
-                    nombre = Path(
-                        ruta_local
-                        or ejecutable
-                    ).name
-                except Exception:
-                    nombre = ""
+                if comparacion_cuenta is False:
+                    return False
 
-                if nombre:
-                    return nombre.lower()
+                if comparacion_cuenta is None:
+                    return None
 
-            return ""
-
-        if not valor:
-            return ""
-
-        valor_local = self.resolver_ruta_portable_windows(
-            valor
+        loc_e = self.normalizar_localizador_bin(
+            esperado
         )
 
-        try:
-            return os.path.normcase(
-                os.path.normpath(
-                    valor_local
-                )
-            )
+        loc_a = self.normalizar_localizador_bin(
+            actual
+        )
 
-        except Exception:
-            return str(
-                valor_local
-                or valor
-            ).lower()
+        # ====================================================
+        # URL / RECURSO
+        # ====================================================
 
-
-    def evaluar_contexto_operativo_bin(
-        self,
-        esperado,
-        actual,
-        incluir_geometria=True,
-    ):
-        esperado = esperado or {}
-        actual = actual or {}
-
-        def normal(valor):
-            return str(valor or "").strip().lower()
-
-        proceso_e = normal(esperado.get("proceso"))
-        proceso_a = normal(actual.get("proceso"))
-        clase_e = normal(esperado.get("clase"))
-        clase_a = normal(actual.get("clase"))
-        tipo_e = normal(esperado.get("tipo_recurso"))
-        tipo_a = normal(actual.get("tipo_recurso"))
-
-        def comparar_campo(esperado_v, actual_v):
-            if not esperado_v:
-                return True
-            if not actual_v:
+        if loc_e:
+            if not loc_a:
                 return None
-            return esperado_v == actual_v
 
-        cmp_proceso = comparar_campo(proceso_e, proceso_a)
-        cmp_clase = comparar_campo(clase_e, clase_a)
-        cmp_tipo = comparar_campo(tipo_e, tipo_a)
+            if loc_e != loc_a:
+                return False
 
-        # ----------------------------------------------------
-        # IDENTIDAD BASE
-        # ----------------------------------------------------
+        perfil_e = str(
+            esperado.get(
+                "perfil_navegador",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        perfil_a = str(
+            actual.get(
+                "perfil_navegador",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        # ====================================================
+        # PERFIL
+        # ====================================================
         #
-        # WEB:
-        #   proceso + tipo son identidad primaria.
-        #   la clase Win32 es evidencia auxiliar, no bloqueante.
-        #
-        # Esto evita descartar una ventana correcta por cambios de
-        # versión/implementación del navegador antes de evaluar URL/cuenta.
-        # ----------------------------------------------------
+        # Si una cuenta estricta ya quedó confirmada, la cuenta
+        # manda y el nombre técnico Default/Profile N no puede
+        # invalidarla ni sustituirla.
+        # ====================================================
 
-        if tipo_e == "web":
-            identidad_resultados = [
-                cmp_proceso,
-                cmp_tipo,
-            ]
+        if perfil_e and not cuenta_e:
+            if (
+                perfil_a
+                and perfil_e != perfil_a
+            ):
+                return False
 
-            clase_autoritativa = False
+            if not perfil_a:
+                return None
 
-        else:
-            identidad_resultados = [
-                cmp_proceso,
-                cmp_clase,
-                cmp_tipo,
-            ]
-
-            clase_autoritativa = True
-
-        localizador_e = self.normalizar_localizador_bin(esperado)
-        localizador_a = self.normalizar_localizador_bin(actual)
-        cmp_localizador = True
-
-        if tipo_e != "web" and localizador_e:
-            if not localizador_a:
-                cmp_localizador = None
-            else:
-                cmp_localizador = localizador_e == localizador_a
-            identidad_resultados.append(cmp_localizador)
-
-        if False in identidad_resultados:
-            identidad_resultado = False
-        elif None in identidad_resultados:
-            identidad_resultado = None
-        else:
-            identidad_resultado = True
-
-        url_e = self.localizador_contexto_bin(esperado) if tipo_e == "web" else ""
-        url_a = self.localizador_contexto_bin(actual) if tipo_e == "web" else ""
-        cmp_url = self.comparar_urls_web_bin(url_e, url_a) if tipo_e == "web" else True
-
-        cuenta_detalle = (
-            self.comparar_cuenta_web_detallada(esperado, actual)
-            if tipo_e == "web"
-            else {"resultado": True, "requerida": False, "motivo": "No aplica."}
-        )
-        cmp_cuenta = cuenta_detalle.get("resultado")
-
-        estado_resultados = []
-        if tipo_e == "web":
-            if url_e:
-                estado_resultados.append(cmp_url)
-            if cuenta_detalle.get("requerida"):
-                estado_resultados.append(cmp_cuenta)
-
-        if not estado_resultados:
-            estado_resultado = True
-        elif False in estado_resultados:
-            estado_resultado = False
-        elif None in estado_resultados:
-            estado_resultado = None
-        else:
-            estado_resultado = True
-
-        if identidad_resultado is False:
-            compatibilidad = False
-            clasificacion = "imposible"
-            razon_clasificacion = (
-                "La identidad base no coincide."
+        return (
+            True
+            if (
+                loc_e
+                or perfil_e
+                or cuenta_e
+                or proceso_e
             )
-
-        elif estado_resultado is False:
-            compatibilidad = False
-
-            if tipo_e == "web":
-                clasificacion = (
-                    "probable_corregible"
-                )
-
-                razon_clasificacion = (
-                    "La ventana base es plausible, pero "
-                    "URL/cuenta requieren corrección."
-                )
-
-            else:
-                clasificacion = "imposible"
-
-                razon_clasificacion = (
-                    "El estado obligatorio no coincide."
-                )
-
-        elif (
-            identidad_resultado is None
-            or estado_resultado is None
-        ):
-            compatibilidad = None
-            clasificacion = "probable"
-
-            razon_clasificacion = (
-                "Falta evidencia suficiente; no se "
-                "clasifica como incorrecta."
-            )
-
-        else:
-            compatibilidad = True
-            clasificacion = "confirmada"
-
-            razon_clasificacion = (
-                "Identidad y estado obligatorios confirmados."
-            )
-
-        geometria = (
-            self.evaluar_geometria_contextos_bin(esperado, actual)
-            if incluir_geometria
-            else {}
+            else None
         )
-
-        return {
-            "identidad": {
-                "resultado": identidad_resultado,
-                "proceso": {"esperado": proceso_e, "actual": proceso_a, "resultado": cmp_proceso},
-                "clase": {
-                    "esperado": clase_e,
-                    "actual": clase_a,
-                    "resultado": cmp_clase,
-                    "autoritativa": clase_autoritativa,
-                },
-                "tipo": {"esperado": tipo_e, "actual": tipo_a, "resultado": cmp_tipo},
-                "localizador": {
-                    "esperado": localizador_e,
-                    "actual": localizador_a,
-                    "resultado": cmp_localizador,
-                },
-            },
-            "estado": {
-                "resultado": estado_resultado,
-                "url": {
-                    "esperada": url_e,
-                    "actual": url_a,
-                    "firma_esperada": self.firma_url_web_bin(url_e) if url_e else "",
-                    "firma_actual": self.firma_url_web_bin(url_a) if url_a else "",
-                    "resultado": cmp_url,
-                },
-                "cuenta": cuenta_detalle,
-            },
-            "entorno": {
-                "perfil": actual.get("perfil_navegador", ""),
-                "perfil_origen": actual.get("perfil_navegador_origen", ""),
-                "perfil_confianza": actual.get("perfil_navegador_confianza", ""),
-                "dpi": actual.get("dpi"),
-                "dpi_origen": actual.get(
-                    "dpi_origen",
-                    "",
-                ),
-                "conciencia_dpi": actual.get(
-                    "conciencia_dpi",
-                    "",
-                ),
-                "monitor": (
-                    actual.get("monitor")
-                    or {}
-                ),
-            },
-            "geometria": geometria,
-            "compatibilidad_operativa": compatibilidad,
-            "clasificacion": clasificacion,
-            "razon_clasificacion": (
-                razon_clasificacion
-            ),
-            "ready": bool(
-                compatibilidad is True
-                and (
-                    not incluir_geometria
-                    or geometria.get("coincide", True)
-                )
-            ),
-        }
-
-    def formatear_evaluacion_contexto_bin(
-        self,
-        esperado,
-        actual,
-        evaluacion=None,
-        decision="",
-        motivo="",
-    ):
-        evaluacion = evaluacion or self.evaluar_contexto_operativo_bin(esperado, actual)
-        identidad = evaluacion.get("identidad") or {}
-        estado = evaluacion.get("estado") or {}
-        cuenta = estado.get("cuenta") or {}
-        url = estado.get("url") or {}
-
-        def texto_resultado(valor):
-            if valor is True:
-                return "OK"
-            if valor is False:
-                return "DIFERENTE"
-            return "DESCONOCIDO"
-
-        def partes_url(valor):
-            valor = str(
-                valor
-                or ""
-            ).strip()
-
-            if not valor:
-                return {
-                    "host": "",
-                    "ruta": "",
-                    "consulta": (),
-                    "fragmento": "",
-                }
-
-            partes = (
-                self.descomponer_url_identidad_bin(
-                    valor
-                )
-                or {}
-            )
-
-            if partes.get(
-                "modo"
-            ) != "http":
-                return {
-                    "host": "",
-                    "ruta": "",
-                    "consulta": (),
-                    "fragmento": "",
-                }
-
-            return {
-                "host": str(
-                    partes.get(
-                        "host",
-                        "",
-                    )
-                    or ""
-                ),
-                "ruta": str(
-                    partes.get(
-                        "ruta",
-                        "",
-                    )
-                    or ""
-                ),
-                "consulta": tuple(
-                    partes.get(
-                        "consulta",
-                        (),
-                    )
-                    or ()
-                ),
-                "fragmento": str(
-                    partes.get(
-                        "fragmento",
-                        "",
-                    )
-                    or ""
-                ),
-            }
-
-        partes_esperada = partes_url(
-            url.get(
-                "esperada"
-            )
-        )
-
-        partes_actual = partes_url(
-            url.get(
-                "actual"
-            )
-        )
-
-        lineas = [
-            f"CLASIFICACIÓN: {evaluacion.get('clasificacion') or '--'}",
-            (
-                "RAZÓN CLASIFICACIÓN: "
-                f"{evaluacion.get('razon_clasificacion') or '--'}"
-            ),
-            f"DECISIÓN: {decision or '--'}",
-            f"RAZÓN: {motivo or '--'}",
-            "",
-            "OBJETIVO / VENTANA ACTUAL",
-            (
-                "HWND esperado="
-                f"{esperado.get('hwnd') or '--'} · "
-                "actual="
-                f"{actual.get('hwnd') or '--'} · "
-                "origen actual="
-                f"{actual.get('hwnd_origen') or '--'}"
-            ),
-            (
-                "PID esperado="
-                f"{esperado.get('pid') or '--'} · "
-                "actual="
-                f"{actual.get('pid') or '--'} · "
-                "origen actual="
-                f"{actual.get('pid_origen') or '--'}"
-            ),
-            (
-                "Ejecutable esperado="
-                f"{esperado.get('ejecutable') or '--'}"
-            ),
-            (
-                "Ejecutable actual="
-                f"{actual.get('ejecutable') or '--'} · "
-                "origen="
-                f"{actual.get('ejecutable_origen') or '--'}"
-            ),
-            "",
-            "IDENTIDAD",
-        ]
-
-        for clave in ("proceso", "clase", "tipo", "localizador"):
-            dato = identidad.get(clave) or {}
-            sufijo = ""
-
-            if clave == "clase":
-                sufijo = (
-                    " · autoritativa="
-                    + str(
-                        bool(
-                            dato.get(
-                                "autoritativa",
-                                True,
-                            )
-                        )
-                    )
-                )
-
-            lineas.append(
-                f"{clave}: "
-                f"esperado={dato.get('esperado') or '--'} · "
-                f"actual={dato.get('actual') or '--'} · "
-                f"{texto_resultado(dato.get('resultado'))}"
-                f"{sufijo}"
-            )
-
-        lineas.extend(
-            [
-                "",
-                "ESTADO WEB",
-                f"URL esperada: {url.get('esperada') or '--'}",
-                f"URL actual: {url.get('actual') or '--'}",
-                f"Firma URL esperada: {url.get('firma_esperada') or '--'}",
-                f"Firma URL actual: {url.get('firma_actual') or '--'}",
-                (
-                    "URL esperada partes: "
-                    f"host={partes_esperada.get('host') or '--'} · "
-                    f"ruta={partes_esperada.get('ruta') or '--'} · "
-                    f"query={partes_esperada.get('consulta') or ()} · "
-                    f"fragmento={partes_esperada.get('fragmento') or '--'}"
-                ),
-                (
-                    "URL actual partes: "
-                    f"host={partes_actual.get('host') or '--'} · "
-                    f"ruta={partes_actual.get('ruta') or '--'} · "
-                    f"query={partes_actual.get('consulta') or ()} · "
-                    f"fragmento={partes_actual.get('fragmento') or '--'}"
-                ),
-                (
-                    "URL actual origen: "
-                    f"{actual.get('url_origen') or '--'}"
-                ),
-                f"Resultado URL: {texto_resultado(url.get('resultado'))}",
-                f"Cuenta esperada: {cuenta.get('esperada') or '--'}",
-                f"Cuenta actual: {cuenta.get('actual') or 'no identificada'}",
-                f"Cuenta origen: {cuenta.get('origen_actual') or '--'}",
-                f"Cuenta confianza: {cuenta.get('confianza_actual') or '--'}",
-                (
-                    "Perfil local esperado para la cuenta: "
-                    f"{cuenta.get('perfil_esperado_local') or '--'}"
-                ),
-                f"Perfil local actual: {cuenta.get('perfil_actual') or actual.get('perfil_navegador') or '--'}",
-                f"Perfil origen: {actual.get('perfil_navegador_origen') or '--'}",
-                f"Perfil confianza: {actual.get('perfil_navegador_confianza') or '--'}",
-                (
-                    "Evidencia identidad navegador: "
-                    f"{actual.get('identidad_navegador_evidencia') or '--'}"
-                ),
-                f"Resultado cuenta: {texto_resultado(cuenta.get('resultado'))}",
-                f"Motivo cuenta: {cuenta.get('motivo') or '--'}",
-                "",
-                "ENTORNO LOCAL",
-                (
-                    "DPI: "
-                    f"{actual.get('dpi') or '--'} · "
-                    f"escala={actual.get('escala_dpi') or '--'} · "
-                    f"origen={actual.get('dpi_origen') or '--'}"
-                ),
-                (
-                    "Conciencia DPI: "
-                    f"{actual.get('conciencia_dpi') or '--'} · "
-                    f"código={actual.get('conciencia_dpi_codigo')} · "
-                    f"origen={actual.get('conciencia_dpi_origen') or '--'}"
-                ),
-                (
-                    "Monitor: "
-                    f"{actual.get('monitor') or {}} · "
-                    f"origen={actual.get('monitor_origen') or '--'}"
-                ),
-                (
-                    "Geometría origen: "
-                    f"{actual.get('geometria_origen') or '--'}"
-                ),
-                "",
-                "GEOMETRÍA",
-                self.formatear_evaluacion_geometria_bin(evaluacion.get("geometria") or {}),
-            ]
-        )
-
-        return "\n".join(lineas)
-
-    def registrar_diagnostico_contexto_bin(
-        self,
-        esperado,
-        actual,
-        decision="",
-        motivo="",
-    ):
-        if not esperado or not actual:
-            return
-
-        evaluacion = self.evaluar_contexto_operativo_bin(esperado, actual)
-        firma = (
-            int(actual.get("hwnd", 0) or 0),
-            evaluacion.get("clasificacion"),
-            (evaluacion.get("identidad") or {}).get("resultado"),
-            (evaluacion.get("estado") or {}).get("resultado"),
-            (evaluacion.get("geometria") or {}).get("coincide"),
-            str(decision or ""),
-            str(motivo or ""),
-        )
-
-        cache = self._cache_operativo_bin("diagnostic_context")
-        ahora = time.monotonic()
-        anterior = cache.get(firma)
-        if anterior is not None:
-            try:
-                if ahora - float(anterior) < 1.5:
-                    return
-            except Exception:
-                pass
-        cache[firma] = ahora
-        if len(cache) > 120:
-            cache.clear()
-            cache[firma] = ahora
-
-        self.registrar_evento_bin(
-            "DIAGNÓSTICO",
-            "Comparación completa del contexto operativo.",
-            self.formatear_evaluacion_contexto_bin(
-                esperado,
-                actual,
-                evaluacion=evaluacion,
-                decision=decision,
-                motivo=motivo,
-            ),
-        )
-
-
-    def identidad_contextos_operativos(self, esperado, actual):
-        """
-        Compatibilidad final necesaria para READY.
-
-        La evaluación interna mantiene separadas identidad, estado y geometría;
-        esta función conserva la interfaz histórica True/False/None y NO incluye
-        geometría en la decisión de identidad/estado.
-        """
-        if not esperado or not actual:
-            return False
-
-        evaluacion = self.evaluar_contexto_operativo_bin(
-            esperado,
-            actual,
-            incluir_geometria=False,
-        )
-        return evaluacion.get("compatibilidad_operativa")
- 
-
+    
     def geometria_contextos_coincide(
         self,
         esperado,
         actual,
         tolerancia=8,
     ):
-        evaluacion = self.evaluar_geometria_contextos_bin(
-            esperado,
-            actual,
-            tolerancia_base=tolerancia,
+        geo_esperada = (
+            esperado.get(
+                "geometria"
+            )
+            or {}
         )
-        return bool(evaluacion.get("coincide"))
 
+        geo_esperada = (
+            self.resolver_geometria_portable(
+                geo_esperada
+            )
+        )
+
+        if not geo_esperada:
+            return True
+
+        geo_actual = (
+            actual.get(
+                "geometria"
+            )
+            or {}
+        )
+
+        if not geo_actual:
+            return False
+
+        # ================================================
+        # ESTADO DE VENTANA
+        # ================================================
+
+        if bool(
+            geo_esperada.get(
+                "maximizada"
+            )
+        ) != bool(
+            geo_actual.get(
+                "maximizada"
+            )
+        ):
+            return False
+
+        if bool(
+            geo_esperada.get(
+                "minimizada"
+            )
+        ) != bool(
+            geo_actual.get(
+                "minimizada"
+            )
+        ):
+            return False
+
+        # Una ventana maximizada depende del área de trabajo
+        # de Windows, no de X/Y/ancho/alto manuales.
+        if geo_esperada.get(
+            "maximizada"
+        ):
+            return True
+
+        # ================================================
+        # POSICIÓN Y TAMAÑO
+        # ================================================
+
+        for clave in (
+            "x",
+            "y",
+            "ancho",
+            "alto",
+        ):
+            if clave not in geo_esperada:
+                continue
+
+            try:
+                esperado_valor = int(
+                    geo_esperada[
+                        clave
+                    ]
+                )
+
+                actual_valor = int(
+                    geo_actual.get(
+                        clave
+                    )
+                )
+
+            except Exception:
+                return False
+
+            diferencia = abs(
+                esperado_valor
+                - actual_valor
+            )
+
+            if diferencia > int(
+                tolerancia
+            ):
+                return False
+
+        return True
+    
     def aprender_identidad_web_manual(
         self,
         esperado,
         actual,
     ):
         """
-        Compatibilidad histórica.
-
-        Una acción manual WEB sin Cuenta asociada permanece flexible.
-        La cuenta o Profile N observados durante replay son datos locales
-        de ejecución y nunca se escriben como identidad esperada.
+        Si una accion manual web no fijo Cuenta asociada, BIN puede
+        aprender la identidad real del navegador solo despues de
+        confirmar la URL exacta. Nunca deduce la cuenta desde texto
+        arbitrario de la pagina.
         """
-        return False
+        if not isinstance(esperado, dict) or not isinstance(actual, dict):
+            return False
+
+        if str(esperado.get("tipo_recurso", "") or "").strip().lower() != "web":
+            return False
+
+        if not bool(esperado.get("contexto_manual")):
+            return False
+
+        if self.normalizar_cuenta_web_rescate(
+            esperado.get("cuenta_navegador", "")
+        ):
+            return False
+
+        url_esperada = self.normalizar_url_bin(
+            esperado.get("url", "")
+        ).lower()
+
+        url_actual = self.normalizar_url_bin(
+            actual.get("url", "")
+        ).lower()
+
+        if not url_esperada or not url_actual or url_esperada != url_actual:
+            return False
+
+        cuenta_actual = self.normalizar_cuenta_web_rescate(
+            actual.get("cuenta_navegador", "")
+        )
+
+        perfil_actual = str(
+            actual.get("perfil_navegador", "") or ""
+        ).strip()
+
+        if not cuenta_actual and not perfil_actual:
+            return False
+
+        if cuenta_actual:
+            esperado["cuenta_navegador"] = cuenta_actual
+            esperado["cuenta_asociada_manual"] = cuenta_actual
+
+        if perfil_actual:
+            esperado["perfil_navegador"] = perfil_actual
+
+        self.registrar_evento_bin(
+            "ASOCIA",
+            "Aprendi la identidad del navegador para la accion manual.",
+            (
+                f"Cuenta: {cuenta_actual or 'no observable'}\n"
+                f"Perfil: {perfil_actual or 'no observable'}\n"
+                f"URL: {url_actual}"
+            ),
+        )
+
+        return True
 
 
     def resolver_ventana_web_por_matricula_bin(self, esperado):
         """
-        Reconstruye una matrícula LOCAL de una ventana web.
+        Reconstruye una matrícula web en cada revisión.
 
-        La identidad base es proceso/clase/tipo. URL y cuenta son ESTADO.
-        Profile N/Default sólo ayuda como localizador del equipo actual.
-        Una URL incorrecta ya no vuelve imposible una candidata: puede ser una
-        ventana correcta cuyo estado todavía debe corregirse.
+        Firma completa:
+            título - clase - tipo_recurso - URL - perfil
+
+        Para no perder la misma ventana durante una navegación,
+        título y URL se consideran ESTADO. La identidad base usa
+        proceso + clase + tipo + perfil; la cuenta, cuando aparece,
+        tiene prioridad.
         """
+
         if str(esperado.get("tipo_recurso", "") or "").strip().lower() != "web":
             return None
 
@@ -22788,176 +21554,504 @@ code {{
                     texto(contexto.get("titulo", "")),
                     texto(contexto.get("clase", "")),
                     texto(contexto.get("tipo_recurso", "")),
-                    self.firma_url_web_bin(contexto.get("url", "")),
-                    # Perfil sólo distingue ventanas dentro del equipo actual.
+                    self.normalizar_url_bin(contexto.get("url", "")).lower(),
                     texto(contexto.get("perfil_navegador", "")),
                 ]
             )
 
         def base_coincide(contexto):
-            evaluacion = self.evaluar_contexto_operativo_bin(
-                esperado,
-                contexto,
-                incluir_geometria=False,
-            )
-            identidad = (evaluacion.get("identidad") or {}).get("resultado")
-            if identidad is False:
+            proceso_e = texto(esperado.get("proceso", ""))
+            proceso_a = texto(contexto.get("proceso", ""))
+
+            if proceso_e and proceso_a and proceso_e != proceso_a:
                 return False
-            if identidad is None:
-                return None
 
-            cuenta_e = self.cuenta_web_estricta_esperada(esperado)
-            if cuenta_e:
-                comparacion = self.comparar_cuenta_web_estricta(esperado, contexto)
-                if comparacion is True:
-                    return True
-                if comparacion is False:
-                    return False
-                return None
+            clase_e = texto(esperado.get("clase", ""))
+            clase_a = texto(contexto.get("clase", ""))
 
-            url_e = str(esperado.get("url", "") or "").strip()
-            if url_e:
-                comparacion_url = self.comparar_urls_web_bin(
-                    url_e,
-                    contexto.get("url", ""),
+            if clase_e and clase_a and clase_e != clase_a:
+                return False
+
+            tipo_a = texto(contexto.get("tipo_recurso", ""))
+
+            if tipo_a and tipo_a != "web":
+                return False
+
+            cuenta_e = self.cuenta_web_estricta_esperada(
+                esperado
+            )
+
+            comparacion_cuenta = (
+                self.comparar_cuenta_web_estricta(
+                    esperado,
+                    contexto,
                 )
-                if comparacion_url is True:
+                if cuenta_e
+                else None
+            )
+
+            perfil_e = texto(
+                esperado.get(
+                    "perfil_navegador",
+                    "",
+                )
+            )
+
+            perfil_a = texto(
+                contexto.get(
+                    "perfil_navegador",
+                    "",
+                )
+            )
+
+            # La cuenta esperada tiene autoridad absoluta.
+            # Un perfil coincidente NO sustituye una cuenta que
+            # todavía no pudo observarse.
+            if cuenta_e:
+                if comparacion_cuenta is True:
                     return True
-                # URL diferente/no observable = estado corregible o pendiente,
-                # no identidad imposible.
+
+                if comparacion_cuenta is False:
+                    return False
+
                 return None
 
-            return True
+            if perfil_e and perfil_a:
+                return perfil_e == perfil_a
+
+            if perfil_e:
+                return None
+
+            # Una accion WEB manual sin cuenta/perfil no puede fijar
+            # cualquier ventana de Chrome solo porque el proceso coincide.
+            # En ese caso la URL digitada por el usuario es la identidad
+            # principal. Si todavia no es observable, esperamos.
+            if bool(esperado.get("contexto_manual")):
+                url_e = self.normalizar_url_bin(
+                    esperado.get("url", "")
+                ).lower()
+
+                url_a = self.normalizar_url_bin(
+                    contexto.get("url", "")
+                ).lower()
+
+                if url_e:
+                    if not url_a:
+                        return None
+
+                    return url_e == url_a
+
+            return bool(
+                proceso_e
+                and proceso_a
+            )
 
         def puntuacion(contexto):
-            evaluacion = self.evaluar_contexto_operativo_bin(
-                esperado,
-                contexto,
-                incluir_geometria=True,
+            base = base_coincide(
+                contexto
             )
-            if (evaluacion.get("identidad") or {}).get("resultado") is False:
+
+            if base is False:
                 return -100000
 
-            puntos = 100
-            cuenta_e = self.cuenta_web_estricta_esperada(esperado)
-            if cuenta_e:
-                cmp_cuenta = self.comparar_cuenta_web_estricta(esperado, contexto)
-                if cmp_cuenta is True:
-                    puntos += 1000
-                elif cmp_cuenta is False:
-                    puntos -= 700
+            puntos = (
+                100
+                if base is True
+                else 10
+            )
 
-            url_e = str(esperado.get("url", "") or "").strip()
-            if url_e:
-                cmp_url = self.comparar_urls_web_bin(url_e, contexto.get("url", ""))
-                if cmp_url is True:
-                    puntos += 400
-                elif cmp_url is False:
-                    puntos -= 40
+            cuenta_e = self.cuenta_web_estricta_esperada(
+                esperado
+            )
 
-            if (evaluacion.get("geometria") or {}).get("coincide"):
-                puntos += 80
+            if (
+                cuenta_e
+                and self.comparar_cuenta_web_estricta(
+                    esperado,
+                    contexto,
+                ) is True
+            ):
+                puntos += 1000
 
-            titulo_e = texto(esperado.get("titulo", ""))
-            titulo_a = texto(contexto.get("titulo", ""))
-            if titulo_e and titulo_a:
-                if titulo_e == titulo_a:
-                    puntos += 30
-                elif titulo_e in titulo_a or titulo_a in titulo_e:
-                    puntos += 10
+            perfil_e = texto(
+                esperado.get(
+                    "perfil_navegador",
+                    "",
+                )
+            )
+
+            perfil_a = texto(
+                contexto.get(
+                    "perfil_navegador",
+                    "",
+                )
+            )
+
+            if (
+                perfil_e
+                and perfil_a
+                and perfil_e == perfil_a
+            ):
+                puntos += 600
+
+            url_e = self.normalizar_url_bin(
+                esperado.get(
+                    "url",
+                    "",
+                )
+            ).lower()
+
+            url_a = self.normalizar_url_bin(
+                contexto.get(
+                    "url",
+                    "",
+                )
+            ).lower()
+
+            if (
+                url_e
+                and url_a
+                and url_e == url_a
+            ):
+                puntos += 300
+
+            if self.geometria_contextos_coincide(
+                esperado,
+                contexto,
+            ):
+                puntos += 50
 
             return puntos
 
-        estado = self.obtener_estado_rescate_web(esperado)
+        estado = self.obtener_estado_rescate_web(
+            esperado
+        )
+
+        # ====================================================
+        # SI YA EXISTE UNA MATRÍCULA FIJADA
+        # NO VOLVER A ELEGIR OTRA VENTANA
+        # ====================================================
 
         try:
-            hwnd_fijo = int(estado.get("matricula_confirmada_hwnd", 0) or 0)
+            hwnd_fijo = int(
+                estado.get(
+                    "matricula_confirmada_hwnd",
+                    0,
+                )
+                or 0
+            )
+
         except Exception:
             hwnd_fijo = 0
 
         if hwnd_fijo:
-            actuales = getattr(self, "_hwnds_ventanas_monitor_bin", set())
-            if isinstance(actuales, set) and hwnd_fijo not in actuales:
+            actuales = getattr(
+                self,
+                "_hwnds_ventanas_monitor_bin",
+                set(),
+            )
+
+            # El monitor de 250 ms nos dice si sigue viva.
+            if (
+                isinstance(
+                    actuales,
+                    set,
+                )
+                and hwnd_fijo not in actuales
+            ):
                 hwnd_fijo = 0
 
             if hwnd_fijo:
-                self.invalidar_caches_observacion_ventanas_bin()
-                contexto_fijo = self.obtener_contexto_hwnd(hwnd_fijo, enriquecer=True)
+                self._cache_operativo_bin(
+                    "browser_uia"
+                ).clear()
+
+                self._cache_operativo_bin(
+                    "context_metadata"
+                ).clear()
+
+                contexto_fijo = (
+                    self.obtener_contexto_hwnd(
+                        hwnd_fijo,
+                        enriquecer=True,
+                    )
+                )
+
                 if contexto_fijo:
-                    base = base_coincide(contexto_fijo)
+                    base = base_coincide(
+                        contexto_fijo
+                    )
+
+                    # ----------------------------------------
+                    # TRES LECTURAS INCOMPATIBLES
+                    # ANTES DE SOLTAR LA MATRÍCULA
+                    # ----------------------------------------
+
                     if base is False:
-                        fallos = int(estado.get("matricula_fallos", 0) or 0) + 1
-                        estado["matricula_fallos"] = fallos
+                        fallos = (
+                            int(
+                                estado.get(
+                                    "matricula_fallos",
+                                    0,
+                                )
+                                or 0
+                            )
+                            + 1
+                        )
+
+                        estado[
+                            "matricula_fallos"
+                        ] = fallos
+
                         if fallos < 3:
                             return {
                                 "contexto": contexto_fijo,
                                 "confirmada": False,
                                 "esperando_confirmacion": True,
-                                "ambigua": False,
                             }
+
                     else:
-                        estado["matricula_fallos"] = 0
-                        estado["matricula_firma_estado"] = firma_estado(contexto_fijo)
+                        # Una lectura incompleta NO rompe
+                        # una matrícula ya fijada.
+                        estado[
+                            "matricula_fallos"
+                        ] = 0
+
+                        estado[
+                            "matricula_firma_estado"
+                        ] = firma_estado(
+                            contexto_fijo
+                        )
+
                         return {
                             "contexto": contexto_fijo,
-                            "confirmada": base is True,
-                            "esperando_confirmacion": base is None,
-                            "ambigua": False,
+                            "confirmada": (
+                                base is True
+                            ),
+                            "esperando_confirmacion": (
+                                base is None
+                            ),
                         }
 
-            estado.pop("matricula_confirmada_hwnd", None)
-            estado.pop("matricula_firma_estado", None)
-            estado["matricula_fallos"] = 0
+            # HWND desapareció o falló identidad 3 veces.
+            estado.pop(
+                "matricula_confirmada_hwnd",
+                None,
+            )
 
-        candidatos = self.enumerar_ventanas_operativas(
-            esperado,
-            max_enriquecidas=24,
+            estado.pop(
+                "matricula_firma_estado",
+                None,
+            )
+
+            estado[
+                "matricula_fallos"
+            ] = 0
+
+        # ====================================================
+        # NO EXISTE OBJETIVO:
+        # RECONSTRUIR MATRÍCULAS
+        # ====================================================
+
+        candidatos = (
+            self.enumerar_ventanas_operativas(
+                esperado,
+                max_enriquecidas=24,
+            )
         )
-        evaluados = [(ctx, base_coincide(ctx)) for ctx in candidatos]
-        confirmados = [ctx for ctx, base in evaluados if base is True]
-        indeterminados = [ctx for ctx, base in evaluados if base is None]
 
+        evaluados = [
+            (
+                contexto,
+                base_coincide(
+                    contexto
+                ),
+            )
+            for contexto
+            in candidatos
+        ]
+
+        confirmados = [
+            contexto
+            for contexto, estado_base
+            in evaluados
+            if estado_base is True
+        ]
+
+        indeterminados = [
+            contexto
+            for contexto, estado_base
+            in evaluados
+            if estado_base is None
+        ]
+
+        # Si la cuenta todavía no puede observarse, no cerramos
+        # supuestos duplicados ni elegimos otra ventana por perfil.
+        # Conservamos la mejor candidata y esperamos otra lectura.
         if not confirmados:
             if not indeterminados:
                 return None
 
-            indeterminados.sort(key=puntuacion, reverse=True)
-            mejor = indeterminados[0]
-            mejor_puntos = puntuacion(mejor)
-            segunda_puntos = (
-                puntuacion(indeterminados[1])
-                if len(indeterminados) > 1
-                else None
-            )
-            ambigua = bool(
-                segunda_puntos is not None
-                and (mejor_puntos - segunda_puntos) < 80
+            indeterminados.sort(
+                key=puntuacion,
+                reverse=True,
             )
 
             return {
-                "contexto": mejor,
+                "contexto": indeterminados[0],
                 "confirmada": False,
                 "esperando_confirmacion": True,
-                "ambigua": ambigua,
             }
 
-        confirmados.sort(key=puntuacion, reverse=True)
-        seleccionada = confirmados[0]
+        candidatos = confirmados
 
-        # No cerramos otras ventanas aquí: dos perfiles locales pueden mostrar
-        # la misma URL. La matrícula sirve para escoger, no para destruir estado
-        # del usuario basándonos en evidencia parcial.
-        estado["matricula_confirmada_hwnd"] = int(seleccionada.get("hwnd", 0) or 0)
-        estado["matricula_firma_estado"] = firma_estado(seleccionada)
-        estado["matricula_confirmada_en"] = time.monotonic()
-        estado["matricula_fallos"] = 0
+        # ====================================================
+        # DETECTAR MATRÍCULAS DUPLICADAS
+        #
+        # título + clase + tipo + URL + perfil
+        # ====================================================
+
+        grupos = {}
+
+        for contexto in candidatos:
+            grupos.setdefault(
+                firma_estado(
+                    contexto
+                ),
+                [],
+            ).append(
+                contexto
+            )
+
+        unicas = []
+
+        for firma, grupo in grupos.items():
+            grupo.sort(
+                key=puntuacion,
+                reverse=True,
+            )
+
+            conservar = grupo[0]
+
+            unicas.append(
+                conservar
+            )
+
+            # -----------------------------------------------
+            # SI HAY MÁS DE UNA CON LA MISMA FIRMA,
+            # CONSERVAMOS UNA SOLA.
+            #
+            # WM_CLOSE.
+            # NO Alt+F4.
+            # -----------------------------------------------
+
+            for duplicada in grupo[1:]:
+                try:
+                    hwnd = int(
+                        duplicada.get(
+                            "hwnd",
+                            0,
+                        )
+                        or 0
+                    )
+
+                    if (
+                        sys.platform == "win32"
+                        and hwnd
+                        and ctypes.windll.user32.IsWindow(
+                            hwnd
+                        )
+                    ):
+                        ctypes.windll.user32.PostMessageW(
+                            hwnd,
+                            0x0010,
+                            0,
+                            0,
+                        )
+
+                        self.registrar_evento_bin(
+                            "CORRIGE",
+                            (
+                                "Ventana web duplicada: "
+                                "conservo una sola matrícula."
+                            ),
+                            (
+                                f"Firma:\n"
+                                f"{firma}\n\n"
+                                f"HWND conservado: "
+                                f"{conservar.get('hwnd') or '--'}\n"
+                                f"HWND cerrado: "
+                                f"{hwnd}"
+                            ),
+                        )
+
+                except Exception:
+                    pass
+
+        # ====================================================
+        # ESCOGER LA MEJOR MATRÍCULA
+        # ====================================================
+
+        unicas.sort(
+            key=puntuacion,
+            reverse=True,
+        )
+
+        seleccionada = (
+            unicas[0]
+        )
+
+        base = base_coincide(
+            seleccionada
+        )
+
+        # Todavía falta información.
+        if base is not True:
+            return {
+                "contexto": seleccionada,
+                "confirmada": False,
+                "esperando_confirmacion": True,
+            }
+
+        # ====================================================
+        # FIJAR HWND DURANTE ESTE PASO
+        # ====================================================
+
+        estado[
+            "matricula_confirmada_hwnd"
+        ] = int(
+            seleccionada.get(
+                "hwnd",
+                0,
+            )
+            or 0
+        )
+
+        estado[
+            "matricula_firma_estado"
+        ] = firma_estado(
+            seleccionada
+        )
+
+        estado[
+            "matricula_confirmada_en"
+        ] = time.monotonic()
+
+        estado[
+            "matricula_fallos"
+        ] = 0
 
         self.registrar_evento_bin(
             "ASOCIA",
-            "Fijo la matrícula temporal de la ventana web.",
             (
-                f"HWND: {seleccionada.get('hwnd') or '--'}\n"
-                f"Firma local:\n{estado.get('matricula_firma_estado')}"
+                "Fijo la matrícula temporal "
+                "de la ventana web."
+            ),
+            (
+                f"HWND: "
+                f"{seleccionada.get('hwnd') or '--'}\n"
+                f"Firma:\n"
+                f"{estado.get('matricula_firma_estado')}"
             ),
         )
 
@@ -22965,9 +22059,7 @@ code {{
             "contexto": seleccionada,
             "confirmada": True,
             "esperando_confirmacion": False,
-            "ambigua": False,
         }
-
 
     def enumerar_ventanas_operativas(self, esperado, max_enriquecidas=8):
         if sys.platform != "win32":
@@ -23066,1221 +22158,339 @@ code {{
 
         return resultado
 
-
     def buscar_ventana_estado_operativo(self, esperado):
-        if str(esperado.get("tipo_recurso", "") or "").strip().lower() == "web":
-            resultado_matricula = self.resolver_ventana_web_por_matricula_bin(esperado)
+        # ====================================================
+        # WEB:
+        # MATRÍCULA RECONSTRUIBLE ANTES DEL BUSCADOR GENÉRICO
+        # ====================================================
+
+        if (
+            str(
+                esperado.get(
+                    "tipo_recurso",
+                    "",
+                )
+                or ""
+            ).strip().lower()
+            == "web"
+        ):
+            resultado_matricula = (
+                self.resolver_ventana_web_por_matricula_bin(
+                    esperado
+                )
+            )
+
             if resultado_matricula:
-                contexto = resultado_matricula.get("contexto") or {}
-                if contexto:
-                    evaluacion = self.evaluar_contexto_operativo_bin(
-                        esperado,
-                        contexto,
-                        incluir_geometria=True,
+                contexto = (
+                    resultado_matricula.get(
+                        "contexto"
                     )
-                    coincide = evaluacion.get("compatibilidad_operativa")
-                    ambigua = bool(resultado_matricula.get("ambigua"))
-                    clasificacion = evaluacion.get("clasificacion", "probable")
+                    or {}
+                )
 
-                    if resultado_matricula.get("confirmada"):
-                        if coincide is True:
-                            self.aprender_identidad_web_manual(esperado, contexto)
-
-                        estado_rescate = self.obtener_estado_rescate_web(esperado)
-                        estado_rescate["cuenta_confirmada_hwnd"] = int(
-                            contexto.get("hwnd", 0) or 0
+                if contexto:
+                    coincide = (
+                        self.identidad_contextos_operativos(
+                            esperado,
+                            contexto,
                         )
-                        estado_rescate["cuenta_confirmada_en"] = (
-                            estado_rescate.get("cuenta_confirmada_en")
+                    )
+
+                    # =========================================
+                    # MATRÍCULA CONFIRMADA
+                    # =========================================
+                    #
+                    # Puede que la URL o geometría aún
+                    # estén mal.
+                    #
+                    # Eso NO significa que debamos buscar
+                    # otra ventana.
+                    # =========================================
+
+                    if resultado_matricula.get(
+                        "confirmada"
+                    ):
+                        if coincide is True:
+                            self.aprender_identidad_web_manual(
+                                esperado,
+                                contexto,
+                            )
+
+                        estado_rescate = (
+                            self.obtener_estado_rescate_web(
+                                esperado
+                            )
+                        )
+
+                        estado_rescate[
+                            "cuenta_confirmada_hwnd"
+                        ] = int(
+                            contexto.get(
+                                "hwnd",
+                                0,
+                            )
+                            or 0
+                        )
+
+                        estado_rescate[
+                            "cuenta_confirmada_en"
+                        ] = (
+                            estado_rescate.get(
+                                "cuenta_confirmada_en"
+                            )
                             or time.monotonic()
                         )
 
-                        # Un estado WEB corregible (p.ej. URL distinta) conserva
-                        # la misma candidata en vez de descartarla como otra ventana.
-                        probable_corregible = clasificacion == "probable_corregible"
                         return {
-                            "ok": coincide is True,
+                            "ok": (
+                                coincide is True
+                            ),
                             "contexto": contexto,
-                            "hwnd": contexto.get("hwnd"),
-                            "indeterminado": bool(coincide is None or probable_corregible),
-                            "conflicto": bool(
+                            "hwnd": contexto.get(
+                                "hwnd"
+                            ),
+                            "indeterminado": (
+                                coincide is None
+                            ),
+                            "conflicto": (
                                 coincide is False
-                                and not probable_corregible
                             ),
                             "matricula_confirmada": True,
-                            "ambigua": ambigua,
-                            "clasificacion": clasificacion,
-                            "evaluacion": evaluacion,
                         }
 
-                    if resultado_matricula.get("esperando_confirmacion"):
+                    # =========================================
+                    # HAY UNA CANDIDATA,
+                    # PERO FALTA CUENTA/PERFIL
+                    # =========================================
+
+                    if resultado_matricula.get(
+                        "esperando_confirmacion"
+                    ):
                         return {
                             "ok": False,
                             "contexto": contexto,
-                            "hwnd": contexto.get("hwnd"),
+                            "hwnd": contexto.get(
+                                "hwnd"
+                            ),
                             "indeterminado": True,
                             "conflicto": False,
                             "matricula_confirmada": False,
-                            "ambigua": ambigua,
-                            "clasificacion": clasificacion,
-                            "evaluacion": evaluacion,
                         }
 
-        candidatos = self.enumerar_ventanas_operativas(esperado)
+        # ====================================================
+        # SOFTWARE / EXPLORER / FALLBACK WEB
+        # ====================================================
+
+        candidatos = (
+            self.enumerar_ventanas_operativas(
+                esperado
+            )
+        )
+
         indeterminada = None
         conflictiva = None
-        evaluacion_indeterminada = None
-        evaluacion_conflictiva = None
 
         for contexto in candidatos:
-            evaluacion = self.evaluar_contexto_operativo_bin(
-                esperado,
-                contexto,
-                incluir_geometria=True,
+            coincide = (
+                self.identidad_contextos_operativos(
+                    esperado,
+                    contexto,
+                )
             )
-            coincide = evaluacion.get("compatibilidad_operativa")
 
             if coincide is True:
-                self.aprender_identidad_web_manual(esperado, contexto)
+                self.aprender_identidad_web_manual(
+                    esperado,
+                    contexto,
+                )
+
                 return {
                     "ok": True,
                     "contexto": contexto,
-                    "hwnd": contexto.get("hwnd"),
+                    "hwnd": contexto.get(
+                        "hwnd"
+                    ),
                     "indeterminado": False,
                     "conflicto": False,
-                    "ambigua": False,
-                    "clasificacion": evaluacion.get("clasificacion"),
-                    "evaluacion": evaluacion,
                 }
 
-            if coincide is None and indeterminada is None:
+            if (
+                coincide is None
+                and indeterminada is None
+            ):
                 indeterminada = contexto
-                evaluacion_indeterminada = evaluacion
 
-            if coincide is False and conflictiva is None:
+            if (
+                coincide is False
+                and conflictiva is None
+            ):
                 conflictiva = contexto
-                evaluacion_conflictiva = evaluacion
 
-        contexto_candidato = indeterminada or conflictiva
-        evaluacion_candidato = evaluacion_indeterminada or evaluacion_conflictiva
+        contexto_candidato = (
+            indeterminada
+            or conflictiva
+        )
 
         return {
             "ok": False,
             "contexto": contexto_candidato,
-            "hwnd": contexto_candidato.get("hwnd") if contexto_candidato else None,
-            "indeterminado": bool(indeterminada),
-            "conflicto": bool(conflictiva and indeterminada is None),
-            "ambigua": False,
-            "clasificacion": (
-                evaluacion_candidato.get("clasificacion")
-                if evaluacion_candidato
-                else "sin_candidata"
+            "hwnd": (
+                contexto_candidato.get(
+                    "hwnd"
+                )
+                if contexto_candidato
+                else None
             ),
-            "evaluacion": evaluacion_candidato,
-        }
-
-    def obtener_integridad_proceso_windows(
-        self,
-        pid,
-    ):
-        """
-        Lee el nivel de integridad REAL del token de un proceso.
-
-        Esta información pertenece al entorno local de ejecución.
-        Nunca debe guardarse como identidad portable de una tarea.
-        """
-        try:
-            pid = int(
-                pid
-                or 0
-            )
-        except Exception:
-            pid = 0
-
-        respuesta = {
-            "ok": False,
-            "pid": pid,
-            "nivel": "desconocido",
-            "rid": None,
-            "elevado": None,
-            "error": "",
-        }
-
-        if (
-            sys.platform != "win32"
-            or pid <= 0
-        ):
-            return respuesta
-
-        cache = self._cache_operativo_obtener(
-            "integridad_proceso",
-            pid,
-            ttl=2.0,
-        )
-
-        if isinstance(
-            cache,
-            dict,
-        ):
-            return dict(
-                cache
-            )
-
-        PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
-        TOKEN_QUERY = 0x0008
-        TOKEN_ELEVATION_CLASS = 20
-        TOKEN_INTEGRITY_LEVEL_CLASS = 25
-
-        class TOKEN_ELEVATION(
-            ctypes.Structure
-        ):
-            _fields_ = [
-                (
-                    "TokenIsElevated",
-                    wintypes.DWORD,
-                ),
-            ]
-
-        class SID_AND_ATTRIBUTES(
-            ctypes.Structure
-        ):
-            _fields_ = [
-                (
-                    "Sid",
-                    wintypes.LPVOID,
-                ),
-                (
-                    "Attributes",
-                    wintypes.DWORD,
-                ),
-            ]
-
-        class TOKEN_MANDATORY_LABEL(
-            ctypes.Structure
-        ):
-            _fields_ = [
-                (
-                    "Label",
-                    SID_AND_ATTRIBUTES,
-                ),
-            ]
-
-        proceso_handle = None
-
-        token_handle = (
-            wintypes.HANDLE()
-        )
-
-        kernel32 = None
-
-        try:
-            kernel32 = ctypes.WinDLL(
-                "kernel32",
-                use_last_error=True,
-            )
-
-            advapi32 = ctypes.WinDLL(
-                "advapi32",
-                use_last_error=True,
-            )
-
-            kernel32.OpenProcess.argtypes = [
-                wintypes.DWORD,
-                wintypes.BOOL,
-                wintypes.DWORD,
-            ]
-
-            kernel32.OpenProcess.restype = (
-                wintypes.HANDLE
-            )
-
-            kernel32.CloseHandle.argtypes = [
-                wintypes.HANDLE,
-            ]
-
-            kernel32.CloseHandle.restype = (
-                wintypes.BOOL
-            )
-
-            advapi32.OpenProcessToken.argtypes = [
-                wintypes.HANDLE,
-                wintypes.DWORD,
-                ctypes.POINTER(
-                    wintypes.HANDLE
-                ),
-            ]
-
-            advapi32.OpenProcessToken.restype = (
-                wintypes.BOOL
-            )
-
-            advapi32.GetTokenInformation.argtypes = [
-                wintypes.HANDLE,
-                ctypes.c_int,
-                wintypes.LPVOID,
-                wintypes.DWORD,
-                ctypes.POINTER(
-                    wintypes.DWORD
-                ),
-            ]
-
-            advapi32.GetTokenInformation.restype = (
-                wintypes.BOOL
-            )
-
-            advapi32.GetSidSubAuthorityCount.argtypes = [
-                wintypes.LPVOID,
-            ]
-
-            advapi32.GetSidSubAuthorityCount.restype = (
-                ctypes.POINTER(
-                    ctypes.c_ubyte
-                )
-            )
-
-            advapi32.GetSidSubAuthority.argtypes = [
-                wintypes.LPVOID,
-                wintypes.DWORD,
-            ]
-
-            advapi32.GetSidSubAuthority.restype = (
-                ctypes.POINTER(
-                    wintypes.DWORD
-                )
-            )
-
-            ctypes.set_last_error(
-                0
-            )
-
-            proceso_handle = (
-                kernel32.OpenProcess(
-                    PROCESS_QUERY_LIMITED_INFORMATION,
-                    False,
-                    pid,
-                )
-            )
-
-            if not proceso_handle:
-                respuesta[
-                    "error"
-                ] = (
-                    "OpenProcess falló. "
-                    f"Win32={ctypes.get_last_error()}"
-                )
-
-                return respuesta
-
-            if not advapi32.OpenProcessToken(
-                proceso_handle,
-                TOKEN_QUERY,
-                ctypes.byref(
-                    token_handle
-                ),
-            ):
-                respuesta[
-                    "error"
-                ] = (
-                    "OpenProcessToken falló. "
-                    f"Win32={ctypes.get_last_error()}"
-                )
-
-                return respuesta
-
-            elevacion = TOKEN_ELEVATION()
-
-            tamano_elevacion = (
-                wintypes.DWORD()
-            )
-
-            if advapi32.GetTokenInformation(
-                token_handle,
-                TOKEN_ELEVATION_CLASS,
-                ctypes.byref(
-                    elevacion
-                ),
-                ctypes.sizeof(
-                    elevacion
-                ),
-                ctypes.byref(
-                    tamano_elevacion
-                ),
-            ):
-                respuesta[
-                    "elevado"
-                ] = bool(
-                    elevacion.TokenIsElevated
-                )
-
-            tamano = wintypes.DWORD(
-                0
-            )
-
-            advapi32.GetTokenInformation(
-                token_handle,
-                TOKEN_INTEGRITY_LEVEL_CLASS,
-                None,
-                0,
-                ctypes.byref(
-                    tamano
-                ),
-            )
-
-            if tamano.value <= 0:
-                respuesta[
-                    "error"
-                ] = (
-                    "Windows no informó el tamaño "
-                    "del TokenIntegrityLevel."
-                )
-
-                return respuesta
-
-            buffer_integridad = (
-                ctypes.create_string_buffer(
-                    tamano.value
-                )
-            )
-
-            if not advapi32.GetTokenInformation(
-                token_handle,
-                TOKEN_INTEGRITY_LEVEL_CLASS,
-                buffer_integridad,
-                tamano.value,
-                ctypes.byref(
-                    tamano
-                ),
-            ):
-                respuesta[
-                    "error"
-                ] = (
-                    "GetTokenInformation("
-                    "TokenIntegrityLevel) falló. "
-                    f"Win32={ctypes.get_last_error()}"
-                )
-
-                return respuesta
-
-            etiqueta = ctypes.cast(
-                buffer_integridad,
-                ctypes.POINTER(
-                    TOKEN_MANDATORY_LABEL
-                ),
-            ).contents
-
-            sid = etiqueta.Label.Sid
-
-            if not sid:
-                respuesta[
-                    "error"
-                ] = (
-                    "El token no contiene "
-                    "SID de integridad."
-                )
-
-                return respuesta
-
-            cantidad_ptr = (
-                advapi32.GetSidSubAuthorityCount(
-                    sid
-                )
-            )
-
-            if not cantidad_ptr:
-                respuesta[
-                    "error"
-                ] = (
-                    "No pude leer el SID "
-                    "de integridad."
-                )
-
-                return respuesta
-
-            cantidad = int(
-                cantidad_ptr.contents.value
-            )
-
-            if cantidad <= 0:
-                respuesta[
-                    "error"
-                ] = (
-                    "SID de integridad inválido."
-                )
-
-                return respuesta
-
-            rid_ptr = (
-                advapi32.GetSidSubAuthority(
-                    sid,
-                    cantidad - 1,
-                )
-            )
-
-            if not rid_ptr:
-                respuesta[
-                    "error"
-                ] = (
-                    "No pude leer el RID "
-                    "de integridad."
-                )
-
-                return respuesta
-
-            rid = int(
-                rid_ptr.contents.value
-            )
-
-            if rid < 0x1000:
-                nivel = "no_confiable"
-
-            elif rid < 0x2000:
-                nivel = "bajo"
-
-            elif rid < 0x3000:
-                nivel = "medio"
-
-            elif rid < 0x4000:
-                nivel = "alto"
-
-            elif rid < 0x5000:
-                nivel = "sistema"
-
-            else:
-                nivel = "protegido"
-
-            respuesta.update(
-                {
-                    "ok": True,
-                    "nivel": nivel,
-                    "rid": rid,
-                    "error": "",
-                }
-            )
-
-            return respuesta
-
-        except Exception as error:
-            respuesta[
-                "error"
-            ] = str(
-                error
-            )
-
-            return respuesta
-
-        finally:
-            try:
-                if (
-                    token_handle.value
-                    and kernel32 is not None
-                ):
-                    kernel32.CloseHandle(
-                        token_handle
-                    )
-            except Exception:
-                pass
-
-            try:
-                if (
-                    proceso_handle
-                    and kernel32 is not None
-                ):
-                    kernel32.CloseHandle(
-                        proceso_handle
-                    )
-            except Exception:
-                pass
-
-            try:
-                self._cache_operativo_guardar(
-                    "integridad_proceso",
-                    pid,
-                    respuesta,
-                )
-            except Exception:
-                pass
-
-    def diagnosticar_privilegios_hwnd(
-        self,
-        hwnd,
-    ):
-        respuesta = {
-            "ok": False,
-            "hwnd": 0,
-            "pid_bin": int(
-                os.getpid()
+            "indeterminado": bool(
+                indeterminada
             ),
-            "pid_objetivo": 0,
-            "usuario_bin": "",
-            "usuario_objetivo": "",
-            "bin": {},
-            "objetivo": {},
-            "objetivo_superior": None,
-            "error": "",
+            "conflicto": bool(
+                conflictiva
+                and indeterminada is None
+            ),
         }
-
-        if (
-            sys.platform != "win32"
-            or not hwnd
-        ):
-            return respuesta
-
-        try:
-            hwnd = int(
-                hwnd
-            )
-
-            respuesta[
-                "hwnd"
-            ] = hwnd
-
-            user32 = ctypes.WinDLL(
-                "user32",
-                use_last_error=True,
-            )
-
-            user32.GetWindowThreadProcessId.argtypes = [
-                wintypes.HWND,
-                ctypes.POINTER(
-                    wintypes.DWORD
-                ),
-            ]
-
-            user32.GetWindowThreadProcessId.restype = (
-                wintypes.DWORD
-            )
-
-            pid_objetivo = (
-                wintypes.DWORD(
-                    0
-                )
-            )
-
-            user32.GetWindowThreadProcessId(
-                wintypes.HWND(
-                    hwnd
-                ),
-                ctypes.byref(
-                    pid_objetivo
-                ),
-            )
-
-            respuesta[
-                "pid_objetivo"
-            ] = int(
-                pid_objetivo.value
-            )
-
-            try:
-                respuesta[
-                    "usuario_bin"
-                ] = str(
-                    psutil.Process(
-                        respuesta[
-                            "pid_bin"
-                        ]
-                    ).username()
-                    or ""
-                )
-
-            except Exception:
-                dominio = str(
-                    os.environ.get(
-                        "USERDOMAIN",
-                        "",
-                    )
-                    or ""
-                ).strip()
-
-                usuario = str(
-                    os.environ.get(
-                        "USERNAME",
-                        "",
-                    )
-                    or ""
-                ).strip()
-
-                respuesta[
-                    "usuario_bin"
-                ] = (
-                    f"{dominio}\\{usuario}"
-                    if dominio and usuario
-                    else usuario
-                )
-
-            if pid_objetivo.value:
-                try:
-                    respuesta[
-                        "usuario_objetivo"
-                    ] = str(
-                        psutil.Process(
-                            pid_objetivo.value
-                        ).username()
-                        or ""
-                    )
-                except Exception:
-                    pass
-
-            diagnostico_bin = (
-                self.obtener_integridad_proceso_windows(
-                    respuesta[
-                        "pid_bin"
-                    ]
-                )
-            )
-
-            diagnostico_objetivo = (
-                self.obtener_integridad_proceso_windows(
-                    pid_objetivo.value
-                )
-            )
-
-            respuesta[
-                "bin"
-            ] = diagnostico_bin
-
-            respuesta[
-                "objetivo"
-            ] = diagnostico_objetivo
-
-            if (
-                diagnostico_bin.get(
-                    "ok"
-                )
-                and diagnostico_objetivo.get(
-                    "ok"
-                )
-            ):
-                rid_bin = int(
-                    diagnostico_bin.get(
-                        "rid",
-                        0,
-                    )
-                    or 0
-                )
-
-                rid_objetivo = int(
-                    diagnostico_objetivo.get(
-                        "rid",
-                        0,
-                    )
-                    or 0
-                )
-
-                respuesta[
-                    "objetivo_superior"
-                ] = bool(
-                    rid_objetivo
-                    > rid_bin
-                )
-
-                respuesta[
-                    "ok"
-                ] = True
-
-            else:
-                respuesta[
-                    "error"
-                ] = (
-                    diagnostico_objetivo.get(
-                        "error"
-                    )
-                    or diagnostico_bin.get(
-                        "error"
-                    )
-                    or (
-                        "No se pudo comparar "
-                        "la integridad."
-                    )
-                )
-
-            return respuesta
-
-        except Exception as error:
-            respuesta[
-                "error"
-            ] = str(
-                error
-            )
-
-            return respuesta
-
-    def formatear_diagnostico_privilegios(
-        self,
-        diagnostico,
-    ):
-        diagnostico = (
-            diagnostico
-            or {}
-        )
-
-        bin_info = (
-            diagnostico.get(
-                "bin"
-            )
-            or {}
-        )
-
-        objetivo_info = (
-            diagnostico.get(
-                "objetivo"
-            )
-            or {}
-        )
-
-        def texto_elevado(
-            valor,
-        ):
-            if valor is True:
-                return "sí"
-
-            if valor is False:
-                return "no"
-
-            return "desconocido"
-
-        return (
-            "Usuario BIN: "
-            f"{diagnostico.get('usuario_bin') or '--'}\n"
-            "BIN PID: "
-            f"{diagnostico.get('pid_bin') or '--'} · "
-            "integridad: "
-            f"{bin_info.get('nivel') or 'desconocido'} · "
-            "elevado: "
-            f"{texto_elevado(bin_info.get('elevado'))}\n"
-            "Objetivo PID: "
-            f"{diagnostico.get('pid_objetivo') or '--'} · "
-            "usuario: "
-            f"{diagnostico.get('usuario_objetivo') or '--'} · "
-            "integridad: "
-            f"{objetivo_info.get('nivel') or 'desconocido'} · "
-            "elevado: "
-            f"{texto_elevado(objetivo_info.get('elevado'))}"
-        )
-
-
+    
     def aplicar_geometria_contexto(
         self,
         hwnd,
         esperado,
     ):
-        self.ultimo_error_geometria_hwnd = None
-        self.ultimo_diagnostico_geometria_hwnd = None
-
         if sys.platform != "win32" or not hwnd:
             return False
 
-        geometria_original = json.loads(
-            json.dumps(
-                esperado.get(
-                    "geometria"
-                )
-                or {},
-                ensure_ascii=False,
+        geometria = (
+            esperado.get(
+                "geometria"
             )
+            or {}
         )
 
-        if not geometria_original:
+        if not geometria:
             return True
 
         geometria = (
             self.resolver_geometria_portable(
-                geometria_original
-            )
-        )
-
-        adaptativa = (
-            geometria_original.get(
-                "adaptativa"
-            )
-            or {}
-        )
-
-        area_trabajo_actual = (
-            self.obtener_area_pantalla_portable(
-                usar_area_trabajo=True,
-            )
-            or {}
-        )
-
-        hwnd = int(
-            hwnd
-        )
-
-        intento = (
-            self.siguiente_intento_geometria_bin(
-                hwnd,
-                geometria,
-            )
-        )
-
-        anterior = (
-            self.obtener_geometria_ventana(
-                hwnd
-            )
-        )
-
-        dpi_info = (
-            self.obtener_dpi_ventana_windows(
-                hwnd
-            )
-        )
-
-        conciencia_dpi = (
-            self.obtener_conciencia_dpi_ventana_windows(
-                hwnd
-            )
-        )
-
-        diagnostico_operacion = {
-            "hwnd": hwnd,
-            "intento": intento,
-            "guardada_original": (
-                geometria_original
-            ),
-            "adaptativa": adaptativa,
-            "area_trabajo_actual": (
-                area_trabajo_actual
-            ),
-            "solicitada": dict(
                 geometria
-            ),
-            "anterior": anterior,
-            "dpi": dpi_info,
-            "conciencia_dpi": (
-                conciencia_dpi
-            ),
-            "resultado_setwindowpos": None,
-            "error_win32": 0,
-            "observada_inmediata": None,
-        }
+            )
+        )
 
         try:
-            user32 = ctypes.WinDLL("user32", use_last_error=True)
-            user32.IsWindow.argtypes = [wintypes.HWND]
-            user32.IsWindow.restype = wintypes.BOOL
-            user32.ShowWindow.argtypes = [wintypes.HWND, ctypes.c_int]
-            user32.ShowWindow.restype = wintypes.BOOL
-            user32.SetWindowPos.argtypes = [
-                wintypes.HWND, wintypes.HWND,
-                ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int,
-                wintypes.UINT,
-            ]
-            user32.SetWindowPos.restype = wintypes.BOOL
+            user32 = ctypes.windll.user32
 
-            if not user32.IsWindow(wintypes.HWND(hwnd)):
-                self.ultimo_error_geometria_hwnd = {
-                    "estado": "HWND_INVALIDO",
-                    "hwnd": hwnd,
-                    "detalle": "La ventana ya no existe.",
-                }
-                diagnostico_operacion["estado"] = "HWND_INVALIDO"
-                self.ultimo_diagnostico_geometria_hwnd = diagnostico_operacion
-                return False
-
-            if geometria.get("minimizada"):
-                user32.ShowWindow(wintypes.HWND(hwnd), 6)
-                QApplication.processEvents()
-                diagnostico_operacion["estado"] = "SHOWWINDOW_MINIMIZE_ENVIADO"
-                diagnostico_operacion["observada_inmediata"] = self.obtener_geometria_ventana(hwnd)
-                self.ultimo_diagnostico_geometria_hwnd = diagnostico_operacion
-                return True
-
-            if geometria.get("maximizada"):
-                user32.ShowWindow(wintypes.HWND(hwnd), 3)
-                QApplication.processEvents()
-                diagnostico_operacion["estado"] = "SHOWWINDOW_MAXIMIZE_ENVIADO"
-                diagnostico_operacion["observada_inmediata"] = self.obtener_geometria_ventana(hwnd)
-                self.ultimo_diagnostico_geometria_hwnd = diagnostico_operacion
-                return True
-
-            user32.ShowWindow(wintypes.HWND(hwnd), 9)
-            QApplication.processEvents()
-            ctypes.set_last_error(0)
-
-            correcto = bool(
-                user32.SetWindowPos(
-                    wintypes.HWND(hwnd),
-                    wintypes.HWND(0),
-                    int(geometria.get("x", 0)),
-                    int(geometria.get("y", 0)),
-                    max(1, int(geometria.get("ancho", 1))),
-                    max(1, int(geometria.get("alto", 1))),
-                    SWP_NOZORDER | SWP_NOACTIVATE,
-                )
-            )
-            error_win32 = int(ctypes.get_last_error() or 0)
-            QApplication.processEvents()
-
-            diagnostico_operacion["resultado_setwindowpos"] = correcto
-            diagnostico_operacion["error_win32"] = error_win32
-            diagnostico_operacion["observada_inmediata"] = self.obtener_geometria_ventana(hwnd)
-            diagnostico_operacion["estado"] = "ORDEN_ACEPTADA" if correcto else "ORDEN_RECHAZADA"
-            self.ultimo_diagnostico_geometria_hwnd = diagnostico_operacion
-
-            detalle_operacion = (
-                f"HWND: {hwnd}\n"
-                f"Intento: {intento}\n"
-                f"DPI: "
-                f"{dpi_info.get('dpi')} "
-                f"({dpi_info.get('origen')})\n"
-                f"Conciencia DPI: "
-                f"{conciencia_dpi.get('conciencia')} "
-                f"({conciencia_dpi.get('origen')})\n"
-                f"Geometría guardada original: "
-                f"{geometria_original}\n"
-                f"Adaptativa origen: "
-                f"{adaptativa}\n"
-                f"Área de trabajo actual: "
-                f"{area_trabajo_actual}\n"
-                f"Geometría resuelta/solicitada: "
-                f"{geometria}\n"
-                f"Antes: {anterior}\n"
-                f"SetWindowPos: "
-                f"{correcto} · "
-                f"Win32={error_win32}\n"
-                f"Lectura inmediata "
-                f"(diagnóstico, NO confirmación): "
-                f"{diagnostico_operacion.get('observada_inmediata')}"
-            )
-
-            if correcto:
-                self.registrar_evento_bin(
-                    "CORRIGE",
-                    "Windows aceptó la orden de geometría; espero una observación posterior para confirmar.",
-                    detalle_operacion,
-                )
-                return True
-
-            diagnostico_privilegios = self.diagnosticar_privilegios_hwnd(hwnd)
-            estado = (
-                "PRIVILEGIO_INSUFICIENTE"
-                if diagnostico_privilegios.get("objetivo_superior") is True
-                else "SETWINDOWPOS_FALLIDO"
-            )
-            self.ultimo_error_geometria_hwnd = {
-                "estado": estado,
-                "hwnd": hwnd,
-                "intento": intento,
-                "geometria_solicitada": dict(geometria),
-                "geometria_anterior": anterior,
-                "geometria_observada": diagnostico_operacion.get("observada_inmediata"),
-                "error_win32": error_win32,
-                "privilegios": diagnostico_privilegios,
-                "detalle": (
-                    detalle_operacion
-                    + "\n"
-                    + self.formatear_diagnostico_privilegios(diagnostico_privilegios)
-                ),
-            }
-            return False
-
-        except Exception as error:
-            diagnostico_privilegios = (
-                self.diagnosticar_privilegios_hwnd(hwnd) if hwnd else {}
-            )
-            estado = (
-                "PRIVILEGIO_INSUFICIENTE"
-                if diagnostico_privilegios.get("objetivo_superior") is True
-                else "ERROR_GEOMETRIA"
-            )
-            diagnostico_operacion["estado"] = estado
-            diagnostico_operacion["error_win32"] = int(ctypes.get_last_error() or 0)
-            diagnostico_operacion["excepcion"] = str(error)
-            diagnostico_operacion["observada_inmediata"] = self.obtener_geometria_ventana(hwnd)
-            self.ultimo_diagnostico_geometria_hwnd = diagnostico_operacion
-
-            self.ultimo_error_geometria_hwnd = {
-                "estado": estado,
-                "hwnd": hwnd,
-                "intento": intento,
-                "geometria_solicitada": dict(geometria),
-                "geometria_anterior": anterior,
-                "geometria_observada": diagnostico_operacion.get("observada_inmediata"),
-                "error_win32": diagnostico_operacion["error_win32"],
-                "privilegios": diagnostico_privilegios,
-                "detalle": str(error),
-            }
-            return False
-
-    def activar_hwnd_operativo(
-        self,
-        hwnd,
-    ):
-        self.ultimo_error_activacion_hwnd = None
-
-        if (
-            sys.platform != "win32"
-            or not hwnd
-        ):
-            return False
-
-        try:
             hwnd = int(
                 hwnd
             )
 
-            # Antes de enviar teclado/mouse, comprobar UIPI.
-            diagnostico = (
-                self.diagnosticar_privilegios_hwnd(
-                    hwnd
-                )
-            )
+            # ================================================
+            # MINIMIZADA
+            # ================================================
 
-            if diagnostico.get(
-                "objetivo_superior"
-            ) is True:
-                self.ultimo_error_activacion_hwnd = {
-                    "estado": (
-                        "PRIVILEGIO_INSUFICIENTE"
-                    ),
-                    "hwnd": hwnd,
-                    "privilegios": diagnostico,
-                    "detalle": (
-                        "La ventana objetivo tiene un "
-                        "nivel de integridad superior al "
-                        "de BIN. Windows puede bloquear "
-                        "foco e inyección de entrada (UIPI).\n"
-                        + self.formatear_diagnostico_privilegios(
-                            diagnostico
-                        )
-                    ),
-                }
-
-                return False
-
-            user32 = ctypes.WinDLL(
-                "user32",
-                use_last_error=True,
-            )
-
-            user32.IsWindow.argtypes = [
-                wintypes.HWND,
-            ]
-
-            user32.IsWindow.restype = (
-                wintypes.BOOL
-            )
-
-            user32.IsIconic.argtypes = [
-                wintypes.HWND,
-            ]
-
-            user32.IsIconic.restype = (
-                wintypes.BOOL
-            )
-
-            user32.ShowWindow.argtypes = [
-                wintypes.HWND,
-                ctypes.c_int,
-            ]
-
-            user32.ShowWindow.restype = (
-                wintypes.BOOL
-            )
-
-            user32.SetForegroundWindow.argtypes = [
-                wintypes.HWND,
-            ]
-
-            user32.SetForegroundWindow.restype = (
-                wintypes.BOOL
-            )
-
-            user32.GetForegroundWindow.argtypes = []
-
-            user32.GetForegroundWindow.restype = (
-                wintypes.HWND
-            )
-
-            if not user32.IsWindow(
-                wintypes.HWND(
-                    hwnd
-                )
-            ):
-                self.ultimo_error_activacion_hwnd = {
-                    "estado": "HWND_INVALIDO",
-                    "hwnd": hwnd,
-                    "detalle": (
-                        "La ventana ya no existe."
-                    ),
-                }
-
-                return False
-
-            if user32.IsIconic(
-                wintypes.HWND(
-                    hwnd
-                )
+            if geometria.get(
+                "minimizada"
             ):
                 user32.ShowWindow(
-                    wintypes.HWND(
-                        hwnd
-                    ),
-                    9,
+                    hwnd,
+                    6,
                 )
 
-            ctypes.set_last_error(
-                0
+                return True
+
+            # ================================================
+            # MAXIMIZADA
+            # ================================================
+
+            if geometria.get(
+                "maximizada"
+            ):
+                user32.ShowWindow(
+                    hwnd,
+                    3,
+                )
+
+                QApplication.processEvents()
+
+                return True
+
+            # ================================================
+            # VENTANA NORMAL
+            #
+            # Los valores que escribió el usuario son
+            # autoritativos.
+            #
+            # No los convertimos a otro sistema de
+            # coordenadas.
+            # ================================================
+
+            user32.ShowWindow(
+                hwnd,
+                9,
             )
 
-            solicitado = bool(
-                user32.SetForegroundWindow(
-                    wintypes.HWND(
-                        hwnd
-                    )
+            QApplication.processEvents()
+
+            correcto = bool(
+                user32.SetWindowPos(
+                    hwnd,
+                    0,
+                    int(
+                        geometria.get(
+                            "x",
+                            0,
+                        )
+                    ),
+                    int(
+                        geometria.get(
+                            "y",
+                            0,
+                        )
+                    ),
+                    max(
+                        1,
+                        int(
+                            geometria.get(
+                                "ancho",
+                                1,
+                            )
+                        ),
+                    ),
+                    max(
+                        1,
+                        int(
+                            geometria.get(
+                                "alto",
+                                1,
+                            )
+                        ),
+                    ),
+                    SWP_NOZORDER
+                    | SWP_NOACTIVATE,
                 )
             )
 
             QApplication.processEvents()
 
-            foreground = int(
-                user32.GetForegroundWindow()
-                or 0
-            )
+            return correcto
 
-            # Ésta es la confirmación real.
-            if foreground == hwnd:
-                return True
-
-            self.ultimo_error_activacion_hwnd = {
-                "estado": "FOCO_NO_CONCEDIDO",
-                "hwnd": hwnd,
-                "foreground_actual": foreground,
-                "setforeground_retorno": solicitado,
-                "error_win32": int(
-                    ctypes.get_last_error()
-                    or 0
-                ),
-                "privilegios": diagnostico,
-                "detalle": (
-                    "Windows no confirmó la ventana "
-                    "objetivo como foreground. "
-                    "No lo clasifico como problema de "
-                    "privilegios porque el objetivo no "
-                    "demostró una integridad superior.\n"
-                    + self.formatear_diagnostico_privilegios(
-                        diagnostico
-                    )
-                ),
-            }
-
+        except Exception:
+            return False
+              
+    def activar_hwnd_operativo(self, hwnd):
+        if sys.platform != "win32" or not hwnd:
             return False
 
-        except Exception as error:
-            self.ultimo_error_activacion_hwnd = {
-                "estado": "ERROR_ACTIVACION",
-                "hwnd": int(
-                    hwnd
-                    or 0
-                ),
-                "detalle": str(
-                    error
-                ),
-            }
+        try:
+            user32 = ctypes.windll.user32
+            hwnd = int(hwnd)
 
+            if user32.IsIconic(hwnd):
+                user32.ShowWindow(hwnd, 9)
+
+            user32.SetForegroundWindow(hwnd)
+            QApplication.processEvents()
+            return True
+        except Exception:
             return False
-        
+
     def seleccionar_cuenta_web_uia(
         self,
         hwnd,
@@ -24442,34 +22652,9 @@ code {{
         try:
             user32 = ctypes.windll.user32
 
-            if not self.activar_hwnd_operativo(
+            self.activar_hwnd_operativo(
                 hwnd
-            ):
-                fallo_activacion = (
-                    getattr(
-                        self,
-                        "ultimo_error_activacion_hwnd",
-                        None,
-                    )
-                    or {}
-                )
-
-                return {
-                    "ok": False,
-                    "estado": fallo_activacion.get(
-                        "estado",
-                        "FOCO_NO_CONFIRMADO",
-                    ),
-                    "detalle": (
-                        fallo_activacion.get(
-                            "detalle"
-                        )
-                        or (
-                            "No pude confirmar el foco de la "
-                            "ventana antes de seleccionar la cuenta."
-                        )
-                    ),
-                }
+            )
 
             user32.SetCursorPos(
                 x,
@@ -25153,15 +23338,20 @@ code {{
                 ),
             }
 
-        url_esperada = url
+        url_esperada = (
+            self.normalizar_url_bin(
+                url
+            ).lower()
+        )
 
-        url_actual = str(
-            contexto.get(
-                "url",
-                "",
-            )
-            or ""
-        ).strip()
+        url_actual = (
+            self.normalizar_url_bin(
+                contexto.get(
+                    "url",
+                    "",
+                )
+            ).lower()
+        )
 
         # ====================================================
         # FIJAR LA VENTANA CUANDO LA CUENTA YA COINCIDE
@@ -25290,10 +23480,9 @@ code {{
                 ] = False
 
         if (
-            self.comparar_urls_web_bin(
-                url_esperada,
-                url_actual,
-            ) is True
+            url_actual
+            and url_actual
+            == url_esperada
         ):
             return {
                 "ok": True,
@@ -25417,11 +23606,12 @@ code {{
         self.registrar_evento_bin(
             "CORRIGE",
             (
-                "Aplico la URL recordada sobre la misma "
-                "ventana web candidata."
+                "Encontré la cuenta correcta "
+                "y aplico la URL recordada "
+                "sobre esa misma ventana."
             ),
             (
-                f"Cuenta requerida: "
+                f"Cuenta: "
                 f"{esperado.get('cuenta_navegador') or '--'}\n"
                 f"URL: {url}\n"
                 f"HWND: {hwnd}"
@@ -25432,7 +23622,8 @@ code {{
             "ok": True,
             "cambio": True,
             "detalle": (
-                "URL aplicada sobre la misma ventana web candidata."
+                "URL aplicada sobre la ventana "
+                "con la cuenta correcta."
             ),
         }
 
@@ -25500,25 +23691,20 @@ code {{
 
         proceso = str(esperado.get("proceso", "") or "").strip().lower()
         cuenta = str(esperado.get("cuenta_navegador", "") or "").strip().lower()
-        url = self.firma_url_web_bin(
-            esperado.get(
-                "url",
-                "",
-            )
-        )
+        perfil = str(esperado.get("perfil_navegador", "") or "").strip().lower()
 
         if not proceso:
             return ""
 
         if cuenta:
             identidad = "cuenta:" + cuenta
-        elif url:
-            identidad = "url:" + url
+        elif perfil:
+            identidad = "perfil:" + perfil
         else:
             return ""
 
         return proceso + "|" + identidad
-    
+
     def preparar_materializacion_web_demostracion(
         self,
         esperado,
@@ -25534,6 +23720,7 @@ code {{
         proceso = str(esperado.get("proceso", "") or "").strip().lower()
         url = str(esperado.get("url", "") or "").strip()
         cuenta = str(esperado.get("cuenta_navegador", "") or "").strip()
+        perfil = str(esperado.get("perfil_navegador", "") or "").strip()
 
         if (
             tipo != "web"
@@ -25544,6 +23731,7 @@ code {{
                 "opera.exe",
             }
             or not url
+            or not (cuenta or perfil)
         ):
             return None
 
@@ -25607,7 +23795,7 @@ code {{
                     - lanzamiento_en
                 )
 
-                if transcurrido < (self.gracia_apertura_web_ms / 1000.0):
+                if transcurrido < 12.0:
                     return {
                         "ok": False,
                         "decision": "WAIT",
@@ -25657,6 +23845,22 @@ code {{
             }
 
             return None
+
+        perfil_resuelto = str(
+            contexto_apertura.get(
+                "perfil_navegador",
+                "",
+            )
+            or ""
+        ).strip()
+
+        if (
+            perfil_resuelto
+            and not perfil
+        ):
+            esperado[
+                "perfil_navegador"
+            ] = perfil_resuelto
 
         momento = time.monotonic()
 
@@ -25755,13 +23959,6 @@ code {{
             )
             or ""
         ).strip()
-
-        # Profile N / Default pertenece al equipo donde fue observado.
-        # En WEB nunca reutilizamos un perfil almacenado como identidad
-        # portable. Si existe una cuenta requerida, se resolverá abajo
-        # contra el Local State del equipo ACTUAL.
-        if tipo == "web":
-            perfil = ""
 
         es_web_manual_chromium = (
             tipo == "web"
@@ -25981,6 +24178,14 @@ code {{
                     ),
                 )
 
+        if (
+            es_web_directo_chromium
+            and perfil
+        ):
+            esperado[
+                "perfil_navegador"
+            ] = perfil
+
         if tipo == "web" and url:
             binario = self.resolver_ruta_aplicacion_windows(
                 proceso,
@@ -26092,15 +24297,11 @@ code {{
                 return {"ok": False, "detalle": str(error)}
 
         if ruta:
-            ruta_local = self.resolver_ruta_portable_windows(
-                ruta
-            )
-
             try:
                 resultado = ctypes.windll.shell32.ShellExecuteW(
                     None,
                     "open",
-                    ruta_local,
+                    ruta,
                     None,
                     None,
                     1,
@@ -26108,10 +24309,7 @@ code {{
                 if int(resultado) > 32:
                     return {
                         "ok": True,
-                        "detalle": (
-                            "Recurso solicitado directamente:\n"
-                            f"{ruta_local}"
-                        ),
+                        "detalle": f"Recurso solicitado directamente:\n{ruta}",
                     }
 
                 return {
@@ -26143,41 +24341,10 @@ code {{
         }
 
     def clave_correccion_contexto(self, esperado):
-        tipo = str(
-            esperado.get(
-                "tipo_recurso",
-                "",
-            )
-            or ""
-        ).strip().lower()
-
-        if tipo == "web":
-            localizador = self.firma_url_web_bin(
-                self.localizador_contexto_bin(
-                    esperado
-                )
-            )
-        else:
-            localizador = self.normalizar_localizador_bin(
-                esperado
-            )
-
-        perfil_clave = (
-            ""
-            if tipo == "web"
-            else str(
-                esperado.get(
-                    "perfil_navegador",
-                    "",
-                )
-                or ""
-            ).lower()
-        )
-
         return (
             str(esperado.get("proceso", "") or "").lower(),
-            localizador,
-            perfil_clave,
+            self.normalizar_localizador_bin(esperado),
+            str(esperado.get("perfil_navegador", "") or "").lower(),
             str(esperado.get("cuenta_navegador", "") or "").lower(),
         )
 
@@ -26206,108 +24373,309 @@ code {{
         cache[clave] = ahora
         return False
 
-
     def intentar_correccion_geometria_primaria(
         self,
         esperado,
         busqueda,
     ):
         """
-        Corrige geometría de una candidata suficientemente plausible sin
-        confundir estado WEB (URL/cuenta) con identidad base.
+        ACCIÓN CORRECTIVA 1.
+
+        Si la ventana candidata ya existe pero todavía falta
+        confirmar algún dato de identidad, intenta restaurar
+        primero posición/tamaño.
+
+        NO abre ventanas.
+        NO cambia URL.
+        NO cambia cuenta.
         """
+
         resultado = {
             "intentada": False,
             "aplicada": False,
             "contexto": None,
-            "error": None,
-            "motivo_omision": "",
         }
 
-        if sys.platform != "win32" or not esperado or not busqueda:
+        if (
+            sys.platform != "win32"
+            or not esperado
+            or not busqueda
+        ):
             return resultado
 
-        if busqueda.get("ok"):
+        # Si ya fue confirmada completamente, la corrección
+        # existente al final de asegurar_estado_contexto_ejecucion
+        # seguirá encargándose de la geometría.
+        if busqueda.get(
+            "ok"
+        ):
             return resultado
 
-        if not busqueda.get("indeterminado"):
-            resultado["motivo_omision"] = "La candidata no está clasificada como probable/corregible."
-            return resultado
+        # ====================================================
+        # COMANDO VENTANA WEB MANUAL
+        # ====================================================
+        #
+        # La geometría del micropront es la referencia autoritativa.
+        #
+        # Mientras la búsqueda sólo tenga una candidata
+        # indeterminada, NO movemos esa ventana. Podría ser otro
+        # Chrome ya existente. La geometría se aplicará después,
+        # cuando el supervisor haya confirmado el HWND correcto.
+        # ====================================================
 
-        if busqueda.get("ambigua"):
-            resultado["motivo_omision"] = (
-                "Hay varias ventanas web con evidencia similar; no moveré una al azar."
+        es_comando_ventana_web_manual = (
+            bool(
+                esperado.get(
+                    "contexto_manual"
+                )
             )
+            and bool(
+                esperado.get(
+                    "bloquear_actualizacion_automatica"
+                )
+            )
+            and str(
+                esperado.get(
+                    "tipo_recurso",
+                    "",
+                )
+                or ""
+            ).strip().lower()
+            == "web"
+        )
+
+        if es_comando_ventana_web_manual:
             return resultado
 
-        actual = busqueda.get("contexto") or {}
-        hwnd = busqueda.get("hwnd") or actual.get("hwnd")
+        # Sólo tocamos una candidata plausible cuya identidad
+        # todavía está incompleta.
+        #
+        # Si existe un conflicto conocido, podría tratarse
+        # de otra ventana y no debemos moverla.
+        if not busqueda.get(
+            "indeterminado"
+        ):
+            return resultado
+
+        actual = (
+            busqueda.get(
+                "contexto"
+            )
+            or {}
+        )
+
+        hwnd = (
+            busqueda.get(
+                "hwnd"
+            )
+            or actual.get(
+                "hwnd"
+            )
+        )
+
         if not actual or not hwnd:
             return resultado
 
-        if not (esperado.get("geometria") or {}) or not (actual.get("geometria") or {}):
+        geo_esperada = (
+            esperado.get(
+                "geometria"
+            )
+            or {}
+        )
+
+        geo_actual = (
+            actual.get(
+                "geometria"
+            )
+            or {}
+        )
+
+        if (
+            not geo_esperada
+            or not geo_actual
+        ):
             return resultado
 
-        if self.geometria_contextos_coincide(esperado, actual):
-            return resultado
-
-        evaluacion = self.evaluar_contexto_operativo_bin(
+        if self.geometria_contextos_coincide(
             esperado,
             actual,
-            incluir_geometria=True,
-        )
-        if (evaluacion.get("identidad") or {}).get("resultado") is False:
-            resultado["motivo_omision"] = "La identidad base (proceso/clase/tipo) es incompatible."
+        ):
             return resultado
 
-        tipo = str(esperado.get("tipo_recurso", "") or "").strip().lower()
+        # ====================================================
+        # CONFIRMAR QUE AL MENOS ES LA MISMA BASE
+        # ====================================================
+
+        proceso_e = str(
+            esperado.get(
+                "proceso",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        proceso_a = str(
+            actual.get(
+                "proceso",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        if (
+            proceso_e
+            and proceso_a
+            and proceso_e != proceso_a
+        ):
+            return resultado
+
+        clase_e = str(
+            esperado.get(
+                "clase",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        clase_a = str(
+            actual.get(
+                "clase",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        if (
+            clase_e
+            and clase_a
+            and clase_e != clase_a
+        ):
+            return resultado
+
+        tipo = str(
+            esperado.get(
+                "tipo_recurso",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        # ====================================================
+        # PROTECCIÓN ESPECIAL PARA WEB
+        # ====================================================
 
         if tipo == "web":
-            cuenta_esperada = self.cuenta_web_estricta_esperada(esperado)
-            cmp_cuenta = self.comparar_cuenta_web_estricta(esperado, actual)
-            url_esperada = self.localizador_contexto_bin(esperado)
-            cmp_url = (
-                self.comparar_urls_web_bin(url_esperada, self.localizador_contexto_bin(actual))
-                if url_esperada
-                else True
+
+            comparacion_cuenta = (
+                self.comparar_cuenta_web_estricta(
+                    esperado,
+                    actual,
+                )
             )
 
-            if cuenta_esperada and cmp_cuenta is False:
-                resultado["motivo_omision"] = "La cuenta actual está confirmada como diferente."
+            # Si sabemos positivamente que es otra cuenta,
+            # no mover esa ventana.
+            if comparacion_cuenta is False:
                 return resultado
 
-            # Cuenta aún desconocida: sólo movemos si la URL aporta evidencia
-            # fuerte de que se trata de la ventana buscada.
-            if cuenta_esperada and cmp_cuenta is None and cmp_url is not True:
-                resultado["motivo_omision"] = (
-                    "La cuenta requerida aún es desconocida y la URL no confirma esta ventana."
+            loc_e = (
+                self.normalizar_localizador_bin(
+                    esperado
                 )
+            )
+
+            loc_a = (
+                self.normalizar_localizador_bin(
+                    actual
+                )
+            )
+
+            # Si ambas URL se conocen y son diferentes,
+            # dejamos a las correcciones web actuales
+            # resolver URL/identidad.
+            if (
+                loc_e
+                and loc_a
+                and loc_e != loc_a
+            ):
                 return resultado
 
-            # Sin cuenta requerida, una URL diferente es ESTADO corregible;
-            # no bloquea la geometría de una candidata no ambigua.
+            perfil_e = str(
+                esperado.get(
+                    "perfil_navegador",
+                    "",
+                )
+                or ""
+            ).strip().lower()
 
-        resultado["intentada"] = True
-        resultado["contexto"] = actual
+            perfil_a = str(
+                actual.get(
+                    "perfil_navegador",
+                    "",
+                )
+                or ""
+            ).strip().lower()
+
+            if (
+                perfil_e
+                and perfil_a
+                and perfil_e != perfil_a
+            ):
+                return resultado
+
+        # ====================================================
+        # ACCIÓN CORRECTIVA 1
+        # ====================================================
+
+        resultado[
+            "intentada"
+        ] = True
 
         self.registrar_evento_bin(
             "CORRIGE",
-            "Acción correctiva 1/2: restauro geometría de una candidata plausible.",
-            self.formatear_evaluacion_contexto_bin(
-                esperado,
-                actual,
-                evaluacion=evaluacion,
-                decision="CORREGIR_GEOMETRIA",
-                motivo="Identidad base suficiente; estado y geometría se evalúan por separado.",
+            (
+                "Acción correctiva 1/2: "
+                "la ventana candidata ya existe; "
+                "restauro primero su posición y tamaño."
+            ),
+            (
+                "ESPERADO\n"
+                + self.formatear_contexto_operativo(
+                    esperado
+                )
+                + "\n\nACTUAL\n"
+                + self.formatear_contexto_operativo(
+                    actual
+                )
             ),
         )
 
-        if not self.aplicar_geometria_contexto(hwnd, esperado):
-            resultado["error"] = getattr(self, "ultimo_error_geometria_hwnd", None) or {}
+        if not self.aplicar_geometria_contexto(
+            hwnd,
+            esperado,
+        ):
             return resultado
 
-        self.invalidar_caches_observacion_ventanas_bin()
-        resultado["aplicada"] = True
+        time.sleep(
+            0.08
+        )
+
+        actualizado = (
+            self.obtener_contexto_hwnd(
+                hwnd,
+                enriquecer=True,
+            )
+            or actual
+        )
+
+        resultado[
+            "aplicada"
+        ] = True
+
+        resultado[
+            "contexto"
+        ] = actualizado
+
         return resultado
 
     def asegurar_estado_contexto_ejecucion(
@@ -26337,39 +24705,6 @@ code {{
         busqueda = self.buscar_ventana_estado_operativo(
             esperado
         )
-
-        contexto_diagnostico = (
-            busqueda.get("contexto")
-            if isinstance(busqueda, dict)
-            else None
-        )
-
-        if contexto_diagnostico:
-            self.registrar_diagnostico_contexto_bin(
-                esperado,
-                contexto_diagnostico,
-                decision=(
-                    "READY"
-                    if busqueda.get("ok")
-                    else "CONFLICTO"
-                    if busqueda.get("conflicto")
-                    else "WAIT"
-                ),
-                motivo=(
-                    "Clasificación inicial del buscador: "
-                    f"{busqueda.get('clasificacion') or '--'}"
-                ),
-            )
-
-        materializacion_demo = (
-            self.preparar_materializacion_web_demostracion(
-                esperado,
-                busqueda,
-            )
-        )
-
-        if materializacion_demo is not None:
-            return materializacion_demo
 
         # ====================================================
         # GRACIA DE APERTURA DIRECTA WEB MANUAL
@@ -26448,7 +24783,7 @@ code {{
                         time.monotonic()
                     )
 
-                elif transcurrido_lanzamiento < (self.gracia_apertura_web_ms / 1000.0):
+                elif transcurrido_lanzamiento < 12.0:
                     return {
                         "ok": False,
                         "decision": "WAIT",
@@ -26489,38 +24824,6 @@ code {{
             )
         )
 
-        error_geometria_primaria = (
-            correccion_geometria_primaria.get(
-                "error"
-            )
-            or {}
-        )
-
-        if error_geometria_primaria.get(
-            "estado"
-        ) == "PRIVILEGIO_INSUFICIENTE":
-            return {
-                "ok": False,
-                "decision": "FAILED",
-                "estado": (
-                    "PRIVILEGIO_INSUFICIENTE"
-                ),
-                "motivo": (
-                    "PRIVILEGIO_INSUFICIENTE: "
-                    "la candidata correcta requiere "
-                    "un nivel de integridad superior.\n"
-                    + error_geometria_primaria.get(
-                        "detalle",
-                        "",
-                    )
-                ),
-                "contexto_actual": (
-                    correccion_geometria_primaria.get(
-                        "contexto"
-                    )
-                ),
-            }
-
         if correccion_geometria_primaria.get(
             "aplicada"
         ):
@@ -26546,10 +24849,6 @@ code {{
                 0,
             )
             or 0
-        )
-
-        espera_supervisor_ms = (
-            self.tiempo_espera_supervisor_ms()
         )
 
         tipo_esperado = str(
@@ -26586,22 +24885,24 @@ code {{
         )
 
         # ====================================================
-        # RESCATE WEB POR TIEMPO REAL
+        # RESCATE WEB POR INTENTOS
         #
-        # 0-3 s:
+        # 1-4:
         #   Si Chrome ya existe, no multiplicar ventanas.
         #
-        # Desde 3 s:
-        #   Primer barrido de todas las ventanas.
+        # 5:
+        #   Revisar TODAS las ventanas.
+        #   Buscar Gmail.
+        #   Si aparece, tomar esa ventana y aplicarle URL.
         #
-        # 3-12 s:
+        # 6-11:
         #   Continuar observando sin abrir duplicados.
         #
-        # Desde 12 s:
+        # 12:
         #   Segundo barrido total.
         #
         # Si falla:
-        #   rescate final
+        #   Alt+F4
         #   reapertura directa
         #   evaluación final.
         # ====================================================
@@ -26682,6 +24983,25 @@ code {{
                     else None
                 )
 
+                perfil_esperado_matricula = str(
+                    esperado.get(
+                        "perfil_navegador",
+                        "",
+                    )
+                    or ""
+                ).strip().lower()
+
+                perfil_actual_matricula = str(
+                    (
+                        contexto_confirmado
+                        or {}
+                    ).get(
+                        "perfil_navegador",
+                        "",
+                    )
+                    or ""
+                ).strip().lower()
+
                 try:
                     hwnd_matricula = int(
                         estado_rescate.get(
@@ -26698,10 +25018,13 @@ code {{
                 # VALIDAR MATRÍCULA
                 # =================================================
                 #
-                # 1. Si existe cuenta esperada, la cuenta manda.
-                # 2. Si no existe cuenta esperada, Profile N / Default
-                #    no participan. Conservamos el mismo HWND ya fijado
-                #    y la URL se valida/corrige inmediatamente después.
+                # 1. Si existe cuenta esperada:
+                #       la cuenta manda de forma estricta.
+                #       El perfil NO puede sustituirla.
+                #
+                # 2. Sólo cuando la demostración no registró cuenta,
+                #       el perfil puede confirmar identidad.
+                #
                 # 3. Una lectura incompleta conserva el HWND y espera.
                 # =================================================
 
@@ -26711,22 +25034,23 @@ code {{
                     )
 
                 elif (
+                    perfil_esperado_matricula
+                    and perfil_actual_matricula
+                ):
+                    identidad_matricula = (
+                        perfil_actual_matricula
+                        == perfil_esperado_matricula
+                    )
+
+                elif (
                     contexto_confirmado
                     and hwnd_matricula
                     == hwnd_cuenta_confirmada
                 ):
-                    identidad_matricula = True
-
-                elif contexto_confirmado:
-                    identidad_matricula = (
-                        self.identidad_contextos_operativos(
-                            esperado,
-                            contexto_confirmado,
-                        )
-                    )
+                    identidad_matricula = None
 
                 else:
-                    identidad_matricula = None
+                    identidad_matricula = False
 
                 # =================================================
                 # LECTURA INCOMPLETA
@@ -26765,21 +25089,23 @@ code {{
                         "fallo_final"
                     ] = False
 
-                    url_esperada_confirmada = str(
-                        esperado.get(
-                            "url",
-                            "",
-                        )
-                        or ""
-                    ).strip()
+                    url_esperada_confirmada = (
+                        self.normalizar_url_bin(
+                            esperado.get(
+                                "url",
+                                "",
+                            )
+                        ).lower()
+                    )
 
-                    url_actual_confirmada = str(
-                        contexto_confirmado.get(
-                            "url",
-                            "",
-                        )
-                        or ""
-                    ).strip()
+                    url_actual_confirmada = (
+                        self.normalizar_url_bin(
+                            contexto_confirmado.get(
+                                "url",
+                                "",
+                            )
+                        ).lower()
+                    )
 
                     # =============================================
                     # CUENTA + URL YA COINCIDEN
@@ -26787,10 +25113,11 @@ code {{
 
                     if (
                         not url_esperada_confirmada
-                        or self.comparar_urls_web_bin(
-                            url_esperada_confirmada,
-                            url_actual_confirmada,
-                        ) is True
+                        or (
+                            url_actual_confirmada
+                            and url_actual_confirmada
+                            == url_esperada_confirmada
+                        )
                     ):
                         # -----------------------------------------
                         # CORREGIR GEOMETRÍA SI HACE FALTA
@@ -26804,144 +25131,52 @@ code {{
                                 hwnd_cuenta_confirmada,
                                 esperado,
                             ):
-                                fallo_geometria = (
-                                    getattr(
-                                        self,
-                                        "ultimo_error_geometria_hwnd",
-                                        None,
-                                    )
-                                    or {}
-                                )
-
-                                if fallo_geometria.get(
-                                    "estado"
-                                ) == "PRIVILEGIO_INSUFICIENTE":
-                                    return {
-                                        "ok": False,
-                                        "decision": "FAILED",
-                                        "estado": (
-                                            "PRIVILEGIO_INSUFICIENTE"
-                                        ),
-                                        "motivo": (
-                                            "PRIVILEGIO_INSUFICIENTE: "
-                                            "Windows rechazó la corrección "
-                                            "de geometría sobre la ventana "
-                                            "web correcta.\n"
-                                            + fallo_geometria.get(
-                                                "detalle",
-                                                "",
-                                            )
-                                        ),
-                                        "contexto_actual": (
-                                            contexto_confirmado
-                                        ),
-                                        "hwnd": (
-                                            hwnd_cuenta_confirmada
-                                        ),
-                                    }
-
                                 return {
                                     "ok": False,
                                     "decision": "WAIT",
-                                    "estado": fallo_geometria.get(
-                                        "estado",
-                                        "GEOMETRIA_NO_APLICADA",
-                                    ),
                                     "motivo": (
-                                        fallo_geometria.get(
-                                            "detalle"
-                                        )
-                                        or (
-                                            "La cuenta y URL ya coinciden, "
-                                            "pero todavía no pude aplicar "
-                                            "la geometría de la ventana."
-                                        )
+                                        "La cuenta y URL ya coinciden, "
+                                        "pero todavía estoy corrigiendo "
+                                        "la geometría de la ventana."
                                     ),
                                     "contexto_actual": (
                                         contexto_confirmado
                                     ),
-                                    "hwnd": (
-                                        hwnd_cuenta_confirmada
-                                    ),
                                 }
 
-                            self.invalidar_caches_observacion_ventanas_bin()
+                            time.sleep(
+                                0.08
+                            )
 
-                            return {
-                                "ok": False,
-                                "decision": "WAIT",
-                                "motivo": (
-                                    "La cuenta y URL son correctas. "
-                                    "Envié la corrección de geometría y "
-                                    "espero una observación nueva de Windows."
-                                ),
-                                "contexto_actual": (
-                                    contexto_confirmado
-                                ),
-                            }
+                            contexto_confirmado = (
+                                self.obtener_contexto_hwnd(
+                                    hwnd_cuenta_confirmada,
+                                    enriquecer=True,
+                                )
+                                or contexto_confirmado
+                            )
+
+                            if not self.geometria_contextos_coincide(
+                                esperado,
+                                contexto_confirmado,
+                            ):
+                                return {
+                                    "ok": False,
+                                    "decision": "WAIT",
+                                    "motivo": (
+                                        "La cuenta y URL son correctas. "
+                                        "Espero confirmación de posición "
+                                        "y tamaño."
+                                    ),
+                                    "contexto_actual": (
+                                        contexto_confirmado
+                                    ),
+                                }
 
                         if activar:
-                            if not self.activar_hwnd_operativo(
+                            self.activar_hwnd_operativo(
                                 hwnd_cuenta_confirmada
-                            ):
-                                fallo_activacion = (
-                                    getattr(
-                                        self,
-                                        "ultimo_error_activacion_hwnd",
-                                        None,
-                                    )
-                                    or {}
-                                )
-
-                                if fallo_activacion.get(
-                                    "estado"
-                                ) == "PRIVILEGIO_INSUFICIENTE":
-                                    return {
-                                        "ok": False,
-                                        "decision": "FAILED",
-                                        "estado": (
-                                            "PRIVILEGIO_INSUFICIENTE"
-                                        ),
-                                        "motivo": (
-                                            "PRIVILEGIO_INSUFICIENTE: "
-                                            "la ventana web tiene una "
-                                            "integridad superior a BIN.\n"
-                                            + fallo_activacion.get(
-                                                "detalle",
-                                                "",
-                                            )
-                                        ),
-                                        "contexto_actual": (
-                                            contexto_confirmado
-                                        ),
-                                        "hwnd": (
-                                            hwnd_cuenta_confirmada
-                                        ),
-                                    }
-
-                                return {
-                                    "ok": False,
-                                    "decision": "WAIT",
-                                    "estado": (
-                                        "FOCO_NO_CONFIRMADO"
-                                    ),
-                                    "motivo": (
-                                        fallo_activacion.get(
-                                            "detalle"
-                                        )
-                                        or (
-                                            "La ventana web correcta "
-                                            "existe, pero Windows todavía "
-                                            "no confirmó su foreground."
-                                        )
-                                    ),
-                                    "contexto_actual": (
-                                        contexto_confirmado
-                                    ),
-                                    "hwnd": (
-                                        hwnd_cuenta_confirmada
-                                    ),
-                                }
+                            )
 
                         if self.contexto_externo_valido(
                             contexto_confirmado
@@ -27081,7 +25316,7 @@ code {{
                     if (
                         ahora_rescate
                         - cuenta_confirmada_en
-                        < (self.gracia_url_web_ms / 1000.0)
+                        < 15.0
                     ):
                         return {
                             "ok": False,
@@ -27118,7 +25353,7 @@ code {{
                             "confirmada, pero la URL no "
                             "coincidió después de "
                             "4 correcciones y "
-                            f"{int(self.gracia_url_web_ms / 1000)} segundos de gracia."
+                            "15 segundos de gracia."
                         ),
                         "contexto_actual": (
                             contexto_confirmado
@@ -27214,21 +25449,23 @@ code {{
                         )
                     )
 
-                    url_esperada_final = str(
-                        esperado.get(
-                            "url",
-                            "",
-                        )
-                        or ""
-                    ).strip()
+                    url_esperada_final = (
+                        self.normalizar_url_bin(
+                            esperado.get(
+                                "url",
+                                "",
+                            )
+                        ).lower()
+                    )
 
-                    url_actual_final = str(
-                        contexto_cuenta.get(
-                            "url",
-                            "",
-                        )
-                        or ""
-                    ).strip()
+                    url_actual_final = (
+                        self.normalizar_url_bin(
+                            contexto_cuenta.get(
+                                "url",
+                                "",
+                            )
+                        ).lower()
+                    )
 
                     # -----------------------------------------
                     # CUENTA + URL CORRECTAS
@@ -27236,10 +25473,8 @@ code {{
 
                     if (
                         url_esperada_final
-                        and self.comparar_urls_web_bin(
-                            url_esperada_final,
-                            url_actual_final,
-                        ) is True
+                        and url_actual_final
+                        == url_esperada_final
                     ):
                         busqueda = {
                             "ok": True,
@@ -27369,7 +25604,7 @@ code {{
 
                     # Chrome puede tardar un poco
                     # en exponer la cuenta.
-                    if transcurrido_final < (self.gracia_reapertura_web_ms / 1000.0):
+                    if transcurrido_final < 3.0:
                         return {
                             "ok": False,
                             "decision": "WAIT",
@@ -27408,7 +25643,7 @@ code {{
             # =================================================
 
             if (
-                espera_supervisor_ms >= 3_000
+                intentos >= 5
                 and not estado_rescate.get(
                     "barrido_5"
                 )
@@ -27533,13 +25768,7 @@ code {{
                 not busqueda.get(
                     "ok"
                 )
-                and estado_rescate.get(
-                    "barrido_5"
-                )
-                and not estado_rescate.get(
-                    "barrido_12"
-                )
-                and espera_supervisor_ms < 12_000
+                and 5 < intentos < 12
                 and contexto_parcial_web
             ):
                 correccion_selector = (
@@ -27577,7 +25806,7 @@ code {{
                 not busqueda.get(
                     "ok"
                 )
-                and espera_supervisor_ms >= 12_000
+                and intentos >= 12
                 and not estado_rescate.get(
                     "barrido_12"
                 )
@@ -27689,8 +25918,10 @@ code {{
                         None,
                     )
 
-                    # La reapertura se envía sin dormir el hilo.
-                    # Su éxito se confirma en observaciones posteriores.
+                    time.sleep(
+                        0.25
+                    )
+
                     reapertura = (
                         self.abrir_contexto_directamente(
                             esperado
@@ -27761,7 +25992,7 @@ code {{
                     }
 
             # =================================================
-            # PRIMEROS 3 SEGUNDOS
+            # INTENTOS 1 A 4
             #
             # Si Chrome ya existe, esperar.
             # No abrir otro.
@@ -27771,7 +26002,7 @@ code {{
                 not busqueda.get(
                     "ok"
                 )
-                and espera_supervisor_ms < 3_000
+                and intentos < 5
                 and contexto_parcial_web
             ):
                 correccion_selector = (
@@ -27865,72 +26096,6 @@ code {{
                         "contexto_actual": contexto_parcial,
                     }
 
-            # =================================================
-            # WEB SIN CUENTA REQUERIDA: CORREGIR URL SOBRE LA
-            # CANDIDATA PROBABLE ANTES DE ABRIR OTRA VENTANA.
-            # =================================================
-
-            tipo_esperado_parcial = str(
-                esperado.get("tipo_recurso", "") or ""
-            ).strip().lower()
-
-            cuenta_esperada_parcial = (
-                self.normalizar_cuenta_web_rescate(
-                    esperado.get("cuenta_navegador", "")
-                )
-            )
-
-            if (
-                tipo_esperado_parcial == "web"
-                and not cuenta_esperada_parcial
-                and contexto_parcial
-                and not busqueda.get("ambigua")
-            ):
-                url_esperada_parcial = str(
-                    esperado.get("url", "")
-                    or self.localizador_contexto_bin(esperado)
-                    or ""
-                ).strip()
-
-                url_actual_parcial = str(
-                    contexto_parcial.get("url", "")
-                    or self.localizador_contexto_bin(contexto_parcial)
-                    or ""
-                ).strip()
-
-                if (
-                    url_esperada_parcial
-                    and self.comparar_urls_web_bin(
-                        url_esperada_parcial,
-                        url_actual_parcial,
-                    ) is False
-                ):
-                    correccion_url = self.aplicar_url_a_ventana_web(
-                        contexto_parcial,
-                        esperado,
-                    )
-
-                    if correccion_url.get("ok"):
-                        return {
-                            "ok": False,
-                            "decision": "WAIT",
-                            "motivo": (
-                                "La ventana web probable ya existe. "
-                                "Corregí su URL sin abrir otra ventana; "
-                                "espero una observación nueva."
-                            ),
-                            "contexto_actual": contexto_parcial,
-                        }
-
-                    self.registrar_evento_bin(
-                        "VERIFICA",
-                        (
-                            "La candidata web es corregible, "
-                            "pero todavía no pude aplicar su URL."
-                        ),
-                        correccion_url.get("detalle", ""),
-                    )
-
             if busqueda.get("indeterminado"):
                 self.registrar_evento_bin(
                     "VERIFICA",
@@ -27945,18 +26110,22 @@ code {{
                     ),
                 )
 
-                # Si la identidad sigue indeterminada, damos tiempo real
-                # al sistema antes de forzar una apertura correctiva.
-                espera_indeterminada_ms = (
-                    self.tiempo_espera_supervisor_ms()
+                # Tras varias comprobaciones sin poder leer el identificador,
+                # BIN ejecuta la ruta directa recordada en vez de quedarse
+                # bloqueado indefinidamente.
+                intentos = int(
+                    getattr(
+                        self,
+                        "intentos_supervisor",
+                        0,
+                    )
+                    or 0
                 )
 
                 if (
                     permitir_abrir
-                    and espera_indeterminada_ms >= 3_000
-                    and not self.correccion_apertura_en_cooldown(
-                        esperado
-                    )
+                    and intentos >= 3
+                    and not self.correccion_apertura_en_cooldown(esperado)
                 ):
                     apertura = self.abrir_contexto_directamente(esperado)
 
@@ -27965,7 +26134,7 @@ code {{
                             "CORRIGE",
                             (
                                 "La identidad siguió sin ser legible tras "
-                                "3 segundos de observación. Fuerzo la apertura "
+                                "varias comprobaciones. Fuerzo la apertura "
                                 "directa recordada."
                             ),
                             apertura.get("detalle", ""),
@@ -28048,144 +26217,63 @@ code {{
             "ACTUAL\n" + self.formatear_contexto_operativo(actual),
         )
 
-        evaluacion_geometria_actual = (
-            self.evaluar_geometria_contextos_bin(
-                esperado,
-                actual,
-            )
-        )
+        if not self.geometria_contextos_coincide(esperado, actual):
+            geo_e = esperado.get("geometria") or {}
+            geo_a = actual.get("geometria") or {}
 
-        if not evaluacion_geometria_actual.get("coincide"):
             self.registrar_evento_bin(
                 "CORRIGE",
                 (
                     "La ventana correcta existe, pero su posición/tamaño "
-                    "no coincide dentro del margen adaptativo."
+                    "no coincide."
                 ),
-                self.formatear_evaluacion_geometria_bin(
-                    evaluacion_geometria_actual
+                (
+                    "Recordado: "
+                    f"X={geo_e.get('x', '--')} Y={geo_e.get('y', '--')} · "
+                    f"{geo_e.get('ancho', '--')}×{geo_e.get('alto', '--')}\n"
+                    "Actual: "
+                    f"X={geo_a.get('x', '--')} Y={geo_a.get('y', '--')} · "
+                    f"{geo_a.get('ancho', '--')}×{geo_a.get('alto', '--')}"
                 ),
             )
 
-
-            if not self.aplicar_geometria_contexto(
-                hwnd,
-                esperado,
-            ):
-                fallo_geometria = (
-                    getattr(
-                        self,
-                        "ultimo_error_geometria_hwnd",
-                        None,
-                    )
-                    or {}
-                )
-
-                if fallo_geometria.get(
-                    "estado"
-                ) == "PRIVILEGIO_INSUFICIENTE":
-                    return {
-                        "ok": False,
-                        "decision": "FAILED",
-                        "estado": (
-                            "PRIVILEGIO_INSUFICIENTE"
-                        ),
-                        "motivo": (
-                            "PRIVILEGIO_INSUFICIENTE: "
-                            "Windows rechazó la corrección "
-                            "de geometría sobre una ventana "
-                            "con integridad superior.\n"
-                            + fallo_geometria.get(
-                                "detalle",
-                                "",
-                            )
-                        ),
-                        "contexto_actual": actual,
-                        "hwnd": hwnd,
-                    }
-
+            if not self.aplicar_geometria_contexto(hwnd, esperado):
                 return {
                     "ok": False,
                     "decision": "WAIT",
-                    "estado": "GEOMETRIA_NO_APLICADA",
-                    "motivo": (
-                        fallo_geometria.get(
-                            "detalle"
-                        )
-                        or (
-                            "No pude aplicar la "
-                            "geometría recordada."
-                        )
-                    ),
+                    "motivo": "No pude aplicar la geometría recordada.",
                     "contexto_actual": actual,
-                    "hwnd": hwnd,
                 }
 
-            self.invalidar_caches_observacion_ventanas_bin()
+            time.sleep(0.08)
+            actualizado = self.obtener_contexto_hwnd(hwnd, enriquecer=True)
 
-            return {
-                "ok": False,
-                "decision": "WAIT",
-                "motivo": (
-                    "Envié la corrección de posición/tamaño. "
-                    "Espero una observación nueva antes de confirmar."
-                ),
-                "contexto_actual": actual,
-            }
+            if (
+                actualizado
+                and self.geometria_contextos_coincide(esperado, actualizado)
+            ):
+                actual = actualizado
+                self.registrar_evento_bin(
+                    "READY",
+                    (
+                        "Acción correctiva confirmada: "
+                        "posición y tamaño coinciden."
+                    ),
+                    self.formatear_contexto_operativo(actual),
+                )
+            else:
+                return {
+                    "ok": False,
+                    "decision": "WAIT",
+                    "motivo": (
+                        "Apliqué la corrección de ventana, "
+                        "pero todavía no coincide."
+                    ),
+                    "contexto_actual": actualizado or actual,
+                }
 
         if activar:
-            if not self.activar_hwnd_operativo(
-                hwnd
-            ):
-                fallo_activacion = (
-                    getattr(
-                        self,
-                        "ultimo_error_activacion_hwnd",
-                        None,
-                    )
-                    or {}
-                )
-
-                if fallo_activacion.get(
-                    "estado"
-                ) == "PRIVILEGIO_INSUFICIENTE":
-                    return {
-                        "ok": False,
-                        "decision": "FAILED",
-                        "estado": (
-                            "PRIVILEGIO_INSUFICIENTE"
-                        ),
-                        "motivo": (
-                            "PRIVILEGIO_INSUFICIENTE: "
-                            "BIN no puede automatizar de "
-                            "forma segura una ventana con "
-                            "integridad superior.\n"
-                            + fallo_activacion.get(
-                                "detalle",
-                                "",
-                            )
-                        ),
-                        "contexto_actual": actual,
-                        "hwnd": hwnd,
-                    }
-
-                return {
-                    "ok": False,
-                    "decision": "WAIT",
-                    "estado": "FOCO_NO_CONFIRMADO",
-                    "motivo": (
-                        fallo_activacion.get(
-                            "detalle"
-                        )
-                        or (
-                            "Windows todavía no confirmó "
-                            "la ventana objetivo como "
-                            "foreground."
-                        )
-                    ),
-                    "contexto_actual": actual,
-                    "hwnd": hwnd,
-                }
+            self.activar_hwnd_operativo(hwnd)
 
         if self.contexto_externo_valido(actual):
             self.registrar_contexto_replay_valido(actual, hwnd)
@@ -28414,129 +26502,38 @@ code {{
         hwnd_destino = elegido["hwnd"]
 
         if activar:
-            if not self.activar_hwnd_operativo(
-                hwnd_destino
-            ):
-                fallo_activacion = (
-                    getattr(
-                        self,
-                        "ultimo_error_activacion_hwnd",
-                        None,
-                    )
-                    or {}
-                )
-
-                if fallo_activacion.get(
-                    "estado"
-                ) == "PRIVILEGIO_INSUFICIENTE":
-                    return {
-                        "ok": False,
-                        "estado": (
-                            "PRIVILEGIO_INSUFICIENTE"
-                        ),
-                        "recuperable": False,
-                        "metodo": "contexto_objetivo",
-                        "detalle": (
-                            fallo_activacion.get(
-                                "detalle"
-                            )
-                            or (
-                                "La ventana objetivo tiene "
-                                "integridad superior a BIN."
-                            )
-                        ),
-                        "contexto": (
-                            elegido.get(
-                                "contexto"
-                            )
-                        ),
-                        "hwnd": hwnd_destino,
-                    }
-
-                return {
-                    "ok": False,
-                    "estado": "FOCO_NO_CONFIRMADO",
-                    "recuperable": True,
-                    "metodo": "contexto_objetivo",
-                    "detalle": (
-                        fallo_activacion.get(
-                            "detalle"
-                        )
-                        or (
-                            "Windows todavía no confirmó "
-                            "el foreground objetivo."
-                        )
-                    ),
-                    "contexto": (
-                        elegido.get(
-                            "contexto"
-                        )
-                    ),
-                    "hwnd": hwnd_destino,
-                }
-
             try:
-                actual = (
-                    self.obtener_contexto_ventana_activa()
-                )
+                if user32.IsIconic(hwnd_destino):
+                    user32.ShowWindow(hwnd_destino, 9)  # SW_RESTORE
 
-                if (
-                    actual
-                    and self.contexto_externo_valido(
-                        actual
+                user32.SetForegroundWindow(hwnd_destino)
+                QApplication.processEvents()
+                kernel32.Sleep(60)
+
+                actual = self.obtener_contexto_ventana_activa()
+                if actual and self.contexto_externo_valido(actual):
+                    proceso_actual = (
+                        str(actual.get("proceso", "") or "").strip().lower()
                     )
-                ):
-                    proceso_actual = str(
-                        actual.get(
-                            "proceso",
-                            "",
-                        )
-                        or ""
-                    ).strip().lower()
-
-                    if (
-                        not esperado_proceso
-                        or proceso_actual
-                        == esperado_proceso
-                    ):
-                        elegido[
-                            "contexto"
-                        ] = actual
-
-                        elegido[
-                            "hwnd"
-                        ] = actual.get(
-                            "hwnd",
-                            hwnd_destino,
-                        )
-
+                    if not esperado_proceso or proceso_actual == esperado_proceso:
+                        elegido["contexto"] = actual
+                        elegido["hwnd"] = actual.get("hwnd", hwnd_destino)
                     else:
                         return {
                             "ok": False,
-                            "estado": (
-                                "FOCO_NO_CONFIRMADO"
-                            ),
+                            "estado": "NO_CONFIRMADO",
                             "recuperable": True,
-                            "metodo": (
-                                "contexto_objetivo"
-                            ),
-                            "detalle": (
-                                "Windows no dejó el "
-                                "proceso esperado como "
-                                "foreground."
-                            ),
+                            "metodo": "contexto_objetivo",
+                            "detalle": "Windows no dejó el proceso esperado como foreground.",
                             "contexto": actual,
                         }
-
             except Exception as error:
                 return {
                     "ok": False,
-                    "estado": "FOCO_NO_CONFIRMADO",
+                    "estado": "NO_CONFIRMADO",
                     "recuperable": True,
                     "metodo": "contexto_objetivo",
-                    "detalle": str(
-                        error
-                    ),
+                    "detalle": str(error),
                 }
 
         return {
@@ -28565,11 +26562,6 @@ code {{
             if objetivo.get("ok"):
                 return objetivo
 
-            if objetivo.get(
-                "estado"
-            ) == "PRIVILEGIO_INSUFICIENTE":
-                return objetivo
-
         # 2) Último contexto válido de replay. NO exigir que su HWND antiguo
         # siga siendo válido: Chrome/Explorer pueden recrear la ventana y
         # cambiar HWND mientras mantienen el mismo proceso.
@@ -28590,11 +26582,6 @@ code {{
                         "Se recuperó el último contexto de replay por "
                         "proceso/clase/título, sin depender del HWND grabado."
                     )
-                    return resultado
-
-                if resultado.get(
-                    "estado"
-                ) == "PRIVILEGIO_INSUFICIENTE":
                     return resultado
 
         # 3) Foreground externo actual. Si coincide con el contexto esperado,
@@ -28971,63 +26958,16 @@ code {{
                     "hwnd": operativo.get("hwnd"),
                 }
 
-            estado_operativo = str(
-                operativo.get(
-                    "estado",
-                    "",
-                )
-                or ""
-            ).strip()
-
-            if (
-                estado_operativo
-                == "PRIVILEGIO_INSUFICIENTE"
-            ):
-                return {
-                    "ok": False,
-                    "estado": (
-                        "PRIVILEGIO_INSUFICIENTE"
-                    ),
-                    "recuperable": False,
-                    "metodo": (
-                        "supervisor_operativo"
-                    ),
-                    "detalle": operativo.get(
-                        "motivo",
-                        (
-                            "La aplicación objetivo "
-                            "requiere un nivel de "
-                            "integridad superior."
-                        ),
-                    ),
-                    "contexto": operativo.get(
-                        "contexto_actual"
-                    ),
-                    "hwnd": operativo.get(
-                        "hwnd"
-                    ),
-                }
-
             return {
                 "ok": False,
-                "estado": (
-                    "ESTADO_OPERATIVO_NO_CONFIRMADO"
-                ),
+                "estado": "ESTADO_OPERATIVO_NO_CONFIRMADO",
                 "recuperable": True,
                 "metodo": "supervisor_operativo",
                 "detalle": operativo.get(
                     "motivo",
-                    (
-                        "El estado operativo todavía "
-                        "no coincide."
-                    ),
+                    "El estado operativo todavía no coincide.",
                 ),
-                "contexto": operativo.get(
-                    "contexto_actual"
-                ),
-                "hwnd": operativo.get(
-                    "hwnd"
-                ),
+                "contexto": operativo.get("contexto_actual"),
             }
 
         # Compatibilidad intacta con tareas antiguas.
@@ -29102,11 +27042,28 @@ code {{
             pass
 
     def delay_minimo_supervision_accion(self, accion):
-        # Primera observación en cuanto Qt devuelve el control al event loop.
-        # Si Windows aún no terminó, el supervisor entra en WAIT y usa
-        # reintentos adaptativos; nunca damos por listo algo por tiempo.
-        return 0
-    
+        tipo = str(accion.get("tipo", "") or "")
+        if tipo in {"navegar", "navegar_url", "buscar_o_navegar"}:
+            return 500
+        if tipo in {
+            "doble_click",
+            "abrir_elemento",
+            "abrir_aplicacion",
+            "ajustar_ventana",
+            "cambiar_aplicacion",
+            "cerrar_ventana",
+        }:
+            if tipo == "abrir_aplicacion":
+                return 600
+
+            if tipo == "ajustar_ventana":
+                return 180
+
+            return 350
+        if tipo in {"click", "click_derecho", "abrir_menu_contextual", "arrastrar"}:
+            return 220
+        return 170
+
     def tiempo_espera_supervisor_ms(self):
         total = int(self.espera_supervisor_acumulada_ms or 0)
         if self.inicio_espera_supervisor_monotonic is not None:
@@ -29115,36 +27072,6 @@ code {{
                 * 1000
             )
         return max(0, total)
-
-    def intervalo_supervision_adaptativo_ms(
-        self,
-        esperado_ms=None,
-    ):
-        """
-        Devuelve sólo la frecuencia de la próxima observación.
-        No autoriza avanzar por tiempo: READY sigue dependiendo del estado.
-        """
-        if esperado_ms is None:
-            esperado_ms = self.tiempo_espera_supervisor_ms()
-
-        try:
-            esperado_ms = max(
-                0,
-                int(esperado_ms or 0),
-            )
-        except Exception:
-            esperado_ms = 0
-
-        if esperado_ms < 2_000:
-            return 180
-
-        if esperado_ms < 8_000:
-            return 350
-
-        if esperado_ms < 20_000:
-            return 550
-
-        return 850
 
     def iniciar_supervision_accion(
         self,
@@ -29233,10 +27160,44 @@ code {{
         # BLOQUE 2: comparar el estado real antes de permitir el siguiente paso.
         contexto_operativo_esperado = None
 
-        if self.contexto_tiene_estado_operativo(contexto_siguiente):
-            contexto_operativo_esperado = contexto_siguiente
-        elif self.contexto_tiene_estado_operativo(contexto_despues):
-            contexto_operativo_esperado = contexto_despues
+        es_comando_ventana_ejecutado = (
+            isinstance(
+                accion_ejecutada,
+                dict,
+            )
+            and str(
+                accion_ejecutada.get(
+                    "tipo",
+                    "",
+                )
+                or ""
+            ).strip().lower()
+            == "comando_ventana"
+        )
+
+        if (
+            es_comando_ventana_ejecutado
+            and self.contexto_tiene_estado_operativo(
+                contexto_despues
+            )
+        ):
+            contexto_operativo_esperado = (
+                contexto_despues
+            )
+
+        elif self.contexto_tiene_estado_operativo(
+            contexto_siguiente
+        ):
+            contexto_operativo_esperado = (
+                contexto_siguiente
+            )
+
+        elif self.contexto_tiene_estado_operativo(
+            contexto_despues
+        ):
+            contexto_operativo_esperado = (
+                contexto_despues
+            )
 
         if contexto_operativo_esperado:
             operativo = self.asegurar_estado_contexto_ejecucion(
@@ -29248,43 +27209,22 @@ code {{
             if operativo.get("ok"):
                 return {
                     "decision": "READY",
-                    "estado": operativo.get(
-                        "estado",
-                        "",
-                    ),
                     "motivo": operativo.get(
                         "motivo",
                         "Estado operativo confirmado.",
                     ),
                     "fuente": "supervisor_operativo",
-                    "contexto_actual": operativo.get(
-                        "contexto_actual"
-                    ),
-                    "hwnd": operativo.get(
-                        "hwnd"
-                    ),
+                    "contexto_actual": operativo.get("contexto_actual"),
                 }
 
             return {
-                "decision": operativo.get(
-                    "decision",
-                    "WAIT",
-                ),
-                "estado": operativo.get(
-                    "estado",
-                    "",
-                ),
+                "decision": operativo.get("decision", "WAIT"),
                 "motivo": operativo.get(
                     "motivo",
                     "Esperando acción correctiva.",
                 ),
                 "fuente": "supervisor_operativo",
-                "contexto_actual": operativo.get(
-                    "contexto_actual"
-                ),
-                "hwnd": operativo.get(
-                    "hwnd"
-                ),
+                "contexto_actual": operativo.get("contexto_actual"),
             }
 
         # ====================================================
@@ -30649,36 +28589,7 @@ code {{
             else ""
         )
 
-        ejecutable_portable = self.portableizar_ruta_windows(
-            ejecutable
-        )
-
-        ruta_portable = self.portableizar_ruta_windows(
-            ruta
-        )
-
-        if tipo_recurso == "web":
-            localizador = url
-
-        elif tipo_recurso == "aplicacion":
-            localizador = (
-                self.normalizar_proceso_aplicacion(
-                    proceso=proceso
-                )
-                or (
-                    Path(
-                        self.resolver_ruta_portable_windows(
-                            ejecutable_portable
-                        )
-                        or ejecutable_portable
-                    ).name.lower()
-                    if ejecutable_portable
-                    else ""
-                )
-            )
-
-        else:
-            localizador = ruta_portable
+        localizador = url if tipo_recurso == "web" else ruta
 
         return {
             "pid": 0,
@@ -30686,14 +28597,10 @@ code {{
             "titulo": "",
             "clase": "",
             "hwnd": 0,
-            "ejecutable": ejecutable_portable,
+            "ejecutable": ejecutable,
             "tipo_recurso": tipo_recurso,
             "url": url if tipo_recurso == "web" else "",
-            "ruta_recurso": (
-                ruta_portable
-                if tipo_recurso == "recurso"
-                else ""
-            ),
+            "ruta_recurso": ruta if tipo_recurso == "recurso" else "",
             "localizador": localizador,
             "perfil_navegador": "",
             # En acciones manuales la Cuenta asociada explicita es
@@ -30771,9 +28678,10 @@ code {{
         configuracion = accion.get("ventana") or {}
         contexto = self.contexto_desde_configuracion_ventana(configuracion)
 
-        # La identidad esperada de una acción manual sale únicamente
-        # de su configuración. El estado observado en replays anteriores
-        # no puede convertirse en cuenta/perfil obligatorio.
+        # Si una ejecucion anterior ya aprendio la cuenta/perfil de esta
+        # misma accion manual, los reutilizamos aunque el usuario hubiera
+        # dejado Cuenta asociada vacia inicialmente.
+        contexto_guardado = accion.get("contexto_despues") or {}
 
         es_web_manual_directo = (
             str(
@@ -30805,9 +28713,26 @@ code {{
         )
 
         if str(contexto.get("tipo_recurso", "") or "").lower() == "web":
-            # Guardamos únicamente la configuración declarada.
-            # Si Cuenta asociada está vacía, seguirá vacía.
-            contexto["perfil_navegador"] = ""
+            if not contexto.get("cuenta_navegador"):
+                cuenta_aprendida = str(
+                    contexto_guardado.get("cuenta_navegador", "") or ""
+                ).strip()
+
+                if cuenta_aprendida:
+                    contexto["cuenta_navegador"] = cuenta_aprendida
+                    contexto["cuenta_asociada_manual"] = cuenta_aprendida
+
+                    if not str(configuracion.get("cuenta_asociada", "") or "").strip():
+                        configuracion["cuenta_asociada"] = cuenta_aprendida
+
+            if not contexto.get("perfil_navegador"):
+                perfil_aprendido = str(
+                    contexto_guardado.get("perfil_navegador", "") or ""
+                ).strip()
+
+                if perfil_aprendido:
+                    contexto["perfil_navegador"] = perfil_aprendido
+
             accion["contexto_despues"] = json.loads(
                 json.dumps(contexto, ensure_ascii=False)
             )
@@ -30862,6 +28787,20 @@ code {{
                     )
                     or ""
                 ).strip()
+
+                if (
+                    cuenta_aprendida
+                    and not str(
+                        configuracion.get(
+                            "cuenta_asociada",
+                            "",
+                        )
+                        or ""
+                    ).strip()
+                ):
+                    configuracion[
+                        "cuenta_asociada"
+                    ] = cuenta_aprendida
 
                 accion["contexto_despues"] = json.loads(
                     json.dumps(
@@ -30932,9 +28871,9 @@ code {{
                 contexto.get("cuenta_navegador", "") or ""
             ).strip()
 
-            # El perfil técnico se resolverá localmente a partir de la
-            # cuenta, si existe. Nunca se transporta como requisito.
-            contexto_apertura["perfil_navegador"] = ""
+            contexto_apertura["perfil_navegador"] = str(
+                contexto.get("perfil_navegador", "") or ""
+            ).strip()
 
 
         tipo_manual = str(
@@ -30944,76 +28883,54 @@ code {{
         # Office permite respetar la aplicación elegida por el usuario.
         # Recursos genéricos continúan usando la asociación nativa de Windows.
         if tipo_manual == "office":
-            ruta = str(
-                configuracion.get(
-                    "ruta_recurso",
-                    "",
-                )
-                or ""
-            ).strip()
+            ruta = str(configuracion.get("ruta_recurso", "") or "").strip()
+            ejecutable = str(configuracion.get("ejecutable", "") or "").strip()
 
-            ejecutable = str(
-                configuracion.get(
-                    "ejecutable",
-                    "",
-                )
-                or ""
-            ).strip()
-
-            proceso = str(
-                configuracion.get(
-                    "proceso",
-                    "",
-                )
-                or ""
-            ).strip()
-
-            ruta_local = self.resolver_ruta_portable_windows(
-                ruta
-            )
-
-            ejecutable_local = self.resolver_ruta_aplicacion_windows(
-                proceso,
-                ejecutable,
-            )
-
-            if ruta_local and ejecutable_local:
+            if ruta and ejecutable and Path(ejecutable).exists():
                 try:
                     subprocess.Popen(
-                        [
-                            ejecutable_local,
-                            ruta_local,
-                        ],
+                        [ejecutable, ruta],
                         close_fds=True,
                     )
-
                     resultado = {
                         "ok": True,
                         "detalle": (
-                            f"Office solicitado: {ejecutable_local}\n"
-                            f"Archivo: {ruta_local}"
+                            f"Office solicitado: {ejecutable}\n"
+                            f"Archivo: {ruta}"
                         ),
                     }
-
                 except Exception as error:
-                    resultado = {
-                        "ok": False,
-                        "detalle": str(error),
-                    }
-
+                    resultado = {"ok": False, "detalle": str(error)}
             else:
-                resultado = self.abrir_contexto_directamente(
-                    contexto_apertura
-                )
-
+                resultado = self.abrir_contexto_directamente(contexto_apertura)
         else:
-            resultado = self.abrir_contexto_directamente(
-                contexto_apertura
-            )
+            resultado = self.abrir_contexto_directamente(contexto_apertura)
 
         if resultado.get("ok") and str(
             contexto_apertura.get("tipo_recurso", "") or ""
         ).lower() == "web":
+            perfil_lanzado = str(
+                contexto_apertura.get(
+                    "perfil_navegador",
+                    "",
+                )
+                or ""
+            ).strip()
+
+            if perfil_lanzado:
+                contexto[
+                    "perfil_navegador"
+                ] = perfil_lanzado
+
+                accion[
+                    "contexto_despues"
+                ] = json.loads(
+                    json.dumps(
+                        contexto,
+                        ensure_ascii=False,
+                    )
+                )
+
             if es_web_manual_directo:
                 self._cache_operativo_bin(
                     "web_rescue_state"
@@ -31063,255 +28980,6 @@ code {{
             "detalle": resultado.get("detalle", "Ventana solicitada."),
         }
 
-    def portableizar_ruta_windows(
-        self,
-        ruta,
-    ):
-        """
-        Convierte rutas pertenecientes al entorno local de Windows en
-        referencias portables. No modifica rutas externas/específicas.
-        """
-        texto = str(
-            ruta
-            or ""
-        ).strip().strip('"')
-
-        if not texto:
-            return ""
-
-        if sys.platform != "win32":
-            return texto
-
-        # Una ruta que ya contiene variables se conserva tal cual.
-        if re.search(
-            r"%[^%]+%",
-            texto,
-        ):
-            return texto
-
-        try:
-            ruta_normalizada = os.path.normcase(
-                os.path.normpath(
-                    texto
-                )
-            )
-        except Exception:
-            return texto
-
-        candidatos = []
-
-        for variable in (
-            "LOCALAPPDATA",
-            "APPDATA",
-            "PROGRAMFILES",
-            "PROGRAMFILES(X86)",
-            "PUBLIC",
-            "TEMP",
-            "USERPROFILE",
-        ):
-            base = str(
-                os.environ.get(
-                    variable,
-                    "",
-                )
-                or ""
-            ).strip().strip('"')
-
-            if not base:
-                continue
-
-            try:
-                base_normalizada = os.path.normcase(
-                    os.path.normpath(
-                        base
-                    )
-                )
-            except Exception:
-                continue
-
-            candidatos.append(
-                (
-                    len(base_normalizada),
-                    variable,
-                    base,
-                    base_normalizada,
-                )
-            )
-
-        # Primero la raíz más específica. Por ejemplo LOCALAPPDATA
-        # debe ganar sobre USERPROFILE.
-        candidatos.sort(
-            reverse=True
-        )
-
-        for _, variable, base, base_normalizada in candidatos:
-            if ruta_normalizada == base_normalizada:
-                return f"%{variable}%"
-
-            prefijo = (
-                base_normalizada.rstrip(
-                    "\\/"
-                )
-                + os.sep
-            )
-
-            if not ruta_normalizada.startswith(
-                prefijo
-            ):
-                continue
-
-            try:
-                relativo = os.path.relpath(
-                    texto,
-                    base,
-                )
-            except Exception:
-                continue
-
-            if relativo in {
-                "",
-                ".",
-            }:
-                return f"%{variable}%"
-
-            return os.path.join(
-                f"%{variable}%",
-                relativo,
-            )
-
-        return texto
-
-    def resolver_ruta_portable_windows(
-        self,
-        ruta,
-    ):
-        """
-        Resuelve una ruta portable contra el usuario/equipo Windows actual.
-        También migra de forma no destructiva rutas antiguas C:\\Users\\X\\...
-        cuando la ruta original ya no existe en este equipo.
-        """
-        texto = str(
-            ruta
-            or ""
-        ).strip().strip('"')
-
-        if not texto:
-            return ""
-
-        if sys.platform != "win32":
-            return os.path.expandvars(
-                texto
-            )
-
-        # Si la ruta absoluta original todavía existe, se respeta.
-        try:
-            if Path(texto).exists():
-                return os.path.normpath(
-                    texto
-                )
-        except Exception:
-            pass
-
-        expandida = os.path.expandvars(
-            texto
-        )
-
-        if expandida != texto:
-            return os.path.normpath(
-                expandida
-            )
-
-        # Compatibilidad con entrenamientos antiguos que guardaron
-        # C:\\Users\\UsuarioOrigen\\... de forma absoluta.
-        coincidencia = re.match(
-            r"^[A-Za-z]:\\Users\\([^\\]+)(?:\\(.*))?$",
-            texto,
-            flags=re.IGNORECASE,
-        )
-
-        if coincidencia:
-            usuario_origen = str(
-                coincidencia.group(1)
-                or ""
-            ).strip()
-
-            resto = str(
-                coincidencia.group(2)
-                or ""
-            ).strip("\\/")
-
-            base = ""
-            relativo = resto
-            resto_l = resto.lower()
-
-            if usuario_origen.lower() == "public":
-                base = str(
-                    os.environ.get(
-                        "PUBLIC",
-                        "",
-                    )
-                    or ""
-                ).strip()
-
-            elif resto_l == "appdata\\local" or resto_l.startswith(
-                "appdata\\local\\"
-            ):
-                base = str(
-                    os.environ.get(
-                        "LOCALAPPDATA",
-                        "",
-                    )
-                    or ""
-                ).strip()
-
-                relativo = resto[
-                    len("AppData\\Local"):
-                ].lstrip("\\/")
-
-            elif resto_l == "appdata\\roaming" or resto_l.startswith(
-                "appdata\\roaming\\"
-            ):
-                base = str(
-                    os.environ.get(
-                        "APPDATA",
-                        "",
-                    )
-                    or ""
-                ).strip()
-
-                relativo = resto[
-                    len("AppData\\Roaming"):
-                ].lstrip("\\/")
-
-            else:
-                base = str(
-                    os.environ.get(
-                        "USERPROFILE",
-                        "",
-                    )
-                    or ""
-                ).strip()
-
-            if base:
-                if relativo:
-                    return os.path.normpath(
-                        os.path.join(
-                            base,
-                            relativo,
-                        )
-                    )
-
-                return os.path.normpath(
-                    base
-                )
-
-        try:
-            return os.path.normpath(
-                texto
-            )
-        except Exception:
-            return texto
-
     def normalizar_proceso_aplicacion(
         self,
         consulta="",
@@ -31349,161 +29017,104 @@ code {{
         proceso,
         ejecutable="",
     ):
-        """
-        Resuelve primero la aplicación en el equipo ACTUAL.
-        La ruta guardada por el entrenamiento sólo es referencia/fallback.
-        """
-        ruta_guardada = str(
-            ejecutable
-            or ""
-        ).strip()
+        ruta_guardada = str(ejecutable or "").strip()
 
-        proceso = self.normalizar_proceso_aplicacion(
-            proceso=proceso
-        )
+        if ruta_guardada and Path(ruta_guardada).exists():
+            return ruta_guardada
 
-        # Compatibilidad: si una tarea antigua no conservó proceso,
-        # intentamos obtenerlo del ejecutable almacenado.
-        if not proceso and ruta_guardada:
-            ruta_para_nombre = self.resolver_ruta_portable_windows(
-                ruta_guardada
-            )
+        proceso = self.normalizar_proceso_aplicacion(proceso=proceso)
+
+        if not proceso:
+            return None
+
+        for proceso_objeto in psutil.process_iter(
+            [
+                "name",
+                "exe",
+            ]
+        ):
 
             try:
-                nombre = Path(
-                    ruta_para_nombre
-                    or ruta_guardada
-                ).name
-            except Exception:
-                nombre = ""
 
-            if nombre:
-                proceso = self.normalizar_proceso_aplicacion(
-                    proceso=nombre
-                )
+                nombre = str(
+                    proceso_objeto.info.get(
+                        "name",
+                        "",
+                    )
+                    or ""
+                ).lower()
 
-        if proceso:
-            # 1. Una instancia existente de ESTE equipo es la evidencia
-            # local más fuerte de dónde vive la aplicación.
-            for proceso_objeto in psutil.process_iter(
-                [
-                    "name",
-                    "exe",
-                ]
-            ):
-                try:
-                    nombre = str(
-                        proceso_objeto.info.get(
-                            "name",
-                            "",
-                        )
-                        or ""
-                    ).strip().lower()
-
-                    if nombre != proceso:
-                        continue
-
-                    ruta = str(
-                        proceso_objeto.info.get(
-                            "exe",
-                            "",
-                        )
-                        or ""
-                    ).strip()
-
-                    if ruta and Path(ruta).exists():
-                        return ruta
-
-                except (
-                    psutil.NoSuchProcess,
-                    psutil.AccessDenied,
-                    psutil.ZombieProcess,
-                ):
+                if nombre != proceso:
                     continue
 
-            # 2. PATH del usuario/equipo actual.
-            ruta_path = shutil.which(
-                proceso
+                ruta = proceso_objeto.info.get("exe")
+
+                if ruta and Path(ruta).exists():
+                    return ruta
+
+            except (
+                psutil.NoSuchProcess,
+                psutil.AccessDenied,
+                psutil.ZombieProcess,
+            ):
+                continue
+
+        ruta_path = shutil.which(proceso)
+
+        if ruta_path:
+            return ruta_path
+
+        if sys.platform == "win32" and winreg is not None:
+
+            subclave = (
+                r"Software\Microsoft\Windows" r"\CurrentVersion\App Paths\\" + proceso
             )
 
-            if ruta_path:
-                return ruta_path
+            ubicaciones = [
+                winreg.HKEY_CURRENT_USER,
+                winreg.HKEY_LOCAL_MACHINE,
+            ]
 
-            # 3. App Paths del usuario actual y del equipo.
-            if sys.platform == "win32" and winreg is not None:
-                subclave = (
-                    r"Software\Microsoft\Windows"
-                    r"\CurrentVersion\App Paths"
-                    + "\\"
-                    + proceso
-                )
+            for raiz in ubicaciones:
 
-                for raiz in (
-                    winreg.HKEY_CURRENT_USER,
-                    winreg.HKEY_LOCAL_MACHINE,
+                for acceso in (
+                    winreg.KEY_READ,
+                    winreg.KEY_READ
+                    | getattr(
+                        winreg,
+                        "KEY_WOW64_64KEY",
+                        0,
+                    ),
+                    winreg.KEY_READ
+                    | getattr(
+                        winreg,
+                        "KEY_WOW64_32KEY",
+                        0,
+                    ),
                 ):
-                    for acceso in (
-                        winreg.KEY_READ,
-                        winreg.KEY_READ
-                        | getattr(
-                            winreg,
-                            "KEY_WOW64_64KEY",
+
+                    try:
+
+                        with winreg.OpenKey(
+                            raiz,
+                            subclave,
                             0,
-                        ),
-                        winreg.KEY_READ
-                        | getattr(
-                            winreg,
-                            "KEY_WOW64_32KEY",
-                            0,
-                        ),
-                    ):
-                        try:
-                            with winreg.OpenKey(
-                                raiz,
-                                subclave,
-                                0,
-                                acceso,
-                            ) as clave:
-                                ruta, _ = winreg.QueryValueEx(
-                                    clave,
-                                    None,
-                                )
+                            acceso,
+                        ) as clave:
 
-                                ruta = str(
-                                    ruta
-                                    or ""
-                                ).strip().strip('"')
+                            ruta, _ = winreg.QueryValueEx(
+                                clave,
+                                None,
+                            )
 
-                                if ruta and Path(ruta).exists():
-                                    return ruta
+                            if ruta and Path(ruta).exists():
+                                return ruta
 
-                        except OSError:
-                            continue
-
-        # 4. Fallback portable/local derivado de la referencia guardada.
-        # Nunca tiene prioridad sobre la resolución del equipo actual.
-        if ruta_guardada:
-            ruta_fallback = self.resolver_ruta_portable_windows(
-                ruta_guardada
-            )
-
-            try:
-                if ruta_fallback and Path(ruta_fallback).exists():
-                    if proceso:
-                        nombre_fallback = Path(
-                            ruta_fallback
-                        ).name.lower()
-
-                        if nombre_fallback != proceso:
-                            return None
-
-                    return ruta_fallback
-
-            except Exception:
-                pass
+                    except OSError:
+                        continue
 
         return None
-    
+
     def ejecutar_abrir_aplicacion(
         self,
         datos,
@@ -32582,7 +30193,7 @@ code {{
                     tarea,
                     accion,
                     modo="preaccion",
-                    delay_inicial_ms=self.intervalo_supervision_adaptativo_ms(0),
+                    delay_inicial_ms=self.intervalo_supervisor_ms,
                 )
                 return
 
@@ -32642,7 +30253,7 @@ code {{
                         tarea,
                         accion,
                         modo="preaccion",
-                        delay_inicial_ms=self.intervalo_supervision_adaptativo_ms(0),
+                        delay_inicial_ms=self.intervalo_supervisor_ms,
                     )
                     return
 
@@ -32661,7 +30272,7 @@ code {{
                         tarea,
                         accion,
                         modo="preaccion",
-                        delay_inicial_ms=self.intervalo_supervision_adaptativo_ms(0),
+                        delay_inicial_ms=self.intervalo_supervisor_ms,
                     )
                     return
                 else:
@@ -32697,7 +30308,7 @@ code {{
                         tarea,
                         accion,
                         modo="preaccion",
-                        delay_inicial_ms=self.intervalo_supervision_adaptativo_ms(0),
+                        delay_inicial_ms=self.intervalo_supervisor_ms,
                     )
                     return
 
@@ -33408,10 +31019,6 @@ code {{
             if preparacion.get("ok"):
                 resultado = {
                     "decision": "READY",
-                    "estado": preparacion.get(
-                        "estado",
-                        "",
-                    ),
                     "motivo": preparacion.get(
                         "detalle",
                         "El contexto de la acción quedó preparado.",
@@ -33421,29 +31028,16 @@ code {{
                         preparacion.get("contexto")
                         or self.obtener_contexto_ventana_activa()
                     ),
-                    "hwnd": preparacion.get(
-                        "hwnd"
-                    ),
                 }
             elif not preparacion.get("recuperable", True):
                 resultado = {
                     "decision": "FAILED",
-                    "estado": preparacion.get(
-                        "estado",
-                        "",
-                    ),
                     "motivo": preparacion.get(
                         "detalle",
                         "El contexto de la acción no puede prepararse.",
                     ),
                     "fuente": "determinista",
-                    "contexto_actual": (
-                        preparacion.get("contexto")
-                        or self.obtener_contexto_ventana_activa()
-                    ),
-                    "hwnd": preparacion.get(
-                        "hwnd"
-                    ),
+                    "contexto_actual": self.obtener_contexto_ventana_activa(),
                 }
             else:
                 observacion = self.evaluar_preparacion_siguiente_accion(
@@ -33460,32 +31054,15 @@ code {{
                 else:
                     resultado = {
                         "decision": "WAIT",
-                        "estado": (
-                            preparacion.get("estado")
-                            or observacion.get(
-                                "estado",
-                                "",
-                            )
-                        ),
                         "motivo": (
                             preparacion.get("detalle")
                             or observacion.get("motivo")
                             or "El contexto todavía no puede activarse."
                         ),
-                        "fuente": observacion.get(
-                            "fuente",
-                            "determinista",
-                        ),
-                        "contexto_actual": (
-                            preparacion.get("contexto")
-                            or observacion.get(
-                                "contexto_actual",
-                                self.obtener_contexto_ventana_activa(),
-                            )
-                        ),
-                        "hwnd": (
-                            preparacion.get("hwnd")
-                            or observacion.get("hwnd")
+                        "fuente": observacion.get("fuente", "determinista"),
+                        "contexto_actual": observacion.get(
+                            "contexto_actual",
+                            self.obtener_contexto_ventana_activa(),
                         ),
                     }
         else:
@@ -33495,33 +31072,9 @@ code {{
                 siguiente_accion,
             )
 
-        decision = str(
-            resultado.get(
-                "decision",
-                "AMBIGUOUS",
-            )
-            or "AMBIGUOUS"
-        ).upper()
-
-        estado_resultado = str(
-            resultado.get(
-                "estado",
-                "",
-            )
-            or ""
-        ).strip().upper()
-
-        motivo = str(
-            resultado.get(
-                "motivo",
-                "",
-            )
-            or ""
-        )
-
-        contexto_actual = resultado.get(
-            "contexto_actual"
-        )
+        decision = str(resultado.get("decision", "AMBIGUOUS") or "AMBIGUOUS").upper()
+        motivo = str(resultado.get("motivo", "") or "")
+        contexto_actual = resultado.get("contexto_actual")
 
         self.ultima_decision_supervisor = decision
         self.ultimo_motivo_supervisor = motivo
@@ -33562,32 +31115,6 @@ code {{
         esperado_ms = (
             self.tiempo_espera_supervisor_ms()
         )
-
-        if (
-            decision == "FAILED"
-            and estado_resultado
-            == "PRIVILEGIO_INSUFICIENTE"
-        ):
-            self.finalizar_ejecucion_con_error(
-                tarea,
-                self.formatear_error_supervisor(
-                    tarea,
-                    accion,
-                    estado="PRIVILEGIO_INSUFICIENTE",
-                    motivo=(
-                        motivo
-                        or (
-                            "La aplicación objetivo requiere "
-                            "un nivel de integridad superior "
-                            "al de BIN."
-                        )
-                    ),
-                    contexto_actual=contexto_actual,
-                    esperado_ms=esperado_ms,
-                ),
-            )
-
-            return
 
         timeout_supervisor_actual_ms = (
             self.timeout_supervisor_ms
@@ -33650,9 +31177,7 @@ code {{
                 int(
                     timeout_supervisor_actual_ms
                 ),
-                int(
-                    self.timeout_supervisor_web_cuenta_ms
-                ),
+                45_000,
             )
 
         if decision == "READY":
@@ -33845,17 +31370,9 @@ code {{
         self.actualizar_tarjeta_tarea(tarea["id"])
         self.refrescar_panel_acciones()
 
-        intervalo_actual_ms = (
-            self.intervalo_supervision_adaptativo_ms(
-                esperado_ms
-            )
-        )
-
-        self.delay_ejecucion_restante_ms = intervalo_actual_ms
+        self.delay_ejecucion_restante_ms = self.intervalo_supervisor_ms
         self.guardar_estado_ejecutor_real_en_tarea(tarea)
-        self.timer_ejecucion_accion.start(
-            intervalo_actual_ms
-        )
+        self.timer_ejecucion_accion.start(self.intervalo_supervisor_ms)
 
     def programar_siguiente_accion_real(
         self,
@@ -33971,12 +31488,11 @@ code {{
         contexto,
     ):
         """
-        Devuelve únicamente la cuenta explícitamente requerida por la tarea.
+        Devuelve únicamente la cuenta AUTORITATIVA del navegador.
 
-        Profile N / Default no son una cuenta ni una identidad portable.
-        Local State sólo se utiliza para resolver una cuenta ESPERADA al
-        perfil local del equipo actual cuando necesitamos abrir/verificar
-        el navegador.
+        El antiguo fallback cuenta_web_observada queda deshabilitado.
+        Un texto accesible de la página nunca puede sustituir la
+        asociación Profile/Default -> cuenta obtenida desde Local State.
         """
 
         if not isinstance(
@@ -33994,283 +31510,72 @@ code {{
             )
         )
 
-
-    def comparar_cuenta_web_detallada(
-        self,
-        esperado,
-        actual,
-    ):
-        esperado = esperado or {}
-        actual = actual or {}
-
-        cuenta_esperada = self.normalizar_cuenta_web_rescate(
-            esperado.get("cuenta_navegador", "")
-        )
-
-        if not cuenta_esperada:
-            return {
-                "resultado": True,
-                "requerida": False,
-                "esperada": "",
-                "actual": self.normalizar_cuenta_web_rescate(
-                    actual.get("cuenta_navegador", "")
-                ),
-                "origen_actual": actual.get(
-                    "cuenta_navegador_origen",
-                    "",
-                ),
-                "confianza_actual": actual.get(
-                    "cuenta_navegador_confianza",
-                    "",
-                ),
-                "perfil_actual": actual.get(
-                    "perfil_navegador",
-                    "",
-                ),
-                "motivo": (
-                    "La tarea no exige una cuenta; cualquier cuenta "
-                    "detectada permanece flexible."
-                ),
-            }
-
-        cuenta_actual = self.normalizar_cuenta_web_rescate(
-            actual.get("cuenta_navegador", "")
-        )
-
-        origen_actual = str(
-            actual.get(
-                "cuenta_navegador_origen",
-                "",
-            )
-            or ""
-        ).strip()
-
-        confianza_actual = str(
-            actual.get(
-                "cuenta_navegador_confianza",
-                "",
-            )
-            or ""
-        ).strip().lower()
-
-        # ----------------------------------------------------
-        # CUENTA OBSERVADA DIRECTAMENTE
-        # ----------------------------------------------------
-        #
-        # En contextos nuevos sólo una evidencia fuerte puede declarar
-        # "cuenta correcta" o "cuenta incorrecta".
-        #
-        # Los contextos legacy sin metadatos conservan compatibilidad.
-        # ----------------------------------------------------
-
-        if cuenta_actual:
-            es_legacy_sin_procedencia = bool(
-                not origen_actual
-                and not confianza_actual
-            )
-
-            evidencia_cuenta_suficiente = bool(
-                confianza_actual == "alta"
-                or origen_actual == "uia_nativa_correo"
-                or es_legacy_sin_procedencia
-            )
-
-            if evidencia_cuenta_suficiente:
-                resultado = (
-                    cuenta_actual
-                    == cuenta_esperada
-                )
-
-                return {
-                    "resultado": resultado,
-                    "requerida": True,
-                    "esperada": cuenta_esperada,
-                    "actual": cuenta_actual,
-                    "origen_actual": (
-                        origen_actual
-                        or "legacy_sin_procedencia"
-                    ),
-                    "confianza_actual": (
-                        confianza_actual
-                        or "legacy"
-                    ),
-                    "perfil_actual": actual.get(
-                        "perfil_navegador",
-                        "",
-                    ),
-                    "motivo": (
-                        "La cuenta observada coincide exactamente."
-                        if resultado
-                        else (
-                            "La cuenta observada con evidencia suficiente "
-                            "es distinta de la requerida."
-                        )
-                    ),
-                }
-
-            return {
-                "resultado": None,
-                "requerida": True,
-                "esperada": cuenta_esperada,
-                "actual": cuenta_actual,
-                "origen_actual": (
-                    origen_actual
-                    or "origen_no_confiable"
-                ),
-                "confianza_actual": (
-                    confianza_actual
-                    or "desconocida"
-                ),
-                "perfil_actual": actual.get(
-                    "perfil_navegador",
-                    "",
-                ),
-                "motivo": (
-                    "Existe texto de cuenta, pero su procedencia/confianza "
-                    "no es suficiente para declararla correcta o incorrecta."
-                ),
-            }
-
-        # ----------------------------------------------------
-        # CUENTA NO OBSERVABLE: USAR PERFIL LOCAL SÓLO COMO PUENTE
-        # ----------------------------------------------------
-        #
-        # Resolvemos la cuenta ESPERADA al Profile N/Default de ESTE equipo.
-        # Después comprobamos si ESTE HWND expone ese perfil con evidencia
-        # nativa suficiente.
-        #
-        # NO convertimos el perfil observado en una cuenta.
-        # ----------------------------------------------------
-
-        proceso = str(
-            esperado.get("proceso")
-            or actual.get("proceso")
-            or ""
-        ).strip().lower()
-
-        perfil_esperado_local = (
-            self.resolver_perfil_navegador_por_cuenta_bin(
-                proceso,
-                cuenta_esperada,
-            )
-        )
-
-        perfil_actual = str(
-            actual.get(
-                "perfil_navegador",
-                "",
-            )
-            or ""
-        ).strip()
-
-        perfil_origen = str(
-            actual.get(
-                "perfil_navegador_origen",
-                "",
-            )
-            or ""
-        ).strip()
-
-        perfil_confianza = str(
-            actual.get(
-                "perfil_navegador_confianza",
-                "",
-            )
-            or ""
-        ).strip().lower()
-
-        evidencia_perfil_suficiente = bool(
-            perfil_actual
-            and perfil_confianza in {
-                "alta",
-                "media",
-            }
-            and perfil_origen
-            != "proceso_pista"
-        )
-
-        if (
-            perfil_esperado_local
-            and evidencia_perfil_suficiente
-        ):
-            resultado = (
-                perfil_actual.lower()
-                == str(
-                    perfil_esperado_local
-                ).strip().lower()
-            )
-
-            return {
-                "resultado": resultado,
-                "requerida": True,
-                "esperada": cuenta_esperada,
-                "actual": "",
-                "origen_actual": (
-                    "cuenta_resuelta_por_perfil_local"
-                ),
-                "confianza_actual": "media",
-                "perfil_actual": perfil_actual,
-                "perfil_esperado_local": (
-                    perfil_esperado_local
-                ),
-                "motivo": (
-                    "El perfil nativo observado corresponde localmente "
-                    "a la cuenta esperada."
-                    if resultado
-                    else (
-                        "El perfil nativo observado corresponde con "
-                        "evidencia suficiente a otro perfil local."
-                    )
-                ),
-            }
-
-        return {
-            "resultado": None,
-            "requerida": True,
-            "esperada": cuenta_esperada,
-            "actual": "",
-            "origen_actual": (
-                origen_actual
-                or "no_observable"
-            ),
-            "confianza_actual": (
-                confianza_actual
-                or "desconocida"
-            ),
-            "perfil_actual": perfil_actual,
-            "perfil_esperado_local": (
-                perfil_esperado_local
-            ),
-            "motivo": (
-                "La cuenta todavía no es observable con evidencia suficiente; "
-                "permanece DESCONOCIDA, no incorrecta."
-            ),
-        }
-    
     def comparar_cuenta_web_estricta(
         self,
         esperado,
         actual,
     ):
         """
-        True: cuenta requerida confirmada.
-        False: evidencia suficiente de una cuenta/perfil local diferente.
-        None: cuenta aún desconocida.
+        Compara exclusivamente la cuenta asociada al perfil real
+        del navegador.
 
-        Si la tarea no exige cuenta devuelve None para conservar la interfaz
-        histórica; el comparador detallado marca ese caso como flexible.
+        True:
+            cuenta_navegador coincide.
+
+        False:
+            ambas son observables y son diferentes.
+
+        None:
+            la demostración esperaba cuenta, pero todavía no puede
+            resolverse la cuenta actual; o no había cuenta esperada.
+
+        cuenta_web_observada queda deliberadamente fuera de esta
+        decisión para evitar contaminación por botones/textos de la web.
         """
-        if not isinstance(esperado, dict) or not isinstance(actual, dict):
+
+        if (
+            not isinstance(
+                esperado,
+                dict,
+            )
+            or not isinstance(
+                actual,
+                dict,
+            )
+        ):
             return None
 
-        if not self.cuenta_web_estricta_esperada(esperado):
+        navegador_esperado = (
+            self.normalizar_cuenta_web_rescate(
+                esperado.get(
+                    "cuenta_navegador",
+                    "",
+                )
+            )
+        )
+
+        if not navegador_esperado:
             return None
 
-        return self.comparar_cuenta_web_detallada(
-            esperado,
-            actual,
-        ).get("resultado")
+        navegador_actual = (
+            self.normalizar_cuenta_web_rescate(
+                actual.get(
+                    "cuenta_navegador",
+                    "",
+                )
+            )
+        )
 
+        if not navegador_actual:
+            return None
+
+        if (
+            navegador_actual
+            != navegador_esperado
+        ):
+            return False
+
+        return True
 
     def invalidar_caches_observacion_ventanas_bin(
         self,
@@ -34281,7 +31586,6 @@ code {{
         """
         for nombre in (
             "browser_uia",
-            "browser_identity_native",
             "context_metadata",
         ):
             try:
@@ -34415,25 +31719,33 @@ code {{
                 )
             )
 
-            # Profile N / Default no forma parte de la matrícula portable.
-            # Si existe cuenta autoritativa usamos la cuenta; de lo
-            # contrario, la URL útil identifica el estado demostrado.
+            perfil = str(
+                contexto.get(
+                    "perfil_navegador",
+                    "",
+                )
+                or ""
+            ).strip().lower()
+
+            # URL se usa solamente como último respaldo. Cuando
+            # existe cuenta/perfil no debe convertir cada navegación
+            # de una misma ventana en una matrícula distinta.
             url = ""
 
-            if not cuenta:
-                url = self.firma_url_web_bin(
+            if not cuenta and not perfil:
+                url = self.normalizar_url_bin(
                     contexto.get(
                         "url",
                         "",
                     )
-                )
+                ).lower()
 
             return (
                 "web",
                 proceso,
                 clase,
                 cuenta,
-                "",
+                perfil,
                 url,
             )
 
@@ -35332,15 +32644,11 @@ code {{
         )
 
         if tipo == "web" and cuenta:
-            timeout_segundos = (
-                self.timeout_supervisor_web_cuenta_ms
-                / 1000.0
-            )
+            max_intentos = 90
+            timeout_segundos = 45.0
         else:
-            timeout_segundos = (
-                self.timeout_supervisor_ms
-                / 1000.0
-            )
+            max_intentos = 40
+            timeout_segundos = 20.0
 
         transcurrido = max(
             0.0,
@@ -35350,6 +32658,7 @@ code {{
 
         agotado = bool(
             decision == "FAILED"
+            or self.auditoria_contextual_intentos >= max_intentos
             or transcurrido >= timeout_segundos
         )
 
@@ -35365,17 +32674,14 @@ code {{
                     f"{len(contextos)}\n"
                     f"Generación: {generacion}\n"
                     f"Intento: "
-                    f"{self.auditoria_contextual_intentos}\n"
-                    f"Tiempo: {transcurrido:.1f}/"
-                    f"{timeout_segundos:.0f}s\n"
+                    f"{self.auditoria_contextual_intentos}/"
+                    f"{max_intentos}\n"
                     f"{resultado.get('motivo', '')}"
                 ),
             )
 
             self.timer_auditoria_contextual.start(
-                self.intervalo_supervision_adaptativo_ms(
-                    int(transcurrido * 1000)
-                )
+                self.auditoria_contextual_intervalo_ms
             )
             return
 
@@ -35429,9 +32735,7 @@ code {{
                 )
 
                 self.timer_auditoria_contextual.start(
-                    self.intervalo_supervision_adaptativo_ms(
-                        0
-                    )
+                    800
                 )
                 return
 
@@ -35968,6 +33272,259 @@ code {{
 
         return True
 
+    def vigilar_geometria_replay_activa(
+        self,
+    ):
+        if (
+            sys.platform != "win32"
+            or not getattr(
+                self,
+                "ejecucion_fisica_activa",
+                False,
+            )
+            or getattr(
+                self,
+                "grabando",
+                False,
+            )
+            or getattr(
+                self,
+                "auditoria_contextual_activa",
+                False,
+            )
+        ):
+            return
+
+        fase = str(
+            getattr(
+                self,
+                "fase_ejecucion_real",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        # Durante el supervisor normal ya existe una comprobación
+        # completa de identidad, URL y geometría.
+        if fase in {
+            "supervisor",
+            "supervisor_preaccion",
+        }:
+            return
+
+        ahora = time.monotonic()
+
+        try:
+            anterior = float(
+                getattr(
+                    self,
+                    "_ultima_vigilancia_geometria_replay",
+                    0.0,
+                )
+                or 0.0
+            )
+
+        except Exception:
+            anterior = 0.0
+
+        if (
+            anterior
+            and ahora - anterior < 0.35
+        ):
+            return
+
+        self._ultima_vigilancia_geometria_replay = ahora
+
+        # No pelear contra el usuario mientras está arrastrando
+        # o redimensionando la ventana.
+        try:
+            if (
+                ctypes.windll.user32.GetAsyncKeyState(
+                    0x01
+                )
+                & 0x8000
+            ):
+                return
+
+        except Exception:
+            pass
+
+        accion = getattr(
+            self,
+            "accion_real_actual",
+            None,
+        )
+
+        if not isinstance(
+            accion,
+            dict,
+        ):
+            try:
+                indice = int(
+                    getattr(
+                        self,
+                        "indice_ejecucion_real",
+                        0,
+                    )
+                    or 0
+                )
+
+            except Exception:
+                indice = -1
+
+            plan = getattr(
+                self,
+                "plan_ejecucion_actual",
+                [],
+            )
+
+            if (
+                isinstance(
+                    plan,
+                    list,
+                )
+                and 0 <= indice < len(plan)
+            ):
+                accion = plan[indice]
+
+        if not isinstance(
+            accion,
+            dict,
+        ):
+            return
+
+        esperado = (
+            accion.get(
+                "contexto_objetivo"
+            )
+            or (
+                accion.get(
+                    "datos"
+                )
+                or {}
+            ).get(
+                "contexto_recordado"
+            )
+            or accion.get(
+                "contexto_despues"
+            )
+            or {}
+        )
+
+        if (
+            not esperado
+            or not esperado.get(
+                "geometria"
+            )
+        ):
+            return
+
+        contexto_valido = getattr(
+            self,
+            "ultimo_contexto_replay_valido",
+            None,
+        )
+
+        hwnd = getattr(
+            self,
+            "ultimo_hwnd_replay_valido",
+            None,
+        )
+
+        if (
+            not isinstance(
+                contexto_valido,
+                dict,
+            )
+            or not hwnd
+            or self.identidad_contextos_operativos(
+                esperado,
+                contexto_valido,
+            )
+            is not True
+        ):
+            return
+
+        try:
+            hwnd = int(
+                hwnd
+            )
+
+            if not ctypes.windll.user32.IsWindow(
+                hwnd
+            ):
+                return
+
+        except Exception:
+            return
+
+        actual = self.obtener_contexto_hwnd(
+            hwnd,
+            enriquecer=False,
+        )
+
+        if not actual:
+            return
+
+        proceso_esperado = str(
+            esperado.get(
+                "proceso",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        proceso_actual = str(
+            actual.get(
+                "proceso",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        if (
+            proceso_esperado
+            and proceso_actual
+            and proceso_esperado
+            != proceso_actual
+        ):
+            return
+
+        clase_esperada = str(
+            esperado.get(
+                "clase",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        clase_actual = str(
+            actual.get(
+                "clase",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        if (
+            clase_esperada
+            and clase_actual
+            and clase_esperada
+            != clase_actual
+        ):
+            return
+
+        if self.geometria_contextos_coincide(
+            esperado,
+            actual,
+        ):
+            return
+
+        self.aplicar_geometria_contexto(
+            hwnd,
+            esperado,
+        )
+
     def actualizar_motor_ejecucion(self):
         tarea = self.obtener_tarea_ejecutando()
 
@@ -36049,6 +33606,8 @@ code {{
         tarea["repeticiones_totales"] = self.obtener_repeticiones_tarea(tarea)
 
         self.actualizar_tarjeta_tarea(tarea["id"])
+
+        self.vigilar_geometria_replay_activa()
 
     def pausar_ejecucion(self, tarea):
         if self.auditoria_contextual_activa:
@@ -42228,7 +39787,6 @@ code {{
     # LEER CONTEXTO DE UNA VENTANA DE WINDOWS
     # ========================================================
 
-
     def obtener_contexto_hwnd(
         self,
         hwnd,
@@ -42238,13 +39796,25 @@ code {{
             return None
 
         user32 = ctypes.windll.user32
+
         try:
             user32.GetWindowTextLengthW.argtypes = [wintypes.HWND]
             user32.GetWindowTextLengthW.restype = ctypes.c_int
-            user32.GetWindowTextW.argtypes = [wintypes.HWND, wintypes.LPWSTR, ctypes.c_int]
+
+            user32.GetWindowTextW.argtypes = [
+                wintypes.HWND,
+                wintypes.LPWSTR,
+                ctypes.c_int,
+            ]
             user32.GetWindowTextW.restype = ctypes.c_int
-            user32.GetClassNameW.argtypes = [wintypes.HWND, wintypes.LPWSTR, ctypes.c_int]
+
+            user32.GetClassNameW.argtypes = [
+                wintypes.HWND,
+                wintypes.LPWSTR,
+                ctypes.c_int,
+            ]
             user32.GetClassNameW.restype = ctypes.c_int
+
             user32.GetWindowThreadProcessId.argtypes = [
                 wintypes.HWND,
                 ctypes.POINTER(wintypes.DWORD),
@@ -42254,124 +39824,65 @@ code {{
             hwnd = int(hwnd)
             longitud = user32.GetWindowTextLengthW(hwnd)
             buffer_titulo = ctypes.create_unicode_buffer(max(1, longitud + 1))
-            user32.GetWindowTextW(hwnd, buffer_titulo, len(buffer_titulo))
+
+            user32.GetWindowTextW(
+                hwnd,
+                buffer_titulo,
+                len(buffer_titulo),
+            )
+
             buffer_clase = ctypes.create_unicode_buffer(256)
-            user32.GetClassNameW(hwnd, buffer_clase, len(buffer_clase))
+            user32.GetClassNameW(
+                hwnd,
+                buffer_clase,
+                len(buffer_clase),
+            )
 
             pid = wintypes.DWORD()
-            user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
+            user32.GetWindowThreadProcessId(
+                hwnd,
+                ctypes.byref(pid),
+            )
 
             proceso = ""
             ejecutable = ""
+
             if pid.value:
                 try:
                     proceso_objeto = psutil.Process(pid.value)
                     proceso = proceso_objeto.name()
+
                     try:
                         ejecutable = proceso_objeto.exe()
-                    except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                    except (
+                        psutil.NoSuchProcess,
+                        psutil.AccessDenied,
+                        psutil.ZombieProcess,
+                    ):
                         ejecutable = ""
-                except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                except (
+                    psutil.NoSuchProcess,
+                    psutil.AccessDenied,
+                    psutil.ZombieProcess,
+                ):
                     pass
-
-            dpi_info = (
-                self.obtener_dpi_ventana_windows(
-                    hwnd
-                )
-            )
-
-            conciencia_dpi = (
-                self.obtener_conciencia_dpi_ventana_windows(
-                    hwnd
-                )
-            )
-
-            monitor_info = (
-                self.obtener_monitor_ventana_windows(
-                    hwnd
-                )
-            )
 
             contexto = {
                 "hwnd": hwnd,
-                "hwnd_origen": "Win32 HWND",
                 "pid": int(pid.value),
-                "pid_origen": "GetWindowThreadProcessId",
                 "proceso": proceso,
-                "proceso_origen": "psutil.Process.name",
                 "ejecutable": ejecutable,
-                "ejecutable_origen": "psutil.Process.exe" if ejecutable else "no_observable",
-                "titulo": (
-                    buffer_titulo.value.strip()
-                ),
-                "titulo_origen": (
-                    "GetWindowTextW"
-                ),
-
-                "clase": (
-                    buffer_clase.value.strip()
-                ),
-                "clase_origen": (
-                    "GetClassNameW"
-                ),
-                "dpi": int(
-                    dpi_info.get(
-                        "dpi",
-                        96,
-                    )
-                    or 96
-                ),
-
-                "escala_dpi": float(
-                    dpi_info.get(
-                        "escala",
-                        1.0,
-                    )
-                    or 1.0
-                ),
-
-                "dpi_origen": str(
-                    dpi_info.get(
-                        "origen",
-                        "",
-                    )
-                    or ""
-                ),
-
-                "conciencia_dpi": str(
-                    conciencia_dpi.get(
-                        "conciencia",
-                        "desconocida",
-                    )
-                    or "desconocida"
-                ),
-
-                "conciencia_dpi_codigo": (
-                    conciencia_dpi.get(
-                        "codigo"
-                    )
-                ),
-
-                "conciencia_dpi_origen": str(
-                    conciencia_dpi.get(
-                        "origen",
-                        "",
-                    )
-                    or ""
-                ),
-                "monitor": monitor_info,
-
-                "monitor_origen": (
-                    "MonitorFromWindow/GetMonitorInfoW"
-                    if monitor_info
-                    else "no_observable"
-                ),
+                "titulo": buffer_titulo.value.strip(),
+                "clase": buffer_clase.value.strip(),
             }
 
             if enriquecer:
                 return self.enriquecer_contexto_operativo(contexto)
 
-            geometria = self.obtener_geometria_ventana(hwnd)
+            geometria = self.obtener_geometria_ventana(
+                hwnd
+            )
+
             if geometria:
                 contexto[
                     "geometria"
@@ -42381,9 +39892,6 @@ code {{
                     )
                 )
 
-                contexto[
-                    "geometria_origen"
-                ] = "GetWindowRect"
             return contexto
 
         except Exception:
@@ -44103,25 +41611,6 @@ code {{
                             "",
                         )
                     ),
-
-                    origen_uia=(
-                        pista_identidad_nativa.get(
-                            "origen",
-                            "",
-                        )
-                    ),
-                    evidencia_uia=(
-                        pista_identidad_nativa.get(
-                            "evidencia",
-                            "",
-                        )
-                    ),
-                    confianza_uia=(
-                        pista_identidad_nativa.get(
-                            "confianza",
-                            "",
-                        )
-                    ),
                 )
             )
 
@@ -44147,26 +41636,6 @@ code {{
                     "",
                 )
                 or ""
-            ).strip()
-
-            perfil_origen_nuevo = str(
-                identidad.get("perfil_origen", "") or ""
-            ).strip()
-
-            perfil_confianza_nueva = str(
-                identidad.get("perfil_confianza", "") or ""
-            ).strip()
-
-            cuenta_origen_nuevo = str(
-                identidad.get("cuenta_origen", "") or origen_nuevo or ""
-            ).strip()
-
-            cuenta_confianza_nueva = str(
-                identidad.get("cuenta_confianza", "") or ""
-            ).strip()
-
-            evidencia_nueva = str(
-                identidad.get("evidencia_uia", "") or ""
             ).strip()
 
             user_data_dir_nuevo = str(
@@ -44248,30 +41717,10 @@ code {{
                     "cuenta_navegador"
                 ] = cuenta_nueva
 
-            if cuenta_origen_nuevo:
+            if origen_nuevo:
                 ficha[
                     "cuenta_navegador_origen"
-                ] = cuenta_origen_nuevo
-
-            if cuenta_confianza_nueva:
-                ficha[
-                    "cuenta_navegador_confianza"
-                ] = cuenta_confianza_nueva
-
-            if perfil_origen_nuevo:
-                ficha[
-                    "perfil_navegador_origen"
-                ] = perfil_origen_nuevo
-
-            if perfil_confianza_nueva:
-                ficha[
-                    "perfil_navegador_confianza"
-                ] = perfil_confianza_nueva
-
-            if evidencia_nueva:
-                ficha[
-                    "identidad_navegador_evidencia"
-                ] = evidencia_nueva
+                ] = origen_nuevo
 
             if user_data_dir_nuevo:
                 ficha[
@@ -44353,8 +41802,32 @@ code {{
                         "Actualicé la cuenta en la "
                         "misma ficha de ventana."
                     ),
-                    self.formatear_contexto_operativo(
-                        ficha
+                    (
+                        self.formatear_contexto_operativo(
+                            ficha
+                        )
+                        + "\n\nDIAGNÓSTICO DE IDENTIDAD"
+                        + "\nOrigen final: "
+                        + (
+                            origen_nuevo
+                            or "no identificado"
+                        )
+                        + "\nUIA perfil observado: "
+                        + str(
+                            pista_identidad_nativa.get(
+                                "perfil",
+                                "",
+                            )
+                            or "no identificado"
+                        )
+                        + "\nUIA cuenta observada: "
+                        + str(
+                            pista_identidad_nativa.get(
+                                "cuenta",
+                                "",
+                            )
+                            or "no identificada"
+                        )
                     ),
                 )
 

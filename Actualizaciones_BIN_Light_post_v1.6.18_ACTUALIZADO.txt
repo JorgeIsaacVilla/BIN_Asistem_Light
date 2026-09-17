@@ -465,3 +465,4 @@ PRIORIDAD TÉCNICA PARA ESTOS HALLAZGOS
 8) sólo después modificar fórmulas geométricas si las pruebas demuestran que es necesario.
 
 21. PERMITIR AGREGAR ACCIONES CORRECTIVAS.
+22. Agregar ventanas de windows en generador de ventanas

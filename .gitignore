@@ -15,26 +15,85 @@ __pycache__/
 
 
 # ============================================================
+# CACHE / HERRAMIENTAS DE DESARROLLO
+# ============================================================
+
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+.coverage
+coverage.xml
+htmlcov/
+
+*.egg-info/
+.eggs/
+
+.ipynb_checkpoints/
+
+
+# ============================================================
 # VARIABLES PRIVADAS
 # ============================================================
 
 .env
 .env.*
 
+
 # ============================================================
-# BIN LIGHT — ARTEFACTOS GENERADOS / DEPURACION
+# BIN LIGHT — DATOS LOCALES / RUNTIME
+# ============================================================
+
+# Tareas creadas por el usuario
+data/tareas.json
+
+# Configuración local del usuario
+data/configuracion.json
+
+# Cola / estado de notificaciones
+data/notificaciones.json
+
+# Memoria aprendida por BIN BOT
+data/memoria.json
+
+# Comandos personalizados del usuario
+data/comandos_teclado.json
+
+# Perfil local utilizado por el navegador de BIN BOT
+# Puede contener cookies, sesiones y otros datos privados.
+data/BIN_Google_Profile/
+
+# HTML temporal de depuración web
+data/BIN_Google_Debug.html
+
+
+# ============================================================
+# IMPORTANTE — ARCHIVOS DE DATA QUE SÍ SE VERSIONAN
+# ============================================================
+
+# NO ignorar:
+#
+# data/manual_bin_bot.json
+#
+# Forma parte del conocimiento/base oficial de BIN BOT.
+
+
+# ============================================================
+# BIN LIGHT — ARTEFACTOS GENERADOS / DEPURACIÓN
 # ============================================================
 
 # PyInstaller
 build/
 dist/
 
+
 # ============================================================
 # INSTALADOR / INNO SETUP
 # ============================================================
 
-# Instaladores y archivos generados
+# Instaladores y archivos finales generados.
 installer/
+
 
 # ============================================================
 # ARCHIVOS TEMPORALES / EDITORES
@@ -56,6 +115,7 @@ installer/
 
 .vscode/
 .idea/
+
 .DS_Store
 Thumbs.db
 desktop.ini
