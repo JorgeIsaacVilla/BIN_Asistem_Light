@@ -1,4 +1,4 @@
-#v1.6.18
+#v1.6.18.09
 #============================================================================================
 
 #1) Evalua la opción para hacer los clics he interacciónes (Como cambios de ventana, entre otros) invisibles ante la ejecución de tareas, ya que tengo el precentimiendo, que las acciónes guardadas, tambien se están haciendo sobre la interfaz de BIN. Evalua si esto tambien afectaria el clic del usuario, y de ser así, entonces haremos invisible los clics, menos el boton de frenar acción. (ESTA NO SE HARÁ)
@@ -6168,7 +6168,7 @@ class BIN(QMainWindow):
         # ====================================================
 
         self.setWindowTitle(
-            "BIN IA Asistem — Light v1.6.18"
+            "BIN IA Asistem — Light v1.6.18.09"
         )
 
         self.ruta_icono_bin = (
@@ -11655,7 +11655,7 @@ class BIN(QMainWindow):
         )
 
         subtitulo = QLabel(
-            "LIGHT v1.6.18"
+            "LIGHT v1.6.18.09"
         )
 
         subtitulo.setObjectName(
@@ -20919,16 +20919,48 @@ code {{
         # ====================================================
         # 3. PERFIL DESDE EL PROCESO
         # ====================================================
+        #
+        # IMPORTANTE:
+        #
+        # El PID de una ventana Chromium NO identifica de forma
+        # suficientemente segura el Profile N cuando el navegador
+        # tiene varios perfiles locales.
+        #
+        # Varias ventanas/perfiles pueden compartir procesos o
+        # ascendencia de procesos. En ese caso --profile-directory
+        # puede pertenecer a otra ventana y contaminar la identidad.
+        #
+        # Por eso el proceso sólo puede resolver identidad cuando
+        # Local State demuestra que existe UN ÚNICO perfil posible.
+        #
+        # Con múltiples perfiles la identidad debe venir del HWND
+        # mediante UIA o quedar temporalmente sin identificar.
+        # ====================================================
 
         if (
             not perfil
             and perfil_proceso
+            and len(perfiles) == 1
         ):
-            perfil = (
-                perfil_proceso
+            perfil_unico = next(
+                iter(
+                    perfiles.keys()
+                ),
+                "",
             )
 
-            origen = "proceso"
+            if (
+                perfil_unico
+                and str(
+                    perfil_unico
+                ).strip().lower()
+                == perfil_proceso.strip().lower()
+            ):
+                perfil = str(
+                    perfil_unico
+                ).strip()
+
+                origen = "proceso_unico"
 
         # ====================================================
         # PERFIL → CORREO DE LOCAL STATE
@@ -21117,6 +21149,116 @@ code {{
                     ),
                 )
             )
+
+            # =================================================
+            # FALLBACK SEGURO POR HWND
+            # =================================================
+            #
+            # Si la lectura UIA puntual no pudo reconocer el
+            # perfil, NO tomamos la identidad de otro proceso.
+            #
+            # Podemos reutilizar únicamente una identidad que BIN
+            # ya haya confirmado anteriormente para ESTA MISMA
+            # ventana física (mismo HWND).
+            #
+            # Además exigimos que esa identidad anterior provenga
+            # de UIA, nunca del antiguo fallback por proceso.
+            # =================================================
+
+            identidad_tiene_datos = bool(
+                str(
+                    identidad.get(
+                        "perfil",
+                        "",
+                    )
+                    or ""
+                ).strip()
+                or str(
+                    identidad.get(
+                        "cuenta",
+                        "",
+                    )
+                    or ""
+                ).strip()
+            )
+
+            if (
+                not identidad_tiene_datos
+                and hwnd
+            ):
+                fichas_hwnd = getattr(
+                    self,
+                    "_contextos_ventanas_monitor_bin",
+                    {},
+                )
+
+                if isinstance(
+                    fichas_hwnd,
+                    dict,
+                ):
+                    try:
+                        ficha_hwnd = (
+                            fichas_hwnd.get(
+                                int(
+                                    hwnd
+                                )
+                            )
+                            or {}
+                        )
+                    except Exception:
+                        ficha_hwnd = {}
+
+                    if isinstance(
+                        ficha_hwnd,
+                        dict,
+                    ):
+                        origen_ficha = str(
+                            ficha_hwnd.get(
+                                "cuenta_navegador_origen",
+                                "",
+                            )
+                            or ""
+                        ).strip().lower()
+
+                        perfil_ficha = str(
+                            ficha_hwnd.get(
+                                "perfil_navegador",
+                                "",
+                            )
+                            or ""
+                        ).strip()
+
+                        cuenta_ficha = str(
+                            ficha_hwnd.get(
+                                "cuenta_navegador",
+                                "",
+                            )
+                            or ""
+                        ).strip()
+
+                        if (
+                            origen_ficha
+                            in {
+                                "uia_correo",
+                                "uia_perfil",
+                            }
+                            and perfil_ficha
+                        ):
+                            identidad = {
+                                "perfil": perfil_ficha,
+                                "cuenta": cuenta_ficha,
+                                "user_data_dir": str(
+                                    ficha_hwnd.get(
+                                        "user_data_dir_navegador",
+                                        "",
+                                    )
+                                    or ""
+                                ).strip(),
+                                "origen": (
+                                    "ficha_hwnd_"
+                                    + origen_ficha
+                                ),
+                            }
 
             cuenta_resuelta = str(
                 identidad.get(
@@ -43883,7 +44025,7 @@ if __name__ == "__main__":
         try:
 
             ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
-                "BIN.IA.Asistem.Light.v1.6.18"
+                "BIN.IA.Asistem.Light.v1.6.18.09"
             )
 
         except Exception:

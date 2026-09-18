@@ -1,8 +1,44 @@
 BIN IA ASISTEM — LIGHT
-V1.6.15
+V1.6.18.09
+
+//Compilado de python
+
+- Entra al proyecto:
+cd "/d/Desktop/Productos en línea/BIN_Asistem_Light"
+
+- Confirma que estás usando el Python correcto:
+python --version
+which python
+python -m PyInstaller --version
+
+- Limpia compilaciones anteriores:
+rm -rf build dist installer __pycache__
+
+- Compila usando el .spec que ya tenemos preparado:
+python -m PyInstaller BIN_Light.spec
+
+- Espera a que termine. La salida correcta debe quedar aquí:
+dist/BIN_Light/BIN_Light.exe
+
+- Puedes comprobarlo desde Git Bash con:
+ls -lah dist/BIN_Light/
+
+- Ejecuta primero el EXE directamente antes de crear el instalador:
+"./dist/BIN_Light/BIN_Light.exe"
+
+Prueba rápidamente que BIN abra bien, cargue la interfaz y que no haya ningún error crítico al iniciar.
+
+- Cuando confirmes que el EXE funciona, abre este archivo:
+BIN_Light_Installer.iss
+
+- Dentro de Inno Setup Compiler pulsa:
+F9
+
+- El instalador debería generarse aquí:
+D:\Desktop\Productos en línea\BIN_Asistem_Light\installer\BIN_Light_v1.6.18_Setup.exe
 
 ============================================================
-BIN IA ASISTEM — LIGHT v1.6.15
+BIN IA ASISTEM — LIGHT v1.6.18.09
 ============================================================
 
 BIN Light es una versión ligera de BIN orientada a la
@@ -74,7 +110,7 @@ python main.py
 IMPORTANTE — ESTA VERSIÓN NO UTILIZA IA LOCAL
 ============================================================
 
-BIN Light v1.6.15 no incorpora un modelo de inteligencia
+BIN Light v1.6.18.09 no incorpora un modelo de inteligencia
 artificial local.
 
 Las decisiones durante una automatización son realizadas por
@@ -351,7 +387,7 @@ BIN IA Asistem — Light
 
 Versión estable:
 
-v1.6.15
+v1.6.18.09
 
 
 Esta versión ha sido probada realizando una secuencia completa

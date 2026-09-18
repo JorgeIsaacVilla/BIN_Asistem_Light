@@ -2,7 +2,7 @@
   "tipo": "BIN_MANUAL",
   "schema_version": 1,
   "manual_version": "1.2-entrenamientos",
-  "bin_version": "1.6.18",
+  "bin_version": "1.6.18.09",
   "estado": "base estable + documentación visual + entrenamientos portables JSON",
   "titulo": "Manual de BIN IA Asistem — Light",
   "descripcion": "Fuente estructurada compartida para consultas de BIN_Bot y renderizado del manual/chat en BIN_Light.",
@@ -43,14 +43,14 @@
   "secciones": [
     {
       "id": "introduccion",
-      "titulo": "BIN IA ASISTEM — LIGHT v1.6.18",
+      "titulo": "BIN IA ASISTEM — LIGHT v1.6.18.09",
       "aliases": [
         "qué es BIN Light",
         "que es bin",
         "bin light",
         "versión estable",
         "version estable",
-        "v1.6.18"
+        "v1.6.18.09"
       ],
       "resumen": "Descripción general y prioridades de la versión estable.",
       "bloques": [
@@ -108,7 +108,7 @@
       "bloques": [
         {
           "tipo": "texto",
-          "contenido": "BIN Light v1.6.18 no incorpora un modelo de inteligencia artificial local. Las decisiones durante una automatización son realizadas por el propio motor de BIN utilizando contexto de las acciones, estado de las ventanas, procesos activos, posición y dimensiones de ventanas, rutas de archivos y carpetas, URL del navegador, perfil del navegador, cuenta asociada cuando puede ser identificada, historial de la demostración, reglas y parámetros condicionales, verificaciones antes y después de las acciones y sistemas de corrección y recuperación. El objetivo es que BIN pueda adaptarse a pequeñas diferencias entre la demostración original y el entorno encontrado durante la ejecución."
+          "contenido": "BIN Light v1.6.18.09 no incorpora un modelo de inteligencia artificial local. Las decisiones durante una automatización son realizadas por el propio motor de BIN utilizando contexto de las acciones, estado de las ventanas, procesos activos, posición y dimensiones de ventanas, rutas de archivos y carpetas, URL del navegador, perfil del navegador, cuenta asociada cuando puede ser identificada, historial de la demostración, reglas y parámetros condicionales, verificaciones antes y después de las acciones y sistemas de corrección y recuperación. El objetivo es que BIN pueda adaptarse a pequeñas diferencias entre la demostración original y el entorno encontrado durante la ejecución."
         }
       ]
     },
@@ -388,14 +388,14 @@
       "aliases": [
         "versión",
         "version",
-        "v1.6.18",
+        "v1.6.18.09",
         "estable"
       ],
-      "resumen": "BIN IA Asistem — Light, versión estable v1.6.18.",
+      "resumen": "BIN IA Asistem — Light, versión estable v1.6.18.09.",
       "bloques": [
         {
           "tipo": "texto",
-          "contenido": "BIN IA Asistem — Light. Versión estable: v1.6.18."
+          "contenido": "BIN IA Asistem — Light. Versión estable: v1.6.18.09."
         }
       ]
     },
@@ -427,13 +427,13 @@
         "botones",
         "manual de interfaz"
       ],
-      "resumen": "Vista principal de BIN IA Asistem — Light v1.6.18 con Lista de tareas, Visor IA, Panel de acciones y Chat con BIN.",
+      "resumen": "Vista principal de BIN IA Asistem — Light v1.6.18.09 con Lista de tareas, Visor IA, Panel de acciones y Chat con BIN.",
       "bloques": [
         {
           "tipo": "imagen",
           "ruta": "src/Captura1_numerada.png",
           "alt": "Interfaz principal de BIN Light — controles numerados",
-          "descripcion": "Vista principal de BIN IA Asistem — Light v1.6.18 con Lista de tareas, Visor IA, Panel de acciones y Chat con BIN. Los círculos amarillos numerados se explican en la lista de interacciones de esta sección."
+          "descripcion": "Vista principal de BIN IA Asistem — Light v1.6.18.09 con Lista de tareas, Visor IA, Panel de acciones y Chat con BIN. Los círculos amarillos numerados se explican en la lista de interacciones de esta sección."
         },
         {
           "tipo": "interacciones",
