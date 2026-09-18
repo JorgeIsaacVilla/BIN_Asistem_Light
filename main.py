@@ -4437,14 +4437,6 @@ class CommandLibraryDialog(QDialog):
                 except Exception:
                     contexto_despues = None
 
-            demostracion_original = None
-            if self.modo_edicion_accion and self.accion_editar:
-                demostracion_original = self.accion_editar.get(
-                    "demostracion_original"
-                ) or json.loads(
-                    json.dumps(self.accion_editar, ensure_ascii=False)
-                )
-
             self.accion_resultado = {
                 "tipo": "comando_ventana",
                 "origen": "edicion_usuario" if self.modo_edicion_accion else "manual_ventana",
@@ -4463,10 +4455,6 @@ class CommandLibraryDialog(QDialog):
                 "contexto_manual": True,
                 "bloquear_actualizacion_automatica": True,
             }
-
-            if demostracion_original is not None:
-                self.accion_resultado["demostracion_original"] = demostracion_original
-                self.accion_resultado["fallback"] = demostracion_original
 
             self.accept()
             return
@@ -17235,10 +17223,175 @@ code {{
         if respuesta != QMessageBox.Yes:
             return
 
+        # ====================================================
+        # CONSERVAR IDENTIDAD DEL PASO QUE SE VA A ELIMINAR
+        # ====================================================
+        #
+        # contexto_despues de una acción anterior puede apuntar
+        # al contexto_objetivo del paso que estamos eliminando.
+        #
+        # Ejemplo:
+        #
+        # ChatGPT
+        #   contexto_despues -> carpeta CASA
+        #
+        # CASA
+        #   contexto_objetivo -> carpeta CASA
+        #
+        # Si eliminamos CASA, también debemos eliminar esa
+        # transición residual de ChatGPT.
+        # ====================================================
+
+        accion_eliminada = acciones[indice]
+
+        contexto_eliminado = (
+            accion_eliminada.get(
+                "contexto_objetivo"
+            )
+            or {}
+        )
+
+        clave_contexto_eliminado = (
+            self.clave_contexto_demostrado_auditoria(
+                contexto_eliminado
+            )
+        )
+
         acciones.pop(indice)
 
-        self.guardar_cambios_acciones()
+        # ====================================================
+        # LIMPIAR CONTEXTO_DESPUES HUÉRFANO
+        # ====================================================
+        #
+        # Primero comprobamos si alguna otra acción superviviente
+        # todavía necesita esa misma ventana/recurso.
+        #
+        # Si sigue existiendo como contexto_objetivo de otra acción,
+        # NO lo eliminamos.
+        #
+        # Si ya ninguna acción lo utiliza, limpiamos cualquier
+        # contexto_despues que todavía apunte hacia él.
+        # ====================================================
 
+        if clave_contexto_eliminado is not None:
+
+            contexto_sigue_representado = False
+
+            for accion_restante in acciones:
+
+                contexto_objetivo_restante = (
+                    accion_restante.get(
+                        "contexto_objetivo"
+                    )
+                    or {}
+                )
+
+                clave_objetivo_restante = (
+                    self.clave_contexto_demostrado_auditoria(
+                        contexto_objetivo_restante
+                    )
+                )
+
+                if (
+                    clave_objetivo_restante
+                    == clave_contexto_eliminado
+                ):
+                    contexto_sigue_representado = True
+                    break
+
+            if not contexto_sigue_representado:
+
+                for accion_restante in acciones:
+
+                    contexto_despues_restante = (
+                        accion_restante.get(
+                            "contexto_despues"
+                        )
+                        or {}
+                    )
+
+                    clave_despues_restante = (
+                        self.clave_contexto_demostrado_auditoria(
+                            contexto_despues_restante
+                        )
+                    )
+
+                    if (
+                        clave_despues_restante
+                        == clave_contexto_eliminado
+                    ):
+                        accion_restante[
+                            "contexto_despues"
+                        ] = None
+
+        # ====================================================
+        # TAREA SELECCIONADA = FUENTE AUTORITATIVA
+        # ====================================================
+        #
+        # Si estamos editando una tarea existente, el resultado
+        # visible del panel se escribe inmediatamente en
+        # tarea["acciones"] y en tareas.json.
+        # ====================================================
+
+        if (
+            not self.grabando
+            and self.tarea_seleccionada_id is not None
+        ):
+            tarea = self.obtener_tarea(
+                self.tarea_seleccionada_id
+            )
+
+            if tarea:
+                tarea["acciones"] = json.loads(
+                    json.dumps(
+                        acciones,
+                        ensure_ascii=False,
+                    )
+                )
+
+                self.rutina_en_borrador = False
+                self.rutina_borrador = []
+                self.rutina_borrador_semantica = []
+
+                self.recalcular_duracion_desde_acciones(
+                    tarea
+                )
+
+                # Regenerar DESPUÉS de limpiar los contextos.
+                tarea["acciones_semanticas"] = (
+                    self.interpretar_acciones_semanticas(
+                        tarea.get(
+                            "acciones",
+                            [],
+                        )
+                    )
+                )
+
+                if tarea.get("acciones"):
+                    tarea["detalle_estado"] = (
+                        f"{len(tarea['acciones'])} "
+                        "acción(es) configurada(s)"
+                    )
+
+                    if (
+                        tarea.get("estado")
+                        == "REQUIERE CONFIGURACIÓN"
+                    ):
+                        tarea["estado"] = "EN ESPERA"
+
+                else:
+                    tarea["detalle_estado"] = (
+                        "SIN ACCIONES · Duración sin calcular"
+                    )
+
+                self.guardar_tareas_en_disco()
+                self.refrescar_lista_tareas()
+                self.refrescar_panel_acciones()
+                return
+
+        # Rutina nueva todavía no asociada a una tarea.
+        self.guardar_cambios_acciones()
+        
     def mover_accion(self, indice, direccion):
         acciones = self.obtener_acciones_panel_actual()
 
@@ -32292,6 +32445,190 @@ code {{
 
         return True
 
+    def acaparar_cuenta_no_observable_auditoria_final(
+        self,
+        esperado,
+        resultado,
+    ):
+        """
+        Excepción muy limitada para la auditoría FINAL.
+
+        Si una ventana web manual ya coincide exactamente en:
+        - proceso
+        - perfil
+        - URL
+        - geometría
+
+        pero la cuenta del navegador no pudo observarse temporalmente,
+        permitimos que la auditoría la considere READY.
+
+        Una cuenta conocida y diferente NUNCA se acepta.
+        """
+
+        if str(
+            getattr(
+                self,
+                "auditoria_contextual_modo",
+                "",
+            )
+            or ""
+        ).strip().lower() != "final":
+            return resultado
+
+        if not esperado or not resultado:
+            return resultado
+
+        if str(
+            esperado.get(
+                "tipo_recurso",
+                "",
+            )
+            or ""
+        ).strip().lower() != "web":
+            return resultado
+
+        if not bool(
+            esperado.get(
+                "contexto_manual"
+            )
+        ):
+            return resultado
+
+        cuenta_esperada = str(
+            esperado.get(
+                "cuenta_navegador",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        perfil_esperado = str(
+            esperado.get(
+                "perfil_navegador",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        if (
+            not cuenta_esperada
+            or not perfil_esperado
+        ):
+            return resultado
+
+        actual = (
+            resultado.get(
+                "contexto_actual"
+            )
+            or {}
+        )
+
+        if not actual:
+            return resultado
+
+        cuenta_actual = str(
+            actual.get(
+                "cuenta_navegador",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        # Si BIN sí identificó una cuenta y es otra,
+        # mantenemos el rechazo normal.
+        if (
+            cuenta_actual
+            and cuenta_actual
+            != cuenta_esperada
+        ):
+            return resultado
+
+        # Esta excepción existe únicamente cuando
+        # la cuenta NO pudo observarse.
+        if cuenta_actual:
+            return resultado
+
+        proceso_esperado = str(
+            esperado.get(
+                "proceso",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        proceso_actual = str(
+            actual.get(
+                "proceso",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        if (
+            proceso_esperado
+            and proceso_actual
+            and proceso_esperado
+            != proceso_actual
+        ):
+            return resultado
+
+        perfil_actual = str(
+            actual.get(
+                "perfil_navegador",
+                "",
+            )
+            or ""
+        ).strip().lower()
+
+        if (
+            not perfil_actual
+            or perfil_actual
+            != perfil_esperado
+        ):
+            return resultado
+
+        url_esperada = self.normalizar_url_bin(
+            esperado.get(
+                "url",
+                "",
+            )
+        ).lower()
+
+        url_actual = self.normalizar_url_bin(
+            actual.get(
+                "url",
+                "",
+            )
+        ).lower()
+
+        if (
+            not url_esperada
+            or not url_actual
+            or url_esperada
+            != url_actual
+        ):
+            return resultado
+
+        if not self.geometria_contextos_coincide(
+            esperado,
+            actual,
+        ):
+            return resultado
+
+        return {
+            "ok": True,
+            "decision": "READY",
+            "motivo": (
+                "Auditoría final: cuenta temporalmente no observable, "
+                "pero proceso, perfil, URL y geometría coinciden exactamente."
+            ),
+            "contexto_actual": actual,
+            "hwnd": actual.get(
+                "hwnd"
+            ),
+        }
+
+
     def procesar_auditoria_contextual(
         self,
     ):
@@ -32441,6 +32778,13 @@ code {{
                 esperado,
                 permitir_abrir=True,
                 activar=False,
+            )
+        )
+
+        resultado = (
+            self.acaparar_cuenta_no_observable_auditoria_final(
+                esperado,
+                resultado,
             )
         )
 
